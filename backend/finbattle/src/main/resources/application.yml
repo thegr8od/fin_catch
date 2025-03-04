@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: finbattle
+  profiles:
+    active: local
+    group:
+      local: local, secret
+      prod: prod, secret
+
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  data:
+    redis:
+      repositories:
+        enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+application:
+  version: 1.0.0
