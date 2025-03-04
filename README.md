@@ -41,3 +41,4 @@
 
 - 컴포넌트 테스트는 Jest와 React Testing Library를 사용합니다.
 - 테스트 파일은 테스트 대상 파일과 동일한 디렉토리에 위치시키고, `.test.tsx` 또는 `.spec.tsx` 확장자를 사용합니다.
+  .
