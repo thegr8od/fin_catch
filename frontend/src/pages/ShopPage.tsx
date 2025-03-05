@@ -38,7 +38,7 @@ const ShopPage: React.FC = () => {
   };
 
   return (
-    <Background backgroundImage={shopBg} overlayOpacity={0.3} enableScanline={true}>
+    <Background backgroundImage={shopBg}>
       <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
         <div className="w-full max-w-4xl px-6 flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-white font-bold mb-10 tracking-wider text-shadow-lg">SHOP</h1>
