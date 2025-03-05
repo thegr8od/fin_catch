@@ -15,6 +15,7 @@ const ShopPage: React.FC = () => {
   const handlePurchase = (amount: number) => {
     const cost = amount === 1 ? 500 : 5000;
 
+    // 코인이 부족하면 알림창 띄우기
     if (balance >= cost) {
       setBalance((prevBalance) => prevBalance - cost);
       setPurchaseAmount(amount);
