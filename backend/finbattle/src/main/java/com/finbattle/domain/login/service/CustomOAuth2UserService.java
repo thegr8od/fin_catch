@@ -1,0 +1,51 @@
+package com.finbattle.domain.login.service;
+
+import com.finbattle.domain.login.dto.AuthenticatedUser;
+import com.finbattle.domain.login.dto.GoogleResponse;
+import com.finbattle.domain.login.dto.KakaoResponse;
+import com.finbattle.domain.login.dto.OAuth2Response;
+import com.finbattle.domain.member.entity.Member;
+import com.finbattle.domain.member.entity.dto.MemberDto;
+import com.finbattle.domain.member.repository.MemberRepository;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+
+    private final MemberRepository memberRepository;
+
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+        System.out.println(oAuth2User);
+
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        OAuth2Response oAuth2Response = null;
+        if(registrationId.equals("google")) {
+            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+        } else if(registrationId.equals("kakao")) {
+            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+        } else return null;
+
+        String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
+        Optional<Member> optionalMember = Optional.ofNullable(
+            memberRepository.findByProviderId(providerId));
+        Member member;
+        if(optionalMember.isEmpty()) {
+            member = Member.of(providerId, oAuth2Response.getName(), oAuth2Response.getEmail());
+            memberRepository.save(member);
+        }
+        else{
+            member = optionalMember.get();
+        }
+
+        return new AuthenticatedUser(MemberDto.from(member));
+    }
+}
