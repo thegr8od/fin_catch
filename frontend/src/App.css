@@ -46,6 +46,10 @@ html {
   font-family: "Press Start 2P", "VT323", monospace;
 }
 
+.font-korean-pixel {
+  font-family: "DungGeunMo", "NeoDunggeunmo", sans-serif;
+}
+
 .bg-kakao {
   background-color: #fee500;
 }

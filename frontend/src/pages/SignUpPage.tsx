@@ -12,6 +12,10 @@ const SignUpPage = () => {
     // 닉네임 제출 로직 구현
     console.log("닉네임 제출:", nickname);
 
+    // 닉네임을 localStorage에 저장
+    localStorage.setItem("userNickname", nickname);
+    localStorage.setItem("isLoggedIn", "true");
+
     // 실제로는 여기서 API 호출하여 닉네임 저장
     // 지금은 DB가 없으므로 바로 메인 페이지로 이동
     alert(`${nickname}님, 환영합니다!`);
