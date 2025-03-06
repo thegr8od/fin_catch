@@ -53,6 +53,16 @@ const Header: React.FC = () => {
     }, 10);
   };
 
+  const handleMyPageClick = () => {
+    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
+    window.dispatchEvent(new CustomEvent("beforePageChange"));
+
+    // 약간의 지연 후 페이지 이동
+    setTimeout(() => {
+      navigate(`/${nickname}`, { replace: true });
+    }, 10);
+  };
+
   const handleMainClick = () => {
     // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
@@ -70,7 +80,9 @@ const Header: React.FC = () => {
           {isLoggedIn && (
             <div className="flex items-center bg-gray-700 px-3 py-1 rounded-md">
               <span className="font-korean-pixel text-sm mr-2">유저:</span>
-              <span className="font-korean-pixel text-sm font-bold">{nickname}</span>
+              <button onClick={handleMyPageClick} className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-korean-pixel flex items-center">
+                <span className="font-korean-pixel text-sm font-bold">{nickname}</span>
+              </button>
             </div>
           )}
         </div>

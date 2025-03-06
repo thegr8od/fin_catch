@@ -8,6 +8,7 @@ import Header from "./components/layout/Header";
 import MainPage from "./pages/MainPage";
 import ShopPage from "./pages/ShopPage";
 import BotPage from "./pages/BotPage";
+import MyPage from "./pages/MyPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               <Route path="/game/Bot" element={<BotPage />} />
               <Route path="/game/oneVsOne" element={<BotPage />} /> {/* 임시로 BotPage 사용, 나중에 OneVsOnePage로 변경 필요 */}
               <Route path="/game/Survival" element={<BotPage />} /> {/* 임시로 BotPage 사용, 나중에 SurvivalPage로 변경 필요 */}
+              <Route path="/:nickname" element={<MyPage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">
