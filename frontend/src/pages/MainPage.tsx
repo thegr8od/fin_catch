@@ -1,6 +1,7 @@
 import Background from "../components/layout/Background";
 import { useState } from "react";
 import ModeCard from "../components/ModeCard";
+import { useNavigate } from "react-router-dom";
 
 // 모드 이미지 import
 import botImg from "../assets/Bot.png";
@@ -14,10 +15,10 @@ type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
 const MainPage = () => {
   const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<GameMode>(null);
+  const navigate = useNavigate();
 
   const handleModeSelect = (mode: GameMode) => {
     setSelectedMode(mode);
-    // 여기에 선택한 모드에 따른 로직 추가
     console.log(`선택한 모드: ${mode}`);
     navigate(`/game/${mode}`);
   };
