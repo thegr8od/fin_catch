@@ -1,30 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Header: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [nickname, setNickname] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
 
   // 로그인 상태 확인 함수
   const checkLoginStatus = () => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
     const userNickname = localStorage.getItem("userNickname") || "";
-
-    console.log("로그인 상태 확인:", loggedIn, userNickname);
-
     setIsLoggedIn(loggedIn);
     setNickname(userNickname);
   };
 
-  // 컴포넌트가 마운트될 때와 location이 변경될 때마다 로그인 상태 확인
+  // 컴포넌트가 마운트될 때 로그인 상태 확인
   useEffect(() => {
     checkLoginStatus();
-  }, [location]);
 
-  // 주기적으로 로그인 상태 확인 (1초마다)
-  useEffect(() => {
+    // 주기적으로 로그인 상태 확인 (1초마다)
     const interval = setInterval(() => {
       checkLoginStatus();
     }, 1000);
@@ -36,17 +30,37 @@ const Header: React.FC = () => {
     // 로그아웃 시 localStorage에서 사용자 정보 삭제
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("userNickname");
-
     setIsLoggedIn(false);
     setNickname("");
 
     // 로그아웃 후 로그인 페이지로 이동
-    navigate("/login");
+    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
+    window.dispatchEvent(new CustomEvent("beforePageChange"));
+
+    // 약간의 지연 후 페이지 이동
+    setTimeout(() => {
+      navigate("/login", { replace: true });
+    }, 10);
   };
 
   const handleShopClick = () => {
-    // 상점 페이지로 이동
-    navigate("/shop");
+    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
+    window.dispatchEvent(new CustomEvent("beforePageChange"));
+
+    // 약간의 지연 후 페이지 이동
+    setTimeout(() => {
+      navigate("/shop", { replace: true });
+    }, 10);
+  };
+
+  const handleMainClick = () => {
+    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
+    window.dispatchEvent(new CustomEvent("beforePageChange"));
+
+    // 약간의 지연 후 페이지 이동
+    setTimeout(() => {
+      navigate("/main", { replace: true });
+    }, 10);
   };
 
   return (
@@ -63,6 +77,9 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-3">
           {isLoggedIn && (
             <>
+              <button onClick={handleMainClick} className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-korean-pixel flex items-center">
+                <span>메인</span>
+              </button>
               <button onClick={handleShopClick} className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded font-korean-pixel flex items-center">
                 <span>상점</span>
               </button>
