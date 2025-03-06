@@ -14,6 +14,7 @@ export default {
         kakao: "#FEE500",
         "form-color": "#FAD0C4",
         "signup-color": "#FFF7F3",
+        "carousel-color": "#FAD0C4",
       },
       animation: {
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
