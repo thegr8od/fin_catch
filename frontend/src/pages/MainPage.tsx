@@ -7,24 +7,26 @@ import { useNavigate } from "react-router-dom";
 import botImg from "../assets/Bot.png";
 import oneVsOneImg from "../assets/one_vs_one.png";
 import multiImg from "../assets/multi.png";
+import { useNavigate } from "react-router-dom";
 
 // 게임 모드 타입 정의
-type GameMode = "ai" | "oneVsOne" | "multi" | null;
+type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
 
 const MainPage = () => {
+  const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<GameMode>(null);
   const navigate = useNavigate();
 
   const handleModeSelect = (mode: GameMode) => {
     setSelectedMode(mode);
-    // 선택한 모드에 따라 해당 게임 페이지로 이동
+    console.log(`선택한 모드: ${mode}`);
     navigate(`/game/${mode}`);
   };
 
   // 모드 데이터 정의
   const modeData = [
     {
-      id: "ai",
+      id: "Bot",
       title: "Bot",
       description: "인공지능이랑 맞짱 뒤지게 까셈 ㅋㅋㅋ",
       imageSrc: botImg,
@@ -36,7 +38,7 @@ const MainPage = () => {
       imageSrc: oneVsOneImg,
     },
     {
-      id: "multi",
+      id: "Survival",
       title: "Survival",
       description: "이새기 ㅈ밥이네 ㅋㅋ",
       imageSrc: multiImg,
