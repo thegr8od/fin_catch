@@ -23,6 +23,7 @@ function App() {
               <Route path="/main" element={<MainPage />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/one-to-one" element={<OneToOnePage />} />
+              <Route path="/battle/:category" element={<OneToOnePage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">
