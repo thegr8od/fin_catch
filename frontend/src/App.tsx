@@ -7,6 +7,7 @@ import Footer from "./components/layout/Footer";
 import Header from "./components/layout/Header";
 import MainPage from "./pages/MainPage";
 import ShopPage from "./pages/ShopPage";
+import OneToOnePage from "./pages/OneToOnePage";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/main" element={<MainPage />} />
               <Route path="/shop" element={<ShopPage />} />
+              <Route path="/one-to-one" element={<OneToOnePage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">
