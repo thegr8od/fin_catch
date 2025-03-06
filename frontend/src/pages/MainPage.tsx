@@ -19,6 +19,17 @@ const MainPage = () => {
 
   const handleModeSelect = (mode: GameMode) => {
     setSelectedMode(mode);
+    
+    // 선택한 모드에 따른 페이지 이동 처리
+    if (mode === "oneVsOne") {
+      navigate("/one-to-one");
+    } else if (mode === "ai") {
+      // AI 모드 페이지로 이동 (구현 필요)
+      console.log("AI 모드 선택");
+    } else if (mode === "multi") {
+      // 멀티 모드 페이지로 이동 (구현 필요)
+      console.log("멀티 모드 선택");
+    }
     console.log(`선택한 모드: ${mode}`);
     navigate(`/game/${mode}`);
   };
