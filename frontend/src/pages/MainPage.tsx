@@ -12,12 +12,22 @@ import { useNavigate } from "react-router-dom";
 type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
 
 const MainPage = () => {
-  const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<GameMode>(null);
+  const navigate = useNavigate();
 
   const handleModeSelect = (mode: GameMode) => {
     setSelectedMode(mode);
-    // 여기에 선택한 모드에 따른 로직 추가
+
+    // 선택한 모드에 따른 페이지 이동 처리
+    if (mode === "oneVsOne") {
+      navigate("/one-to-one");
+    } else if (mode === "Bot") {
+      // AI 모드 페이지로 이동 (구현 필요)
+      console.log("AI 모드 선택");
+    } else if (mode === "Survival") {
+      // 멀티 모드 페이지로 이동 (구현 필요)
+      console.log("멀티 모드 선택");
+    }
     console.log(`선택한 모드: ${mode}`);
     navigate(`/game/${mode}`);
   };
