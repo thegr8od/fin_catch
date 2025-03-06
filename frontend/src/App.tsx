@@ -7,7 +7,7 @@ import Footer from "./components/layout/Footer";
 import Header from "./components/layout/Header";
 import MainPage from "./pages/MainPage";
 import ShopPage from "./pages/ShopPage";
-
+import SurvivalPage from "./pages/SurvivalPage";
 function App() {
   return (
     <div className="w-full h-screen overflow-hidden relative">
@@ -21,6 +21,7 @@ function App() {
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/main" element={<MainPage />} />
               <Route path="/shop" element={<ShopPage />} />
+              <Route path="/game/:mode" element={<SurvivalPage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">
