@@ -15,7 +15,8 @@ public enum BaseResponseStatus {
 
     // JWT (1001 ~ 1099)
     JWT_NOT_FOUND(false, HttpStatus.UNAUTHORIZED, 1001, "JWT를 찾을 수 없습니다."),
-    JWT_INVALID(false, HttpStatus.UNAUTHORIZED, 1002, "유효하지 않은 JWT입니다.");
+    JWT_EXPIRED(false, HttpStatus.UNAUTHORIZED, 1002, "만료된 JWT입니다."),
+    JWT_INVALID(false, HttpStatus.UNAUTHORIZED, 1003, "유효하지 않은 JWT입니다.");
     private final boolean isSuccess;
     @JsonIgnore
     private final HttpStatus httpStatus;

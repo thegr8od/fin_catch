@@ -34,14 +34,14 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             errorResponse = new BaseResponse<>(UNAUTHORIZED);
         } else {
             switch (exceptionType) {
-                case "JWT_NOT_FOUND":
-                    errorResponse = new BaseResponse<>(JWT_NOT_FOUND);
+                case "JWT_EXPIRED":
+                    errorResponse = new BaseResponse<>("Access Token expired. Please refresh.");
                     break;
                 case "JWT_INVALID":
-                    errorResponse = new BaseResponse<>(JWT_INVALID);
+                    errorResponse = new BaseResponse<>("Invalid JWT Token. Please log in again.");
                     break;
                 default:
-                    errorResponse = new BaseResponse<>(UNAUTHORIZED);
+                    errorResponse = new BaseResponse<>("Unauthorized request. Please log in.");
             }
         }
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));

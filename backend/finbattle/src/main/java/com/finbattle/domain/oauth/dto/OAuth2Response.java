@@ -1,4 +1,4 @@
-package com.finbattle.domain.login.dto;
+package com.finbattle.domain.oauth.dto;
 
 public interface OAuth2Response {
     //제공자 (Ex. kakao, google, ...)

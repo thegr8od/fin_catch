@@ -1,8 +1,7 @@
 package com.finbattle.global.common.config;
 
-import com.finbattle.domain.login.handler.CustomSuccessHandler;
-import com.finbattle.domain.login.service.CustomOAuth2UserService;
-import com.finbattle.global.common.Util.JWTUtil;
+import com.finbattle.domain.oauth.handler.CustomSuccessHandler;
+import com.finbattle.domain.oauth.service.CustomOAuth2UserService;
 import com.finbattle.global.common.exception.exception.security.CustomAccessDeniedHandler;
 import com.finbattle.global.common.exception.exception.security.CustomAuthenticationEntryPoint;
 import com.finbattle.global.common.filter.JWTFilter;
@@ -26,48 +25,37 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
-    private final JWTUtil jwtUtil;
+    private final JWTFilter jwtFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        //csrf disable
-        http.csrf((auth) -> auth.disable());
 
-        //Form 로그인 방식 disable
-        http.formLogin((auth) -> auth.disable());
-
-        //HTTP Basic 인증 방식 disable
-        http.httpBasic((auth) -> auth.disable());
-
-//        // Exception 핸들러 추가
-//        http.exceptionHandling(exception ->
-//            exception
-//                .authenticationEntryPoint(authenticationEntryPoint) // 401 예외 핸들러 적용
-//                .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
-//        );
-
-        //oauth2
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf((auth) -> auth.disable())
             .oauth2Login((oauth2) -> oauth2
                 .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                     .userService(customOAuth2UserService))
-                .successHandler(customSuccessHandler));
-
-        //경로별 인가 작업
-        http.authorizeHttpRequests((auth) -> auth
-            .requestMatchers("/").permitAll()
-            .requestMatchers("/login", "/api/login/**", "/oauth2/**").permitAll()
-            .requestMatchers("/error", "/swagger-ui/**").permitAll()
-            .anyRequest().authenticated());
-
-        //세션 설정 : STATELESS
-        http.sessionManagement((session) -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        //JWTFilter 추가
-        http.addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .successHandler(customSuccessHandler)
+            )
+            .authorizeHttpRequests((auth) -> auth
+                .requestMatchers("/login", "/api/member/reissue", "/oauth2/**").permitAll()
+                .requestMatchers("/error", "/swagger-ui/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .sessionManagement((session) -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+//            .exceptionHandling(exception ->
+//                exception
+//                    .authenticationEntryPoint(authenticationEntryPoint) // 401 예외 핸들러 적용
+//                    .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
+//            )
+            .formLogin((auth) -> auth.disable())
+            .httpBasic((auth) -> auth.disable());
 
         return http.build();
     }

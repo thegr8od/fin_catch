@@ -1,6 +1,9 @@
 package com.finbattle.global.common.Util;
 
+import com.finbattle.global.common.exception.exception.BusinessException;
+import com.finbattle.global.common.model.dto.BaseResponseStatus;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import java.nio.charset.StandardCharsets;
@@ -15,38 +18,38 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class JWTUtil {
 
-    private SecretKey secretKey;
+    private SecretKey secretAccess;
+    private SecretKey secretRefresh;
     @Value("${spring.jwt.access-token-validity}")
     private long accessTokenValidity;
     @Value("${spring.jwt.refresh-token-validity}")
     private long refreshTokenValidity;
 
-    public JWTUtil(@Value("${spring.jwt.secret}") String secret) {
-        secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
+    public JWTUtil(@Value("${spring.jwt.secret-access}") String access,
+                    @Value("${spring.jwt.secret-refresh}") String refresh) {
+        secretAccess = new SecretKeySpec(access.getBytes(StandardCharsets.UTF_8),
+            Jwts.SIG.HS256.key().build().getAlgorithm());
+        secretRefresh = new SecretKeySpec(refresh.getBytes(StandardCharsets.UTF_8),
             Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
-    public Long getMemberId(String token) {
-        return Jwts.parser().verifyWith(secretKey).build()
-            .parseSignedClaims(token).getPayload()
-            .get("memberId", Long.class);
+
+    public Long getAccessMemberId(String token) {
+        return getMemberId(token, secretAccess);
     }
 
-    public String getProviderId(String token) {
-        return Jwts.parser().verifyWith(secretKey).build()
-            .parseSignedClaims(token).getPayload()
-            .get("providerId", String.class);
+    public String getAccessProviderId(String token) {
+        return getProviderId(token, secretAccess);
     }
 
-
-    /**
-     * JWT 만료 여부 확인 Exeption 발생 시 만료된 토큰
-     */
-    public Boolean isExpired(String token) {
-        return Jwts.parser().verifyWith(secretKey)
-            .build().parseSignedClaims(token).getPayload()
-            .getExpiration().before(new Date());
+    public Long getRefreshMemberId(String token) {
+        return getMemberId(token, secretRefresh);
     }
+
+    public String getRefreshProviderId(String token) {
+        return getProviderId(token, secretRefresh);
+    }
+
 
     public String createAccessToken(String providerId, Long memberId) {
         return Jwts.builder()
@@ -54,7 +57,7 @@ public class JWTUtil {
             .claim("memberId", memberId)
             .issuedAt(new Date(System.currentTimeMillis()))
             .expiration(new Date(System.currentTimeMillis() + accessTokenValidity))
-            .signWith(secretKey)
+            .signWith(secretAccess)
             .compact();
     }
 
@@ -64,41 +67,45 @@ public class JWTUtil {
             .claim("memberId", memberId)
             .issuedAt(new Date(System.currentTimeMillis()))
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidity))
-            .signWith(secretKey)
+            .signWith(secretRefresh)
             .compact();
     }
+
+    public boolean validateAccessToken(String token) {
+        return validateToken(token, secretAccess);
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateToken(token, secretRefresh);
+    }
+
+    private Long getMemberId(String token, SecretKey secretkey) {
+        return Jwts.parser().verifyWith(secretkey).build()
+            .parseSignedClaims(token).getPayload()
+            .get("memberId", Long.class);
+    }
+
+    private String getProviderId(String token, SecretKey secretkey) {
+        return Jwts.parser().verifyWith(secretkey).build()
+            .parseSignedClaims(token).getPayload()
+            .get("providerId", String.class);
+    }
+
 
     /**
      * JWT 전체 유효성 검증 (서명 & 만료 여부 확인)
      */
-    public boolean validateToken(String token) {
+    private boolean validateToken(String token, SecretKey secretKey) {
         try {
-            Claims claims = Jwts.parser()
+            Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-            if (isExpired(token)) {
-                log.warn("❌ JWT 검증 실패: 토큰이 만료됨");
-                return false;
-            }
-
-            log.info("✅ JWT 검증 성공");
+                .parseSignedClaims(token);
             return true;
-        } catch (JwtException e) {
-            log.error("❌ JWT 검증 실패: {}", e.getMessage());
-            return false;
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(BaseResponseStatus.JWT_EXPIRED);
+        } catch (Exception e) {
+            throw new BusinessException(BaseResponseStatus.JWT_INVALID);
         }
     }
-
-
-    public Claims parseToken(String token) {
-        return Jwts.parser()
-            .verifyWith(secretKey)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload();
-    }
-
 }

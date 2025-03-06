@@ -1,4 +1,4 @@
-package com.finbattle.domain.login.dto;
+package com.finbattle.domain.oauth.dto;
 
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

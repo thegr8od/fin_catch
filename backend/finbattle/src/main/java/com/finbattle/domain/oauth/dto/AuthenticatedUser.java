@@ -1,4 +1,4 @@
-package com.finbattle.domain.login.dto;
+package com.finbattle.domain.oauth.dto;
 
 import com.finbattle.domain.member.entity.dto.MemberDto;
 import java.util.ArrayList;

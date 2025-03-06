@@ -1,9 +1,9 @@
-package com.finbattle.domain.login.service;
+package com.finbattle.domain.oauth.service;
 
-import com.finbattle.domain.login.dto.AuthenticatedUser;
-import com.finbattle.domain.login.dto.GoogleResponse;
-import com.finbattle.domain.login.dto.KakaoResponse;
-import com.finbattle.domain.login.dto.OAuth2Response;
+import com.finbattle.domain.oauth.dto.AuthenticatedUser;
+import com.finbattle.domain.oauth.dto.GoogleResponse;
+import com.finbattle.domain.oauth.dto.KakaoResponse;
+import com.finbattle.domain.oauth.dto.OAuth2Response;
 import com.finbattle.domain.member.entity.Member;
 import com.finbattle.domain.member.entity.dto.MemberDto;
 import com.finbattle.domain.member.repository.MemberRepository;

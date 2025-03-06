@@ -1,11 +1,11 @@
 package com.finbattle.global.common.filter;
 
-import com.finbattle.domain.login.dto.AuthenticatedUser;
+import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.domain.member.entity.dto.MemberDto;
 import com.finbattle.global.common.Util.JWTUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -14,44 +14,54 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 @Slf4j
+@Component
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-        FilterChain filterChain)
-        throws ServletException, IOException {
+        FilterChain filterChain) throws ServletException, IOException {
 
-        String token = getTokenFromCookies(request.getCookies());
-
-        if (token == null) {
-            log.warn("JWT not found in request");
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String accessToken = getTokenFromHeader(request);
 
         try {
-            if (jwtUtil.isExpired(token)) {
-                log.warn("❌ JWT is expired");
-                request.setAttribute("exception", "JWT_INVALID");
-                filterChain.doFilter(request, response);
-                return;
+            if (accessToken != null) {
+                if (jwtUtil.validateAccessToken(accessToken)) {
+                    authenticateUser(accessToken);
+                }
             }
+        } catch (ExpiredJwtException e) {
+            log.warn("Expired JWT Token: {}", e.getMessage());
+            request.setAttribute("exception", "JWT_EXPIRED");
         } catch (Exception e) {
-            log.error("❌ JWT validation error: {}", e.getMessage());
+            log.warn("Invalid JWT Token: {}", e.getMessage());
             request.setAttribute("exception", "JWT_INVALID");
-            filterChain.doFilter(request, response);
-            return;
         }
 
+        filterChain.doFilter(request, response);
+    }
+
+    private String getTokenFromHeader(HttpServletRequest request) {
+        // 1️⃣ 요청 헤더에서 "Authorization" 키의 값 가져오기
+        String bearerToken = request.getHeader("Authorization");
+
+        // 2️⃣ "Bearer"로 시작하는지 확인
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7); // "Bearer " 이후의 토큰 값만 반환
+        }
+        return null;
+    }
+
+    private void authenticateUser(String token) {
         // JWT 토큰에서 사용자 정보 추출
-        String providerId = jwtUtil.getProviderId(token);
-        Long memberId = jwtUtil.getMemberId(token);
+        String providerId = jwtUtil.getAccessProviderId(token);
+        Long memberId = jwtUtil.getAccessMemberId(token);
 
         MemberDto memberDto = MemberDto.builder()
             .providerId(providerId)
@@ -67,25 +77,5 @@ public class JWTFilter extends OncePerRequestFilter {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
-        filterChain.doFilter(request, response);
-    }
-
-    /**
-     * 쿠키 배열에서 ACCESS 토큰을 추출
-     *
-     * @param cookies 쿠키 배열
-     * @return ACCESS 토큰 값 또는 null
-     */
-    private String getTokenFromCookies(Cookie[] cookies) {
-        if (cookies == null) {
-            return null;
-        }
-
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals("ACCESS")) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }

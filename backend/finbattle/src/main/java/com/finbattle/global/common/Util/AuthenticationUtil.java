@@ -1,6 +1,6 @@
 package com.finbattle.global.common.Util;
 
-import com.finbattle.domain.login.dto.AuthenticatedUser;
+import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
