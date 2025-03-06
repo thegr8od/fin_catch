@@ -8,7 +8,6 @@ import DifficultySelector, { Difficulty } from "../components/difficulty/Difficu
 // 주제 이미지 import
 import financeImg from "../assets/topics/finance.svg";
 import investmentImg from "../assets/topics/investment.svg";
-import bankingImg from "../assets/topics/banking.svg";
 
 const BotPage = () => {
   const navigate = useNavigate();
