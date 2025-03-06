@@ -16,13 +16,14 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
     private final JWTUtil jwtUtil;
     private final CookieUtil cookieUtil;
     private final AuthenticationUtil authenticationUtil;
 
     @Value("${app.baseUrl}")
     private String baseUrl;
-    private static final String LOGIN_SUCCESS_URI = "/login/success";
+    private static final String LOGIN_SUCCESS_URI = "/api/login/success";
 
     @Override
     @Transactional

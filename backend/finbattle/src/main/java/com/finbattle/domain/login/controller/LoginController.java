@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class LoginController {
+
     private final LoginService loginService;
     private final MemberService memberService;
 
@@ -25,7 +26,7 @@ public class LoginController {
     public String loginSuccess(
         @AuthenticationPrincipal AuthenticatedUser detail) {
         Member member = memberService.getMemberInfo(detail.getMemberId());
-        //loginService.setTokens(detail, response);
+        // loginService.setTokens(detail, response);
         log.info("로그인 성공! 사용자 정보: {}", member.toString());
         return "로그인 성공!";
     }

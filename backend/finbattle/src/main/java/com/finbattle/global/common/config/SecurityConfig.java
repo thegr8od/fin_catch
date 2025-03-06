@@ -3,7 +3,9 @@ package com.finbattle.global.common.config;
 import com.finbattle.domain.login.handler.CustomSuccessHandler;
 import com.finbattle.domain.login.service.CustomOAuth2UserService;
 import com.finbattle.global.common.Util.JWTUtil;
-import com.finbattle.global.common.filter.jwtFilter;
+import com.finbattle.global.common.exception.exception.security.CustomAccessDeniedHandler;
+import com.finbattle.global.common.exception.exception.security.CustomAuthenticationEntryPoint;
+import com.finbattle.global.common.filter.JWTFilter;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -21,9 +23,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final JWTUtil jwtUtil;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,8 +41,12 @@ public class SecurityConfig {
         //HTTP Basic 인증 방식 disable
         http.httpBasic((auth) -> auth.disable());
 
-        //JWTFilter 추가
-        http.addFilterBefore(new jwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+//        // Exception 핸들러 추가
+//        http.exceptionHandling(exception ->
+//            exception
+//                .authenticationEntryPoint(authenticationEntryPoint) // 401 예외 핸들러 적용
+//                .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
+//        );
 
         //oauth2
         http
@@ -48,12 +57,17 @@ public class SecurityConfig {
 
         //경로별 인가 작업
         http.authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/").permitAll()
-                .anyRequest().authenticated());
+            .requestMatchers("/").permitAll()
+            .requestMatchers("/login", "/api/login/**", "/oauth2/**").permitAll()
+            .requestMatchers("/error", "/swagger-ui/**").permitAll()
+            .anyRequest().authenticated());
 
         //세션 설정 : STATELESS
         http.sessionManagement((session) -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        //JWTFilter 추가
+        http.addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

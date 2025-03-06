@@ -1,15 +1,18 @@
 package com.finbattle.global.common.Util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class JWTUtil {
 
     private SecretKey secretKey;
@@ -36,9 +39,12 @@ public class JWTUtil {
     }
 
 
+    /**
+     * JWT 만료 여부 확인 Exeption 발생 시 만료된 토큰
+     */
     public Boolean isExpired(String token) {
-        return Jwts.parser().verifyWith(secretKey).build()
-            .parseSignedClaims(token).getPayload()
+        return Jwts.parser().verifyWith(secretKey)
+            .build().parseSignedClaims(token).getPayload()
             .getExpiration().before(new Date());
     }
 
@@ -62,17 +68,26 @@ public class JWTUtil {
             .compact();
     }
 
+    /**
+     * JWT 전체 유효성 검증 (서명 & 만료 여부 확인)
+     */
     public boolean validateToken(String token) {
         try {
-            // 토큰 만료 및 유효성 검증
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
-                .parseSignedClaims(token);
-            System.out.println("Token valid: "+ !isExpired(token));
-            return !isExpired(token);
-        } catch (Exception e) {
-            e.getStackTrace();
+                .parseSignedClaims(token)
+                .getPayload();
+
+            if (isExpired(token)) {
+                log.warn("❌ JWT 검증 실패: 토큰이 만료됨");
+                return false;
+            }
+
+            log.info("✅ JWT 검증 성공");
+            return true;
+        } catch (JwtException e) {
+            log.error("❌ JWT 검증 실패: {}", e.getMessage());
             return false;
         }
     }

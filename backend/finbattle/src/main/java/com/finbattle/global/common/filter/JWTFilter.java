@@ -18,11 +18,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 @Slf4j
-public class jwtFilter extends OncePerRequestFilter{
+public class JWTFilter extends OncePerRequestFilter {
+
     private final JWTUtil jwtUtil;
 
     @Override
-    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+        FilterChain filterChain)
         throws ServletException, IOException {
 
         String token = getTokenFromCookies(request.getCookies());
@@ -33,8 +35,16 @@ public class jwtFilter extends OncePerRequestFilter{
             return;
         }
 
-        if(jwtUtil.isExpired(token)){
-            log.warn("JWT is expired");
+        try {
+            if (jwtUtil.isExpired(token)) {
+                log.warn("❌ JWT is expired");
+                request.setAttribute("exception", "JWT_INVALID");
+                filterChain.doFilter(request, response);
+                return;
+            }
+        } catch (Exception e) {
+            log.error("❌ JWT validation error: {}", e.getMessage());
+            request.setAttribute("exception", "JWT_INVALID");
             filterChain.doFilter(request, response);
             return;
         }

@@ -2,7 +2,8 @@ package com.finbattle.domain.login.dto;
 
 import java.util.Map;
 
-public class GoogleResponse implements OAuth2Response{
+public class GoogleResponse implements OAuth2Response {
+
     private final Map<String, Object> attributes;
 
     public GoogleResponse(Map<String, Object> attributes) {
@@ -13,7 +14,7 @@ public class GoogleResponse implements OAuth2Response{
     public String getProvider() {
         return "google";
     }
-
+    
     @Override
     public String getProviderId() {
         return attributes.get("sub").toString();
