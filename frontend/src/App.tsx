@@ -10,6 +10,7 @@ import ShopPage from "./pages/ShopPage";
 import OneToOnePage from "./pages/OneToOnePage";
 import SurvivalPage from "./pages/SurvivalPage";
 import BotPage from "./pages/BotPage";
+import MyPage from "./pages/MyPage";
 import RoomPreparePage from "./pages/RoomPreparePage";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
               <Route path="/one-to-one/:category" element={<OneToOnePage />} />
               <Route path="/game/survival" element={<SurvivalPage />} />
               <Route path="/game/bot" element={<BotPage />} />
+              <Route path="/:nickname" element={<MyPage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">

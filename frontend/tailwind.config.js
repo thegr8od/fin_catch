@@ -15,6 +15,11 @@ export default {
         "form-color": "#FAD0C4",
         "signup-color": "#FFF7F3",
         "carousel-color": "#FAD0C4",
+        "button-color": "#FAD0C4",
+        red: "#FF0000",
+        "character-grid-bg": "#EEF1DA",
+        "character-section-bg": "#C7D9DD",
+        "character-stats-bg": "#D5E5D5",
       },
       animation: {
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",

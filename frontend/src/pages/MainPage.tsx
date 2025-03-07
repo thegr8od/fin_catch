@@ -27,11 +27,26 @@ const MainPage = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [showModal, setShowModal] = useState(false);
+
   const [selectedMode, setSelectedMode] = useState<GameMode>(null);
   const [roomTitle, setRoomTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
 
+  const handleModeSelect = (mode: GameMode) => {
+    setSelectedMode(mode);
+
+    // 선택한 모드에 따른 페이지 이동 처리
+    if (mode === "oneVsOne") {
+      navigate("/one-to-one");
+    } else if (mode === "Bot") {
+      // AI 모드 페이지로 이동 (구현 필요)
+      console.log("AI 모드 선택");
+    } else if (mode === "Survival") {
+      // 멀티 모드 페이지로 이동 (구현 필요)
+      console.log("멀티 모드 선택");
+    }
+  };
   // 임시 방 데이터 생성
   useEffect(() => {
     // 로컬 스토리지에서 방 목록 불러오기
