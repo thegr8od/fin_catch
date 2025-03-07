@@ -28,7 +28,7 @@ const OneToOnePage: React.FC = () => {
   const navigate = useNavigate();
   const { category } = useParams<{ category: string }>();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [showBattle, setShowBattle] = useState<boolean>(false);
+  const [showBattle, setShowBattle] = useState<boolean>(true);
   const [playerHealth, setPlayerHealth] = useState<number>(5);
   const [opponentHealth, setOpponentHealth] = useState<number>(5);
   const [chatInput, setChatInput] = useState<string>("");
@@ -42,17 +42,20 @@ const OneToOnePage: React.FC = () => {
   useEffect(() => {
     if (category) {
       setSelectedOption(category);
-      setShowBattle(true);
+    } else {
+      // 카테고리가 없으면 기본값 설정
+      setSelectedOption("investment");
     }
+    setShowBattle(true);
   }, [category]);
 
   // 타이머 효과
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    
+
     if (isTimerRunning && timer > 0) {
       interval = setInterval(() => {
-        setTimer(prevTimer => prevTimer - 1);
+        setTimer((prevTimer) => prevTimer - 1);
       }, 1000);
     } else if (timer === 0) {
       setIsTimerRunning(false);
@@ -60,7 +63,7 @@ const OneToOnePage: React.FC = () => {
       console.log("타이머 종료, 불꽃 애니메이션 시작");
       setShowFireAnimation(true);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -81,11 +84,11 @@ const OneToOnePage: React.FC = () => {
     console.log("애니메이션 완료 핸들러 호출됨");
     // 애니메이션 완료 후 처리할 로직
     setShowFireAnimation(false);
-    
+
     // 다음 라운드를 위해 타이머 재설정 (필요한 경우)
     // setTimer(60);
     // setIsTimerRunning(true);
-    
+
     // 게임 종료 체크
     if (playerHealth <= 1 || opponentHealth <= 1) {
       // 게임 종료 처리 (승패 결정 등)
@@ -100,43 +103,30 @@ const OneToOnePage: React.FC = () => {
       id: "investment",
       name: "투자",
       image: investment,
-      description: "투자 카테고리"
+      description: "투자 카테고리",
     },
     {
       id: "economy",
       name: "정책",
       image: policy,
-      description: "정책 카테고리"
+      description: "정책 카테고리",
     },
     {
       id: "product",
       name: "상품",
       image: product,
-      description: "상품 카테고리"
+      description: "상품 카테고리",
     },
     {
       id: "delivery",
       name: "범죄",
       image: crime,
-      description: "범죄 카테고리"
-    }
+      description: "범죄 카테고리",
+    },
   ];
 
-  const handleOptionClick = (optionId: string) => {
-    setSelectedOption(optionId);
-    setShowBattle(true);
-    // URL 업데이트
-    navigate(`/battle/${optionId}`);
-  };
-
   const handleBackClick = () => {
-    if (showBattle) {
-      setShowBattle(false);
-      setSelectedOption(null);
-      navigate("/one-to-one");
-    } else {
-      navigate("/main");
-    }
+    navigate("/main");
   };
 
   const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,16 +136,16 @@ const OneToOnePage: React.FC = () => {
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (chatInput.trim() === "") return;
-    
+
     const newMessage: ChatMessage = {
       sender: "김범난", // 현재 사용자 이름
       message: chatInput,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    
+
     setChatMessages([...chatMessages, newMessage]);
     setPlayerBubble(newMessage);
-    
+
     setChatInput("");
   };
 
@@ -192,9 +182,7 @@ const OneToOnePage: React.FC = () => {
                 <div className="w-40 h-40 flex items-center justify-center mb-3">
                   <img src={leftCat} alt="Player Character" className="w-full h-full object-contain" />
                 </div>
-                <div className="flex mb-2">
-                  {renderHearts(playerHealth)}
-                </div>
+                <div className="flex mb-2">{renderHearts(playerHealth)}</div>
                 <div className="text-center">
                   <span className="text-lg font-bold text-white">공격적인 투자자 김범난</span>
                 </div>
@@ -205,33 +193,27 @@ const OneToOnePage: React.FC = () => {
             <div className="w-2/4 flex flex-col items-center justify-center px-4">
               {/* VS 표시와 타이머 */}
               <div className="flex items-center justify-center mb-4">
-                <div className="text-4xl font-bold text-white mr-4" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>VS</div>
-                <div className={`text-4xl font-bold ${timer <= 10 ? 'text-red-500' : 'text-white'}`} style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
+                <div className="text-4xl font-bold text-white mr-4" style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
+                  VS
+                </div>
+                <div className={`text-4xl font-bold ${timer <= 10 ? "text-red-500" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
                   {timer}
                 </div>
               </div>
-              
+
               {/* 문제 영역 - VS 밑으로 이동 */}
               <div className="w-full bg-white bg-opacity-80 rounded-lg p-4 mb-8">
                 <div className="text-sm mb-3">
-                  당신이 100만원을 가지고 있고, 연간 5%의 복리로 투자할 수 있다고 가정해보세요. 이 돈을 10년 동안 투자할 때, 최종적으로 얼마의 금액이 될지 계산하고, 이러한 복리 투자가 단리 투자와 비교했을 때 어떤 장점이 있는지 설명해보세요.
+                  당신이 100만원을 가지고 있고, 연간 5%의 복리로 투자할 수 있다고 가정해보세요. 이 돈을 10년 동안 투자할 때, 최종적으로 얼마의 금액이 될지 계산하고, 이러한 복리 투자가 단리 투자와
+                  비교했을 때 어떤 장점이 있는지 설명해보세요.
                 </div>
               </div>
-              
+
               {/* 채팅 입력 영역 */}
               <div className="w-full mt-auto mb-8">
                 <form onSubmit={handleChatSubmit} className="flex">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={handleChatInputChange}
-                    className="flex-grow p-2 rounded-l-lg border-0"
-                    placeholder="메시지를 입력하세요..."
-                  />
-                  <button 
-                    type="submit" 
-                    className="bg-yellow-400 text-black px-4 py-2 rounded-r-lg"
-                  >
+                  <input type="text" value={chatInput} onChange={handleChatInputChange} className="flex-grow p-2 rounded-l-lg border-0" placeholder="메시지를 입력하세요..." />
+                  <button type="submit" className="bg-yellow-400 text-black px-4 py-2 rounded-r-lg">
                     전송
                   </button>
                 </form>
@@ -241,15 +223,11 @@ const OneToOnePage: React.FC = () => {
             {/* 오른쪽 상대 영역 */}
             <div className="w-1/4 flex flex-col items-center justify-center">
               <div className="w-full bg-transparent flex flex-col items-center">
-                <div className="h-20 mb-2">
-                  {/* 상대방 말풍선 제거 */}
-                </div>
+                <div className="h-20 mb-2">{/* 상대방 말풍선 제거 */}</div>
                 <div className="w-40 h-40 flex items-center justify-center mb-3">
                   <img src={rightCat} alt="Opponent Character" className="w-full h-full object-contain" />
                 </div>
-                <div className="flex mb-2">
-                  {renderHearts(opponentHealth)}
-                </div>
+                <div className="flex mb-2">{renderHearts(opponentHealth)}</div>
                 <div className="text-center">
                   <span className="text-lg font-bold text-white">악의 세력 김세현</span>
                 </div>
@@ -268,21 +246,21 @@ const OneToOnePage: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           {/* 불꽃 애니메이션 - 캐릭터 수평선상에 위치 */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             {showFireAnimation && (
-              <FireAnimation 
-                isPlaying={showFireAnimation} 
+              <FireAnimation
+                isPlaying={showFireAnimation}
                 onAnimationComplete={handleAnimationComplete}
                 onHitLeft={() => {
                   // 왼쪽 캐릭터(플레이어)가 맞았을 때 처리
-                  setPlayerHealth(prev => Math.max(0, prev - 1));
+                  setPlayerHealth((prev) => Math.max(0, prev - 1));
                   console.log("왼쪽 캐릭터 피격!");
                 }}
                 onHitRight={() => {
                   // 오른쪽 캐릭터(상대)가 맞았을 때 처리
-                  setOpponentHealth(prev => Math.max(0, prev - 1));
+                  setOpponentHealth((prev) => Math.max(0, prev - 1));
                   console.log("오른쪽 캐릭터 피격!");
                 }}
                 direction={Math.random() > 0.5} // 50% 확률로 방향 결정
@@ -295,51 +273,21 @@ const OneToOnePage: React.FC = () => {
   };
 
   return (
-    <div 
+    <div
       className="w-full h-full flex flex-col items-center justify-center relative"
       style={{
-        backgroundImage: `url(${showBattle ? battleBackground : oneToOneBackground})`,
+        backgroundImage: `url(${battleBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }}
     >
       {/* 뒤로 가기 버튼 */}
-      <button 
-        className="absolute top-4 left-4 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors"
-        onClick={handleBackClick}
-      >
+      <button className="absolute top-4 left-4 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors" onClick={handleBackClick}>
         ← 뒤로 가기
       </button>
-      
-      {showBattle ? (
-        renderBattleScreen()
-      ) : (
-        <>
-          {/* 타이틀 */}
-          <h1 className="text-4xl font-bold text-white mb-8 text-shadow-lg">1:1 대결</h1>
-          
-          {/* 게임 옵션 그리드 */}
-          <div className="grid grid-cols-2 gap-8 max-w-2xl">
-            {gameOptions.map((option) => (
-              <div 
-                key={option.id}
-                className="bg-sky-200 bg-opacity-70 rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-sky-300 hover:bg-opacity-80 transition-colors transform hover:scale-105"
-                onClick={() => handleOptionClick(option.id)}
-              >
-                <img 
-                  src={option.image} 
-                  alt={option.name} 
-                  className="w-32 h-32 object-contain mb-2"
-                />
-                <button className="bg-white text-black py-2 px-8 rounded-full font-medium hover:bg-gray-100 transition-colors">
-                  {option.name}
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+
+      {renderBattleScreen()}
     </div>
   );
 };

@@ -10,6 +10,7 @@ import ShopPage from "./pages/ShopPage";
 import OneToOnePage from "./pages/OneToOnePage";
 import SurvivalPage from "./pages/SurvivalPage";
 import BotPage from "./pages/BotPage";
+import RoomPreparePage from "./pages/RoomPreparePage";
 
 function App() {
   return (
@@ -24,15 +25,11 @@ function App() {
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/main" element={<MainPage />} />
               <Route path="/shop" element={<ShopPage />} />
+              <Route path="/room/prepare/:roomId" element={<RoomPreparePage />} />
               <Route path="/one-to-one" element={<OneToOnePage />} />
-              <Route path="/battle/:category" element={<OneToOnePage />} />
-              <Route path="/game/:mode" element={<SurvivalPage />} />
-
-              {/* 게임 모드별 라우팅 */}
-              <Route path="/game/Bot" element={<BotPage />} />
-              <Route path="/game/oneVsOne" element={<BotPage />} /> {/* 임시로 BotPage 사용, 나중에 OneVsOnePage로 변경 필요 */}
-              <Route path="/game/Survival" element={<BotPage />} /> {/* 임시로 BotPage 사용, 나중에 SurvivalPage로 변경 필요 */}
-
+              <Route path="/one-to-one/:category" element={<OneToOnePage />} />
+              <Route path="/game/survival" element={<SurvivalPage />} />
+              <Route path="/game/bot" element={<BotPage />} />
             </Routes>
           </div>
           <div className="absolute bottom-0 w-full z-20">
