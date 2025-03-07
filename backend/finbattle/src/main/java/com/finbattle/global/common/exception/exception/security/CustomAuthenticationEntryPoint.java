@@ -1,21 +1,19 @@
 package com.finbattle.global.common.exception.exception.security;
 
-import static com.finbattle.global.common.model.dto.BaseResponseStatus.JWT_INVALID;
-import static com.finbattle.global.common.model.dto.BaseResponseStatus.JWT_NOT_FOUND;
-import static com.finbattle.global.common.model.dto.BaseResponseStatus.UNAUTHORIZED;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.global.common.model.dto.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
@@ -31,7 +29,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         String exceptionType = (String) request.getAttribute("exception");
         BaseResponse<String> errorResponse;
         if (exceptionType == null) {
-            errorResponse = new BaseResponse<>(UNAUTHORIZED);
+            // JWT 자체가 존재하지 않음 -> 로그인 페이지로 리디렉션
+            errorResponse = new BaseResponse<>("JWT does not exist. Redirect to login page.");
+            log.warn("JWT가 없습니다. 로그인 페이지로 이동");
         } else {
             switch (exceptionType) {
                 case "JWT_EXPIRED":

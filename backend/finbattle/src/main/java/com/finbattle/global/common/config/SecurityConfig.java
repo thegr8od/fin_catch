@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,7 +42,7 @@ public class SecurityConfig {
                 .successHandler(customSuccessHandler)
             )
             .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/login", "/api/member/reissue", "/oauth2/**").permitAll()
+                .requestMatchers("/", "/login", "/api/member/public/**", "/oauth2/**").permitAll()
                 .requestMatchers("/error", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()
             )
@@ -49,11 +50,14 @@ public class SecurityConfig {
             .sessionManagement((session) -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-//            .exceptionHandling(exception ->
-//                exception
-//                    .authenticationEntryPoint(authenticationEntryPoint) // 401 예외 핸들러 적용
-//                    .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
-//            )
+            .exceptionHandling(exception ->
+                exception
+                    .defaultAuthenticationEntryPointFor(
+                        authenticationEntryPoint,
+                        new AntPathRequestMatcher("/api/**")
+                    ) // 401 예외 핸들러 적용
+                    .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
+            )
             .formLogin((auth) -> auth.disable())
             .httpBasic((auth) -> auth.disable());
 

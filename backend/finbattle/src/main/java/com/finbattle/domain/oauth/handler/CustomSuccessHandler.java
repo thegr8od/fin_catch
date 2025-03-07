@@ -3,7 +3,6 @@ package com.finbattle.domain.oauth.handler;
 import com.finbattle.domain.token.service.TokenService;
 import com.finbattle.global.common.Util.AuthenticationUtil;
 import com.finbattle.global.common.Util.CookieUtil;
-import com.finbattle.global.common.Util.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -24,7 +23,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Value("${app.baseUrl}")
     private String baseUrl;
-    private static final String LOGIN_SUCCESS_URI = "/api/member/login";
+    private static final String LOGIN_SUCCESS_URI = "/api/member/public/reissue";
 
     @Override
     @Transactional
@@ -34,11 +33,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String providerId = authenticationUtil.getProviderId();
 
         //토큰 생성
-        String accessToken = tokenService.createAccessToken(providerId, memberId);
         String refreshToken = tokenService.createRefreshToken(providerId, memberId);
 
         // 응답 설정
-        response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(cookieUtil.createCookie("REFRESH", refreshToken));
         response.sendRedirect(baseUrl + LOGIN_SUCCESS_URI);
     }

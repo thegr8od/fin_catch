@@ -1,10 +1,8 @@
-package com.finbattle.domain.member;
+package com.finbattle.domain.member.cotroller;
 
-import static org.springframework.boot.actuate.web.exchanges.Include.AUTHORIZATION_HEADER;
-
-import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.domain.member.entity.Member;
 import com.finbattle.domain.member.service.MemberService;
+import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.domain.token.service.TokenService;
 import com.finbattle.global.common.Util.CookieUtil;
 import com.finbattle.global.common.model.dto.BaseResponse;
@@ -25,12 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 public class MemberController {
+
     private final MemberService memberService;
     private final TokenService tokenService;
     private final CookieUtil cookieUtil;
 
     @GetMapping("/login")
-    public ResponseEntity<BaseResponse<Member>> loginSuccess(
+    public ResponseEntity<BaseResponse<Member>> login(
         @AuthenticationPrincipal AuthenticatedUser detail) {
         Member member = memberService.getMemberInfo(detail.getMemberId());
         // loginService.setTokens(detail, response);
@@ -53,11 +52,13 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>("Logout success!"));
     }
 
-    @PostMapping("/reissue")
-    public ResponseEntity<BaseResponse<String>> refreshSuccess(@CookieValue(value = "REFRESH", required = false) String refresh, HttpServletResponse response) {
+    @GetMapping("/public/reissue")
+    public ResponseEntity<BaseResponse<String>> refreshSuccess(
+        @CookieValue(value = "REFRESH", required = false) String refresh,
+        HttpServletResponse response) {
         String accessToken = tokenService.reissueAccessToken(refresh);
 
         response.setHeader("Authorization", "Bearer " + accessToken);
-        return ResponseEntity.ok(new BaseResponse<>("AccessToken Reissue success!"));
+        return ResponseEntity.ok(new BaseResponse<>("AccessToken create success!"));
     }
 }
