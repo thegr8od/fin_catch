@@ -4,6 +4,7 @@ import Background from "../components/layout/Background";
 import botImg from "../assets/Bot.png";
 import oneVsOneImg from "../assets/one_vs_one.png";
 import multiImg from "../assets/multi.png";
+import mainBg from "../assets/main.gif";
 
 // 게임 모드 타입 정의
 type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
@@ -229,7 +230,7 @@ const RoomPreparePage: React.FC = () => {
 
   if (!room) {
     return (
-      <Background>
+      <Background backgroundImage={mainBg}>
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-white text-2xl">로딩 중...</div>
         </div>
@@ -238,7 +239,7 @@ const RoomPreparePage: React.FC = () => {
   }
 
   return (
-    <Background>
+    <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
         <div className="w-full max-w-6xl px-6 flex flex-col h-[calc(100vh-12rem)]">
           <div className="flex justify-between items-center mb-6">

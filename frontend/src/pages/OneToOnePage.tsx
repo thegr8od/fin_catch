@@ -1,73 +1,73 @@
-import React, { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import battleBackground from "../assets/battlebg.png"
-import leftCat from "../assets/left.png"
-import rightCat from "../assets/right.png"
-import Animation from "../game/Animations"
-import { getMotionImages } from "../utils/motionLoader"
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import battleBackground from "../assets/battlebg.png";
+import leftCat from "../assets/left.png";
+import rightCat from "../assets/right.png";
+import Animation from "../game/Animations";
+import { getMotionImages } from "../utils/motionLoader";
 
 interface ChatMessage {
-  sender: string
-  message: string
-  timestamp: Date
-  isVisible?: boolean
+  sender: string;
+  message: string;
+  timestamp: Date;
+  isVisible?: boolean;
 }
 
 const OneToOnePage: React.FC = () => {
-  const navigate = useNavigate()
-  const { category } = useParams<{ category: string }>()
-  const [playerHealth, setPlayerHealth] = useState<number>(5)
-  const [opponentHealth, setOpponentHealth] = useState<number>(5)
-  const [chatInput, setChatInput] = useState<string>("")
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null)
-  const [timer, setTimer] = useState<number>(1)
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(true)
-  const [showAnimation, setShowAnimation] = useState<boolean>(false)
+  const navigate = useNavigate();
+  const { category } = useParams<{ category: string }>();
+  const [playerHealth, setPlayerHealth] = useState<number>(5);
+  const [opponentHealth, setOpponentHealth] = useState<number>(5);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null);
+  const [timer, setTimer] = useState<number>(1);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(true);
+  const [showAnimation, setShowAnimation] = useState<boolean>(false);
 
   // URL 파라미터에 따라 초기 상태 설정
   useEffect(() => {
     // 필요한 초기화 로직만 유지
-  }, [category])
+  }, [category]);
 
   // 타이머 효과
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    let interval: NodeJS.Timeout | null = null;
 
     if (isTimerRunning && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1)
-      }, 1000)
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
     } else if (timer === 0) {
-      setIsTimerRunning(false)
+      setIsTimerRunning(false);
       // 타이머가 0이 되면 불꽃 애니메이션 시작
-      console.log("타이머 종료, 애니메이션 시작")
+      console.log("타이머 종료, 애니메이션 시작");
       // 이미지 경로 확인
-      const fireImages = getMotionImages("fire", 5)
-      console.log("불꽃 이미지 경로:", fireImages)
-      setShowAnimation(true)
+      const fireImages = getMotionImages("fire", 5);
+      console.log("불꽃 이미지 경로:", fireImages);
+      setShowAnimation(true);
     }
 
     return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [timer, isTimerRunning])
+      if (interval) clearInterval(interval);
+    };
+  }, [timer, isTimerRunning]);
 
   // 말풍선 타이머 효과
   useEffect(() => {
     if (playerBubble) {
       const timer = setTimeout(() => {
-        setPlayerBubble(null)
-      }, 5000)
-      return () => clearTimeout(timer)
+        setPlayerBubble(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [playerBubble])
+  }, [playerBubble]);
 
   // 애니메이션 완료 핸들러
   const handleAnimationComplete = () => {
-    console.log("애니메이션 완료 핸들러 호출됨")
+    console.log("애니메이션 완료 핸들러 호출됨");
     // 애니메이션 완료 후 처리할 로직
-    setShowAnimation(false)
+    setShowAnimation(false);
 
     // 다음 라운드를 위해 타이머 재설정 (필요한 경우)
     // setTimer(60);
@@ -76,34 +76,34 @@ const OneToOnePage: React.FC = () => {
     // 게임 종료 체크
     if (playerHealth <= 1 || opponentHealth <= 1) {
       // 게임 종료 처리 (승패 결정 등)
-      console.log("게임 종료:", playerHealth <= 1 ? "패배" : "승리")
+      console.log("게임 종료:", playerHealth <= 1 ? "패배" : "승리");
       // 여기에 게임 종료 후 처리 로직 추가
     }
-  }
+  };
 
   const handleBackClick = () => {
-    navigate("/main")
-  }
+    navigate("/main");
+  };
 
   const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChatInput(e.target.value)
-  }
+    setChatInput(e.target.value);
+  };
 
   const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (chatInput.trim() === "") return
+    e.preventDefault();
+    if (chatInput.trim() === "") return;
 
     const newMessage: ChatMessage = {
       sender: "김병년", // 현재 사용자 이름
       message: chatInput,
       timestamp: new Date(),
-    }
+    };
 
-    setChatMessages([...chatMessages, newMessage])
-    setPlayerBubble(newMessage)
+    setChatMessages([...chatMessages, newMessage]);
+    setPlayerBubble(newMessage);
 
-    setChatInput("")
-  }
+    setChatInput("");
+  };
 
   // 하트 아이콘 렌더링 함수
   const renderHearts = (count: number, total: number = 5) => {
@@ -113,8 +113,8 @@ const OneToOnePage: React.FC = () => {
         <span key={index} className="text-2xl mx-1">
           {index < count ? "❤️" : "🖤"}
         </span>
-      ))
-  }
+      ));
+  };
 
   // 대결 화면 렌더링
   const renderBattleScreen = () => {
@@ -152,7 +152,7 @@ const OneToOnePage: React.FC = () => {
                 <div className="text-4xl font-bold text-white mr-4" style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
                   VS
                 </div>
-                <div className={`text-4xl font-bold ${timer <= 10 ? "text-red-500" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
+                <div className={`text-4xl font-bold ${timer <= 10 ? "text-red" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
                   {timer}
                 </div>
               </div>
@@ -215,13 +215,13 @@ const OneToOnePage: React.FC = () => {
                 onAnimationComplete={handleAnimationComplete}
                 onHitLeft={() => {
                   // 왼쪽 캐릭터(플레이어)가 맞았을 때 처리
-                  setPlayerHealth((prev) => Math.max(0, prev - 1))
-                  console.log("왼쪽 캐릭터 피격!")
+                  setPlayerHealth((prev) => Math.max(0, prev - 1));
+                  console.log("왼쪽 캐릭터 피격!");
                 }}
                 onHitRight={() => {
                   // 오른쪽 캐릭터(상대)가 맞았을 때 처리
-                  setOpponentHealth((prev) => Math.max(0, prev - 1))
-                  console.log("오른쪽 캐릭터 피격!")
+                  setOpponentHealth((prev) => Math.max(0, prev - 1));
+                  console.log("오른쪽 캐릭터 피격!");
                 }}
                 direction={Math.random() > 0.5} // 50% 확률로 방향 결정
               />
@@ -229,8 +229,8 @@ const OneToOnePage: React.FC = () => {
           </div>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div
@@ -249,7 +249,7 @@ const OneToOnePage: React.FC = () => {
 
       {renderBattleScreen()}
     </div>
-  )
-}
+  );
+};
 
-export default OneToOnePage
+export default OneToOnePage;

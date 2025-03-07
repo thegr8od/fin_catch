@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Background from "../components/layout/Background";
+import mainBg from "../assets/main.gif";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const LoginPage = () => {
   };
 
   return (
-    <Background>
+    <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
         <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-white font-bold mb-10 tracking-wider text-shadow-lg animate-glitch">Fin Catch</h1>

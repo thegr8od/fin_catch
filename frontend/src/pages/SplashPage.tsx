@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import Background from "../components/layout/Background";
+import mainBg from "../assets/main.gif";
 
 const SplashPage = () => {
   return (
-    <Background>
+    <Background backgroundImage={mainBg}>
       {/* 콘텐츠 컨테이너 */}
       <div className="w-full h-full flex flex-col items-center justify-between relative z-10 py-20">
         <h1 className="text-4xl md:text-5xl text-white font-bold mt-20 tracking-wider text-shadow-lg animate-glitch">Fin Catch</h1>

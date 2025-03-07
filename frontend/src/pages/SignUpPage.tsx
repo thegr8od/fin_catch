@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Background from "../components/layout/Background";
+import mainBg from "../assets/main.gif";
 // 회원가입 페이지용 배경 이미지 import (예시)
 
 const SignUpPage = () => {
@@ -23,7 +24,7 @@ const SignUpPage = () => {
   };
 
   return (
-    <Background>
+    <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
         <div className="flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl text-white font-bold mb-10 tracking-wider text-shadow-lg animate-glitch">Fin Catch</h1>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import botImg from "../assets/Bot.png";
 import oneVsOneImg from "../assets/one_vs_one.png";
 import multiImg from "../assets/multi.png";
-
+import mainBg from "../assets/main.gif";
 // 게임 모드 타입 정의
 type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
 
@@ -225,7 +225,7 @@ const MainPage = () => {
   ];
 
   return (
-    <Background>
+    <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
         <div className="w-full max-w-6xl px-6">
           <div className="flex justify-between items-center mb-8">
