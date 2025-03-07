@@ -1,8 +1,6 @@
 import Background from "../components/layout/Background";
 import { useState } from "react";
 import ModeCard from "../components/ModeCard";
-import { useNavigate } from "react-router-dom";
-
 // 모드 이미지 import
 import botImg from "../assets/Bot.png";
 import oneVsOneImg from "../assets/one_vs_one.png";
@@ -13,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
 
 const MainPage = () => {
-  const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<GameMode>(null);
   const navigate = useNavigate();
 
@@ -23,10 +20,10 @@ const MainPage = () => {
     // 선택한 모드에 따른 페이지 이동 처리
     if (mode === "oneVsOne") {
       navigate("/one-to-one");
-    } else if (mode === "ai") {
+    } else if (mode === "Bot") {
       // AI 모드 페이지로 이동 (구현 필요)
       console.log("AI 모드 선택");
-    } else if (mode === "multi") {
+    } else if (mode === "Survival") {
       // 멀티 모드 페이지로 이동 (구현 필요)
       console.log("멀티 모드 선택");
     }
