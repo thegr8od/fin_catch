@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import battleBackground from "../assets/battlebg.png";
-import Animation from "../game/Animations";
-import SpriteAnimation from "../game/SpriteAnimation";
+import Animation from "../components/game/Animations";
+import SpriteAnimation from "../components/game/SpriteAnimation";
 import { getMotionImages } from "../utils/motionLoader";
 import { useLoading } from "../contexts/LoadingContext";
 
@@ -317,7 +317,7 @@ const OneToOnePage: React.FC = () => {
                 <div className="text-4xl font-bold text-white mr-4" style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
                   VS
                 </div>
-                <div className={`text-4xl font-bold ${timer <= 10 ? "text-red-500" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
+                <div className={`text-4xl font-bold ${timer <= 10 ? "text-red" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
                   {timer}
                 </div>
               </div>
