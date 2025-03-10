@@ -43,8 +43,8 @@ const OneToOnePage: React.FC = () => {
   const navigate = useNavigate();
   const { category } = useParams<{ category: string }>();
   const { setLoading, setProgress, completeLoading } = useLoading();
-  const [playerHealth, setPlayerHealth] = useState<number>(5);
-  const [opponentHealth, setOpponentHealth] = useState<number>(5);
+  const [playerHealth, setPlayerHealth] = useState<number>(1);
+  const [opponentHealth, setOpponentHealth] = useState<number>(1);
   const [chatInput, setChatInput] = useState<string>("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null);
@@ -188,12 +188,35 @@ const OneToOnePage: React.FC = () => {
     }
   }, [playerBubble]);
 
+  // 체력 상태 변경 감지 및 콘솔 출력
+  useEffect(() => {
+    // 중요한 상태 변화만 로그 출력
+    if (playerHealth <= 0 || opponentHealth <= 0) {
+      console.log("플레이어 체력:", playerHealth);
+      console.log("상대방 체력:", opponentHealth);
+
+      // 체력이 0이 되면 중앙 애니메이션 숨김
+      setShowAnimation(false);
+    }
+  }, [playerHealth, opponentHealth]);
+
   const handleAnimationComplete = () => {
     console.log("애니메이션 완료 핸들러 호출됨");
-    setShowAnimation(false);
 
-    if (playerHealth <= 1 || opponentHealth <= 1) {
-      console.log("게임 종료:", playerHealth <= 1 ? "패배" : "승리");
+    // 일반 공격 애니메이션인 경우에만 애니메이션을 숨김
+    // 체력이 0인 경우는 별도의 사망 애니메이션 컴포넌트가 처리함
+    if (playerHealth > 0 && opponentHealth > 0) {
+      setShowAnimation(false);
+    }
+
+    if (playerHealth <= 0 || opponentHealth <= 0) {
+      if (playerHealth <= 0) {
+        console.log("게임 종료: 플레이어 패배 (체력: " + playerHealth + ")");
+      } else if (opponentHealth <= 0) {
+        console.log("게임 종료: 플레이어 승리 (상대방 체력: " + opponentHealth + ")");
+      }
+    } else {
+      console.log("게임 진행 중 - 플레이어 체력: " + playerHealth + ", 상대방 체력: " + opponentHealth);
     }
   };
 
@@ -257,21 +280,39 @@ const OneToOnePage: React.FC = () => {
                 </div>
                 <div className="w-[185px] h-48 flex items-center justify-center mb-3 p-2">
                   <div className="w-full h-full">
-                    <SpriteAnimation
-                      isPlaying={true}
-                      spriteSheet="/game/IdleCatt.png"
-                      frameWidth={32}
-                      frameHeight={32}
-                      frameCount={7}
-                      width={96}
-                      height={96}
-                      animationSpeed={0.1}
-                      horizontal={true}
-                      rows={1}
-                      columns={7}
-                      loop={true}
-                      moving={false}
-                    />
+                    {playerHealth > 0 ? (
+                      <SpriteAnimation
+                        isPlaying={true}
+                        spriteSheet="/game/IdleCatt.png"
+                        frameWidth={32}
+                        frameHeight={32}
+                        frameCount={7}
+                        width={96}
+                        height={96}
+                        animationSpeed={0.1}
+                        horizontal={true}
+                        rows={1}
+                        columns={7}
+                        loop={true}
+                        moving={false}
+                      />
+                    ) : (
+                      <SpriteAnimation
+                        isPlaying={true}
+                        spriteSheet="/game/classicCat/die/DieCatt.png"
+                        frameWidth={32}
+                        frameHeight={32}
+                        frameCount={15}
+                        width={96}
+                        height={96}
+                        animationSpeed={0.1}
+                        horizontal={true}
+                        rows={1}
+                        columns={15}
+                        loop={false}
+                        moving={false}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="flex mb-2">{renderHearts(playerHealth)}</div>
@@ -313,22 +354,41 @@ const OneToOnePage: React.FC = () => {
                 <div className="h-20 mb-2">{/* 상대방 말풍선 제거 */}</div>
                 <div className="w-[185px] h-48 flex items-center justify-center mb-3 p-2">
                   <div className="w-full h-full">
-                    <SpriteAnimation
-                      isPlaying={true}
-                      spriteSheet="/game/IdleCatt.png"
-                      frameWidth={32}
-                      frameHeight={32}
-                      frameCount={7}
-                      width={96}
-                      height={96}
-                      animationSpeed={0.1}
-                      horizontal={true}
-                      rows={1}
-                      columns={7}
-                      loop={true}
-                      moving={false}
-                      direction={false}
-                    />
+                    {opponentHealth > 0 ? (
+                      <SpriteAnimation
+                        isPlaying={true}
+                        spriteSheet="/game/IdleCatt.png"
+                        frameWidth={32}
+                        frameHeight={32}
+                        frameCount={7}
+                        width={96}
+                        height={96}
+                        animationSpeed={0.1}
+                        horizontal={true}
+                        rows={1}
+                        columns={7}
+                        loop={true}
+                        moving={false}
+                        direction={false}
+                      />
+                    ) : (
+                      <SpriteAnimation
+                        isPlaying={true}
+                        spriteSheet="/game/classicCat/die/DieCatt.png"
+                        frameWidth={32}
+                        frameHeight={32}
+                        frameCount={15}
+                        width={96}
+                        height={96}
+                        animationSpeed={0.1}
+                        horizontal={true}
+                        rows={1}
+                        columns={15}
+                        loop={false}
+                        moving={false}
+                        direction={false}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="flex mb-2">{renderHearts(opponentHealth)}</div>
@@ -351,7 +411,7 @@ const OneToOnePage: React.FC = () => {
           </div>
 
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[400px] h-[300px] border border-transparent">
-            {showAnimation && (
+            {showAnimation && playerHealth > 0 && opponentHealth > 0 && (
               <GameAnimation
                 isPlaying={showAnimation}
                 type="imageSequence"
@@ -359,14 +419,21 @@ const OneToOnePage: React.FC = () => {
                 width={400}
                 height={300}
                 animationSpeed={0.1}
+                hp={100}
                 onAnimationComplete={handleAnimationComplete}
                 onHitLeft={() => {
-                  setPlayerHealth((prev) => Math.max(0, prev - 1));
-                  console.log("왼쪽 캐릭터 피격!");
+                  setPlayerHealth((prev) => {
+                    const newHealth = Math.max(0, prev - 1);
+                    console.log(`왼쪽 캐릭터 피격! 이전 체력: ${prev}, 새 체력: ${newHealth}`);
+                    return newHealth;
+                  });
                 }}
                 onHitRight={() => {
-                  setOpponentHealth((prev) => Math.max(0, prev - 1));
-                  console.log("오른쪽 캐릭터 피격!");
+                  setOpponentHealth((prev) => {
+                    const newHealth = Math.max(0, prev - 1);
+                    console.log(`오른쪽 캐릭터 피격! 이전 체력: ${prev}, 새 체력: ${newHealth}`);
+                    return newHealth;
+                  });
                 }}
                 direction={Math.random() > 0.5}
                 moving={true}
@@ -392,6 +459,34 @@ const OneToOnePage: React.FC = () => {
       <button className="absolute top-4 left-4 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors" onClick={handleBackClick}>
         ← 뒤로 가기
       </button>
+
+      {/* 테스트 버튼 추가 */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        <button
+          className="bg-red-500 bg-opacity-70 text-white py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors"
+          onClick={() => {
+            // 먼저 공격 애니메이션을 표시한 후 체력을 0으로 설정
+            setShowAnimation(true);
+            setTimeout(() => {
+              setPlayerHealth(0);
+            }, 1000); // 애니메이션이 끝나기 전에 체력을 0으로 설정
+          }}
+        >
+          플레이어 체력 0
+        </button>
+        <button
+          className="bg-red-500 bg-opacity-70 text-white py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors"
+          onClick={() => {
+            // 먼저 공격 애니메이션을 표시한 후 체력을 0으로 설정
+            setShowAnimation(true);
+            setTimeout(() => {
+              setOpponentHealth(0);
+            }, 1000); // 애니메이션이 끝나기 전에 체력을 0으로 설정
+          }}
+        >
+          상대방 체력 0
+        </button>
+      </div>
 
       {renderBattleScreen()}
     </div>

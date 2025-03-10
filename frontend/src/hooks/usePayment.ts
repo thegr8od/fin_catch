@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { requestPayment, completePayment } from "../api/paymentService";
+// import { requestPayment, completePayment } from "../api/paymentService";
 
 interface PaymentHookResult {
   showPaymentModal: boolean;

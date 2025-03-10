@@ -78,6 +78,8 @@ export interface CommonAnimationOptions {
   deadAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions; // 사망 애니메이션 옵션
   victoryAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions; // 승리 애니메이션 옵션
   gameOverAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions; // 게임 종료 애니메이션 옵션
+  hurtAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
+  sleepAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
 }
 
 // 애니메이션 옵션 타입

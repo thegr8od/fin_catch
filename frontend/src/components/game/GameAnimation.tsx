@@ -63,6 +63,8 @@ interface GameAnimationProps {
   deadAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
   victoryAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
   gameOverAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
+  hurtAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
+  sleepAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
 }
 
 /**
@@ -123,6 +125,8 @@ const GameAnimation: React.FC<GameAnimationProps> = (props) => {
         deadAnimationOptions: props.deadAnimationOptions,
         victoryAnimationOptions: props.victoryAnimationOptions,
         gameOverAnimationOptions: props.gameOverAnimationOptions,
+        hurtAnimationOptions: props.hurtAnimationOptions,
+        sleepAnimationOptions: props.sleepAnimationOptions,
       };
       return spriteSheetOptions as AnimationOptions;
     }
@@ -147,6 +151,8 @@ const GameAnimation: React.FC<GameAnimationProps> = (props) => {
         deadAnimationOptions: props.deadAnimationOptions,
         victoryAnimationOptions: props.victoryAnimationOptions,
         gameOverAnimationOptions: props.gameOverAnimationOptions,
+        hurtAnimationOptions: props.hurtAnimationOptions,
+        sleepAnimationOptions: props.sleepAnimationOptions,
       };
       return imageSequenceOptions as AnimationOptions;
     }
