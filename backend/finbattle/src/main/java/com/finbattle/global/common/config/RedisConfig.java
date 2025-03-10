@@ -1,8 +1,6 @@
 package com.finbattle.global.common.config;
 
-import com.finbattle.global.common.redis.RedisChatSubscriber;
-import com.finbattle.global.common.redis.RedisGameInfoSubscriber;
-import com.finbattle.global.common.redis.RedisGameHintSubscriber;
+import com.finbattle.global.common.redis.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -21,7 +19,6 @@ public class RedisConfig {
         return new LettuceConnectionFactory();
     }
 
-
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -35,20 +32,28 @@ public class RedisConfig {
         return template;
     }
 
-
     @Bean
-    public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
-                                                        RedisChatSubscriber chatSubscriber,
-                                                        RedisGameInfoSubscriber gameInfoSubscriber,
-                                                        RedisGameHintSubscriber gameHintSubscriber) {
+    public RedisMessageListenerContainer redisContainer(
+            RedisConnectionFactory connectionFactory,
+            RedisChatSubscriber chatSubscriber,
+            RedisGameInfoSubscriber gameInfoSubscriber,
+            // 게임 관련 채널은 제외 (힌트는 퀴즈에만 있음)
+            RedisGameQuizSubscriber gameQuizSubscriber,
+            RedisGameQuizResultSubscriber gameQuizResultSubscriber,
+            RedisGameQuizHintSubscriber gameQuizHintSubscriber
+    ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        // 채팅 메시지 구독 (채널명: "chat")
+
+        // 기존 채팅, 게임 정보 리스너
         container.addMessageListener(chatSubscriber, new PatternTopic("chat"));
-        // 게임 정보 메시지 구독 (채널명: "game-info")
         container.addMessageListener(gameInfoSubscriber, new PatternTopic("game-info"));
-        // 게임 힌트 메시지 구독 (채널명: "game-hint")
-        container.addMessageListener(gameHintSubscriber, new PatternTopic("game-hint"));
+
+        // 퀴즈 관련 리스너 등록
+        container.addMessageListener(gameQuizSubscriber, new PatternTopic("game-quiz"));
+        container.addMessageListener(gameQuizResultSubscriber, new PatternTopic("game-quizResult"));
+        container.addMessageListener(gameQuizHintSubscriber, new PatternTopic("game-quizHint"));
+
         return container;
     }
 }

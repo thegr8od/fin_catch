@@ -35,6 +35,7 @@ public class GameService {
      * roomId 기반 힌트 제공 후, Redis 채널("game-hint")에 발행
      */
     public void publishGameHint(String roomId) {
+        // 예시: 실제로는 QuizService 통해 "hint"를 가져올 수도 있음
         String hint = "힌트 예시입니다 (roomId=" + roomId + ")";
         try {
             var map = new java.util.HashMap<String, String>();
