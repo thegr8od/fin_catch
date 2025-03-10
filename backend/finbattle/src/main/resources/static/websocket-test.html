@@ -1,36 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebSocket(STOMP) with Redis Pub/Sub Test</title>
+    <meta charset="UTF-8">
+    <title>FinBattle - Chat & Game Test</title>
+    <!-- SockJS와 StompJS 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .section {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #chatLog, #gameInfo, #gameHint {
+            border: 1px solid #aaa;
+            padding: 5px;
+            height: 120px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        #gameInfo, #gameHint {
+            height: 80px;
+        }
+    </style>
 </head>
 <body>
-<h1>WebSocket(STOMP) with Redis Pub/Sub Test</h1>
-<div>
+<h1>FinBattle - Chat & Game Test</h1>
+
+<!-- 방 접속 영역 -->
+<div class="section">
     <label>Room ID: </label>
-    <input type="text" id="roomId" placeholder="Room ID"/>
+    <input type="text" id="roomId" placeholder="Room ID" />
     <button onclick="connect()">Connect</button>
 </div>
-<hr/>
 
-<div>
-    <label>Chat Message: </label>
-    <input type="text" id="chatMessage" placeholder="Chat Message"/>
-    <button onclick="sendChat()">Send Chat</button>
+<!-- 채팅 영역 -->
+<div class="section">
+    <h2>Chat</h2>
+    <label>Message: </label>
+    <input type="text" id="chatMessage" placeholder="Type message" />
+    <button onclick="sendChat()">Send</button>
+
+    <div id="chatLog"></div>
 </div>
-<hr/>
 
-<div>
+<!-- 게임 영역 -->
+<div class="section">
+    <h2>Game</h2>
     <button onclick="requestGameInfo()">Get Game Info</button>
     <button onclick="requestHint()">Request Hint</button>
+
+    <div id="gameInfo"></div>
+    <div id="gameHint"></div>
 </div>
 
 <script>
     let stompClient = null;
 
+    // WebSocket 연결
     function connect() {
-        const socket = new SockJS('/ws/firechat');
+        const socket = new SockJS('/ws/firechat'); // WebSocket(STOMP) 엔드포인트
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, function (frame) {
@@ -41,40 +71,72 @@
             stompClient.subscribe(`/topic/chat/${roomId}`, function (message) {
                 const chatMessage = JSON.parse(message.body);
                 console.log("Received Chat:", chatMessage);
+                appendChat(chatMessage.sender, chatMessage.content);
             });
 
             // 게임 정보 구독
             stompClient.subscribe(`/topic/game/${roomId}-getInfo`, function (info) {
-                console.log("Game Info:", JSON.parse(info.body));
+                const gameData = JSON.parse(info.body);
+                console.log("Game Info:", gameData);
+                displayGameInfo(gameData);
             });
 
             // 게임 힌트 구독
             stompClient.subscribe(`/topic/game/${roomId}-hint`, function (hint) {
                 console.log("Hint:", hint.body);
+                displayGameHint(hint.body);
             });
         });
     }
 
+    // 채팅 메시지 전송
     function sendChat() {
         const roomId = document.getElementById('roomId').value;
         const content = document.getElementById('chatMessage').value;
+        if (!roomId || !content) return;
+
         const msgObj = {
-            sender: 'User123',
+            sender: 'User123', // 고정 값 (필요시 로그인 사용자 정보 연동)
             content: content,
             roomId: roomId
         };
-        // 클라이언트 → 서버: /app/chat/{roomId}
         stompClient.send(`/app/chat/${roomId}`, {}, JSON.stringify(msgObj));
+        document.getElementById('chatMessage').value = '';
     }
 
+    // 게임 정보 요청
     function requestGameInfo() {
         const roomId = document.getElementById('roomId').value;
+        if (!roomId) return;
         stompClient.send(`/app/game/${roomId}-getInfo`, {}, {});
     }
 
+    // 게임 힌트 요청
     function requestHint() {
         const roomId = document.getElementById('roomId').value;
+        if (!roomId) return;
         stompClient.send(`/app/game/${roomId}-hint`, {}, {});
+    }
+
+    // 채팅 로그 표시
+    function appendChat(sender, message) {
+        const chatLog = document.getElementById('chatLog');
+        const newLine = document.createElement('div');
+        newLine.textContent = sender + ": " + message;
+        chatLog.appendChild(newLine);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    // 게임 정보 표시
+    function displayGameInfo(gameData) {
+        const gameInfoDiv = document.getElementById('gameInfo');
+        gameInfoDiv.innerHTML = "Status: " + gameData.status + "<br/>Score: " + gameData.score;
+    }
+
+    // 게임 힌트 표시
+    function displayGameHint(hint) {
+        const gameHintDiv = document.getElementById('gameHint');
+        gameHintDiv.textContent = "Hint: " + hint;
     }
 </script>
 </body>
