@@ -16,11 +16,16 @@ import RoomPreparePage from "./pages/RoomPreparePage";
 import { LoadingProvider, useLoading } from "./contexts/LoadingContext";
 import LoadingScreen from "./components/common/LoadingScreen";
 
-// 라우트 변경 시 로딩 상태를 초기화하는 컴포넌트
+/**
+ * 라우트 변경 감지 및 로딩 상태 초기화 컴포넌트
+ * 페이지 이동 시 로딩 상태를 초기화하고 무한 로딩 상태를 방지하는 안전장치 제공
+ *
+ * @returns {null} - 렌더링하지 않는 컴포넌트
+ */
 const RouteChangeHandler = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { setLoading, completeLoading } = useLoading();
+  const location = useLocation(); // 현재 라우트 위치 정보
+  const navigate = useNavigate(); // 라우트 네비게이션 함수
+  const { setLoading, completeLoading } = useLoading(); // 로딩 상태 관리 훅
 
   useEffect(() => {
     console.log("라우트 변경 감지:", location.pathname);
@@ -46,6 +51,12 @@ const RouteChangeHandler = () => {
   return null;
 };
 
+/**
+ * 앱 콘텐츠 컴포넌트
+ * 애플리케이션의 주요 레이아웃과 라우팅 구조를 정의
+ *
+ * @returns {JSX.Element} - 앱 콘텐츠 컴포넌트
+ */
 function AppContent() {
   return (
     <>
@@ -54,8 +65,13 @@ function AppContent() {
 
       <div className="w-full h-screen overflow-hidden relative">
         <div className="w-full h-full flex flex-col">
+          {/* 헤더 컴포넌트 */}
           <Header />
+
+          {/* 라우트 변경 감지 컴포넌트 */}
           <RouteChangeHandler />
+
+          {/* 메인 콘텐츠 영역 */}
           <div className="flex-grow pt-12">
             <Routes>
               <Route path="/" element={<SplashPage />} />
@@ -71,6 +87,8 @@ function AppContent() {
               <Route path="/:nickname" element={<MyPage />} />
             </Routes>
           </div>
+
+          {/* 푸터 컴포넌트 */}
           <div className="absolute bottom-0 w-full z-20">
             <Footer />
           </div>
@@ -80,6 +98,12 @@ function AppContent() {
   );
 }
 
+/**
+ * 앱 루트 컴포넌트
+ * 전체 애플리케이션의 진입점으로, 로딩 컨텍스트와 라우터를 설정
+ *
+ * @returns {JSX.Element} - 앱 루트 컴포넌트
+ */
 function App() {
   return (
     <LoadingProvider>

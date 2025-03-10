@@ -1,10 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as PIXI from "pixi.js";
 
-// 이미지 캐시 객체 추가
+/**
+ * 이미지 캐시 객체
+ * 이미지를 메모리에 캐싱하여 중복 로드 방지 및 성능 최적화
+ */
 const imageCache: Record<string, HTMLImageElement> = {};
 
-// 이미지 사전 로딩 함수
+/**
+ * 이미지 사전 로딩 함수
+ * 단일 이미지를 로드하고 캐싱하는 유틸리티 함수
+ *
+ * @param {string} src - 로드할 이미지 경로
+ * @returns {Promise<HTMLImageElement>} - 로드된 이미지 객체를 포함한 Promise
+ */
 const preloadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     // 이미 캐시에 있으면 바로 반환
@@ -15,7 +24,7 @@ const preloadImage = (src: string): Promise<HTMLImageElement> => {
 
     const img = new Image();
     img.onload = () => {
-      imageCache[src] = img;
+      imageCache[src] = img; // 이미지를 캐시에 저장
       resolve(img);
     };
     img.onerror = (e) => reject(e);
@@ -23,6 +32,27 @@ const preloadImage = (src: string): Promise<HTMLImageElement> => {
   });
 };
 
+/**
+ * 스프라이트 애니메이션 컴포넌트 Props 인터페이스
+ *
+ * @property {boolean} isPlaying - 애니메이션 재생 여부
+ * @property {string} spriteSheet - 스프라이트 시트 이미지 경로
+ * @property {number} frameWidth - 각 프레임의 너비(픽셀)
+ * @property {number} frameHeight - 각 프레임의 높이(픽셀)
+ * @property {number} frameCount - 총 프레임 수
+ * @property {number} animationSpeed - 애니메이션 속도 (기본값: 0.2)
+ * @property {function} onAnimationComplete - 애니메이션 완료 시 호출될 콜백 함수
+ * @property {function} onHitLeft - 왼쪽 캐릭터에 부딪혔을 때 호출될 함수
+ * @property {function} onHitRight - 오른쪽 캐릭터에 부딪혔을 때 호출될 함수
+ * @property {boolean} direction - 애니메이션 방향 (true: 왼쪽→오른쪽, false: 오른쪽→왼쪽)
+ * @property {number} width - 애니메이션 컨테이너 너비
+ * @property {number} height - 애니메이션 컨테이너 높이
+ * @property {boolean} horizontal - 스프라이트 시트 레이아웃 (true: 가로 배열, false: 세로 배열)
+ * @property {number} rows - 스프라이트 시트의 행 수 (세로 배열일 때 사용)
+ * @property {number} columns - 스프라이트 시트의 열 수 (가로 배열일 때 사용)
+ * @property {boolean} loop - 애니메이션 반복 여부
+ * @property {boolean} moving - 이동 애니메이션 여부 (false일 경우 제자리 애니메이션)
+ */
 interface SpriteAnimationProps {
   isPlaying: boolean;
   spriteSheet: string; // 스프라이트 시트 이미지 경로
@@ -51,6 +81,13 @@ interface SpriteAnimationProps {
   moving?: boolean;
 }
 
+/**
+ * 스프라이트 시트 기반 애니메이션 컴포넌트
+ * PixiJS를 사용하여 스프라이트 시트 애니메이션을 렌더링
+ *
+ * @param {SpriteAnimationProps} props - 스프라이트 애니메이션 컴포넌트 props
+ * @returns {JSX.Element} - 스프라이트 애니메이션 컴포넌트
+ */
 const SpriteAnimation: React.FC<SpriteAnimationProps> = ({
   isPlaying,
   spriteSheet,
@@ -89,7 +126,10 @@ const SpriteAnimation: React.FC<SpriteAnimationProps> = ({
   // 로딩 상태 추가
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 이미지 사전 로딩
+  /**
+   * 스프라이트 시트 이미지 사전 로딩 효과
+   * 컴포넌트 마운트 시 스프라이트 시트 이미지를 미리 로드
+   */
   useEffect(() => {
     const loadImage = async () => {
       try {
@@ -103,7 +143,10 @@ const SpriteAnimation: React.FC<SpriteAnimationProps> = ({
     loadImage();
   }, [spriteSheet]);
 
-  // PixiJS 앱 초기화
+  /**
+   * PixiJS 앱 초기화 효과
+   * 이미지가 로드되면 PixiJS 애플리케이션 및 스프라이트 애니메이션 초기화
+   */
   useEffect(() => {
     // 이미지가 로드되지 않았거나 이미 초기화되었거나 컨테이너가 없으면 리턴
     if (!isLoaded || initializedRef.current || !containerRef.current) return;
@@ -249,221 +292,161 @@ const SpriteAnimation: React.FC<SpriteAnimationProps> = ({
       // 제자리 애니메이션인 경우
       animation.x = containerWidthRef.current / 2; // 중앙 위치
       animation.y = containerHeightRef.current / 2; // 중앙 높이
-
-      // 방향에 따라 수평 반전
       if (!direction) {
-        animation.scale.x = -1; // 수평 반전
+        animation.scale.x = -1; // 방향에 따라 수평 반전
       }
     }
 
     // 앵커 포인트 설정 (중앙)
     animation.anchor.set(0.5);
 
-    // 크기 설정
-    // 원본 크기와 컨테이너 크기의 비율을 계산하여 적절한 크기 설정
-    const scaleX = containerWidthRef.current / frameWidth;
-    const scaleY = containerHeightRef.current / frameHeight;
-    const scale = Math.min(scaleX, scaleY) * 0.6; // 60%로 축소하여 여백 확보
+    // 크기 설정 (더 크게 조정)
+    animation.width = frameWidth * 3;
+    animation.height = frameHeight * 3;
 
-    // 너무 큰 스케일링은 픽셀화를 악화시키므로 최대값 제한
-    const maxScale = 3.0; // 최대 3배까지만 확대
-
-    // 픽셀 아트는 정수 배수로 스케일링할 때 가장 선명함
-    // 가장 가까운 정수 배수로 반올림
-    const integerScale = Math.floor(Math.min(scale, maxScale));
-
-    // 최소 1배 이상 확대
-    const finalScale = Math.max(integerScale, 1);
-
-    animation.width = frameWidth * finalScale;
-    animation.height = frameHeight * finalScale;
-
-    console.log("애니메이션 크기 설정:", {
-      containerWidth: containerWidthRef.current,
-      containerHeight: containerHeightRef.current,
-      frameWidth,
-      frameHeight,
-      scaleX,
-      scaleY,
-      scale,
-      integerScale,
-      finalScale,
-      finalWidth: animation.width,
-      finalHeight: animation.height,
-    });
-
-    // 애니메이션 완료 이벤트
+    /**
+     * 애니메이션 완료 이벤트 핸들러
+     * 애니메이션이 끝나면 정리 작업 수행 및 콜백 호출
+     */
     animation.onComplete = () => {
       console.log("애니메이션 완료");
 
-      // 반복 설정이 아닌 경우에만 처리
+      // 애니메이션 완료 콜백 호출
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
+
+      // 반복 설정이 아니면 애니메이션 중지
       if (!loop) {
-        // 애니메이션 완료 콜백
-        if (onAnimationComplete) {
-          onAnimationComplete();
-        }
+        animation.stop();
       }
     };
 
-    // 앱에 애니메이션 추가
+    // 스테이지에 애니메이션 추가
     app.stage.addChild(animation);
 
     // 애니메이션 참조 저장
     animationRef.current = animation;
 
-    // 애니메이션 업데이트 함수
+    /**
+     * 애니메이션 업데이트 함수
+     * 애니메이션 프레임마다 위치 업데이트 및 충돌 감지
+     */
     const updateAnimation = () => {
       if (!animation || !app) return;
 
-      // 애니메이션 이동
-      if (moving) {
+      // 이동 애니메이션이고 재생 중인 경우에만 위치 업데이트
+      if (moving && isPlayingRef.current && animation.playing) {
+        // 방향에 따라 이동 방향 결정
         if (direction) {
-          // 왼쪽에서 오른쪽으로
-          animation.x += 3; // 이동 속도
+          // 왼쪽에서 오른쪽으로 이동
+          animation.x += 2; // 이동 속도 조정
 
-          // 오른쪽 끝에 도달했는지 확인
-          if (animation.x > (containerWidthRef.current * 3) / 4) {
-            // 오른쪽 캐릭터에 부딪혔는지 확인
-            if (onHitRight && !hitRightRef.current) {
-              hitRightRef.current = true;
+          // 오른쪽 경계 도달 시 충돌 감지
+          if (animation.x > (containerWidthRef.current * 3) / 4 && !hitRightRef.current) {
+            hitRightRef.current = true;
+            console.log("오른쪽 충돌 감지");
+            if (onHitRight) {
               onHitRight();
             }
           }
-        } else {
-          // 오른쪽에서 왼쪽으로
-          animation.x -= 3; // 이동 속도
 
-          // 왼쪽 끝에 도달했는지 확인
-          if (animation.x < containerWidthRef.current / 4) {
-            // 왼쪽 캐릭터에 부딪혔는지 확인
-            if (onHitLeft && !hitLeftRef.current) {
-              hitLeftRef.current = true;
+          // 화면 밖으로 나가면 반대편에서 다시 등장
+          if (animation.x > containerWidthRef.current + animation.width / 2) {
+            animation.x = -animation.width / 2;
+            hitRightRef.current = false;
+          }
+        } else {
+          // 오른쪽에서 왼쪽으로 이동
+          animation.x -= 2; // 이동 속도 조정
+
+          // 왼쪽 경계 도달 시 충돌 감지
+          if (animation.x < containerWidthRef.current / 4 && !hitLeftRef.current) {
+            hitLeftRef.current = true;
+            console.log("왼쪽 충돌 감지");
+            if (onHitLeft) {
               onHitLeft();
             }
+          }
+
+          // 화면 밖으로 나가면 반대편에서 다시 등장
+          if (animation.x < -animation.width / 2) {
+            animation.x = containerWidthRef.current + animation.width / 2;
+            hitLeftRef.current = false;
           }
         }
       }
     };
 
-    // 이동 애니메이션인 경우 업데이트 함수 등록
-    if (moving) {
-      app.ticker.add(updateAnimation);
-    }
+    // 애니메이션 업데이트 함수를 ticker에 추가
+    app.ticker.add(updateAnimation);
 
-    // 애니메이션 자동 시작
+    // 애니메이션 자동 시작 (isPlaying이 true인 경우)
     if (isPlaying) {
-      console.log("애니메이션 자동 시작");
+      isPlayingRef.current = true;
       animation.play();
     }
-  }, [
-    isLoaded,
-    spriteSheet,
-    frameWidth,
-    frameHeight,
-    frameCount,
-    width,
-    height,
-    horizontal,
-    rows,
-    columns,
-    loop,
-    moving,
-    direction,
-    animationSpeed,
-    isPlaying,
-    onAnimationComplete,
-    onHitLeft,
-    onHitRight,
-  ]);
 
-  // 애니메이션 재생 상태 변경 시
-  useEffect(() => {
-    // 애니메이션 참조가 없으면 리턴
-    if (!animationRef.current) return;
-
-    // 재생 상태 업데이트
-    isPlayingRef.current = isPlaying;
-
-    if (isPlaying) {
-      console.log("애니메이션 재생 시작");
-      // 애니메이션 재생
-      animationRef.current.play();
-    } else {
-      console.log("애니메이션 재생 중지");
-      // 애니메이션 중지
-      animationRef.current.stop();
-    }
-  }, [isPlaying]);
-
-  // 컴포넌트 언마운트 시 정리
-  useEffect(() => {
+    // 컴포넌트 언마운트 시 정리
     return () => {
-      // 애니메이션 참조 정리
-      if (animationRef.current) {
-        try {
-          animationRef.current.stop();
-          animationRef.current.destroy();
-        } catch (error) {
-          console.error("애니메이션 정리 중 오류:", error);
-        }
-        animationRef.current = null;
+      // ticker에서 업데이트 함수 제거
+      app.ticker.remove(updateAnimation);
+
+      // 애니메이션 중지 및 제거
+      if (animation) {
+        animation.stop();
+        animation.destroy();
       }
 
       // 앱 정리
-      if (appRef.current) {
-        try {
-          // 렌더러 정리
-          if (appRef.current.renderer) {
-            appRef.current.renderer.destroy(true);
-          }
-
-          // 스테이지 정리
-          if (appRef.current.stage && appRef.current.stage.children) {
-            // 스테이지의 모든 자식 요소 제거
-            while (appRef.current.stage.children && appRef.current.stage.children.length > 0) {
-              const child = appRef.current.stage.children[0];
-              if (child) {
-                appRef.current.stage.removeChild(child);
-                if (typeof child.destroy === "function") {
-                  child.destroy(true);
-                }
-              }
-            }
-            appRef.current.stage.destroy(true);
-          }
-
-          // 앱 정리
-          appRef.current.destroy(true, { children: true, texture: true, baseTexture: true });
-        } catch (error) {
-          console.error("앱 정리 중 오류:", error);
-        }
-        appRef.current = null;
-      }
+      app.destroy(true, { children: true, texture: true, baseTexture: true });
 
       // 캔버스 제거
-      if (containerRef.current) {
-        const canvas = containerRef.current.querySelector("canvas");
-        if (canvas) {
-          try {
-            containerRef.current.removeChild(canvas);
-          } catch (error) {
-            console.error("캔버스 제거 중 오류:", error);
-          }
+      if (containerRef.current && canvas && containerRef.current.contains(canvas)) {
+        try {
+          containerRef.current.removeChild(canvas);
+        } catch (error) {
+          console.error("정리 중 캔버스 제거 오류:", error);
         }
       }
 
       // 초기화 상태 리셋
       initializedRef.current = false;
     };
-  }, []);
+  }, [isLoaded, spriteSheet, frameWidth, frameHeight, frameCount, animationSpeed, direction, width, height, horizontal, rows, columns, loop, moving, onAnimationComplete, onHitLeft, onHitRight]);
+
+  /**
+   * 애니메이션 재생 상태 변경 효과
+   * isPlaying prop이 변경될 때 애니메이션 재생/정지 제어
+   */
+  useEffect(() => {
+    // 재생 상태 참조 업데이트
+    isPlayingRef.current = isPlaying;
+
+    // 애니메이션이 초기화되지 않았으면 리턴
+    if (!animationRef.current) return;
+
+    if (isPlaying) {
+      // 애니메이션 시작
+      console.log("애니메이션 시작");
+      // 충돌 감지 상태 초기화
+      hitLeftRef.current = false;
+      hitRightRef.current = false;
+      // 애니메이션 재생
+      animationRef.current.visible = true;
+      animationRef.current.play();
+    } else {
+      // 애니메이션 정지
+      console.log("애니메이션 정지");
+      animationRef.current.stop();
+    }
+  }, [isPlaying]);
 
   return (
     <div
       ref={containerRef}
+      className="relative w-full h-full"
       style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
         overflow: "hidden",
         backgroundColor: "transparent",
       }}
