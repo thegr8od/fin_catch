@@ -2,36 +2,33 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>FinBattle - Chat & Game Test</title>
+    <title>FinBattle - Chat, Game & Quiz Test</title>
     <!-- SockJS와 StompJS 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
         .section {
             border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 20px;
         }
-        #chatLog, #gameInfo, #gameHint {
+        .logBox {
             border: 1px solid #aaa;
             padding: 5px;
-            height: 120px;
+            height: 80px;
             overflow-y: auto;
             margin-top: 10px;
-        }
-        #gameInfo, #gameHint {
-            height: 80px;
         }
     </style>
 </head>
 <body>
-<h1>FinBattle - Chat & Game Test</h1>
+<h1>FinBattle - Chat, Game & Quiz Test</h1>
 
 <!-- 방 접속 영역 -->
 <div class="section">
     <label>Room ID: </label>
-    <input type="text" id="roomId" placeholder="Room ID" />
+    <input type="text" id="roomId" placeholder="Enter Room ID" />
     <button onclick="connect()">Connect</button>
 </div>
 
@@ -39,52 +36,79 @@
 <div class="section">
     <h2>Chat</h2>
     <label>Message: </label>
-    <input type="text" id="chatMessage" placeholder="Type message" />
-    <button onclick="sendChat()">Send</button>
-
-    <div id="chatLog"></div>
+    <input type="text" id="chatMessage" placeholder="Type your chat message" />
+    <button onclick="sendChat()">Send Chat</button>
+    <div id="chatLog" class="logBox"></div>
 </div>
 
-<!-- 게임 영역 -->
+<!-- 게임 정보 영역 -->
 <div class="section">
     <h2>Game</h2>
     <button onclick="requestGameInfo()">Get Game Info</button>
-    <button onclick="requestHint()">Request Hint</button>
+    <button onclick="requestGameHint()">Request Game Hint</button>
+    <div id="gameInfo" class="logBox"></div>
+    <div id="gameHint" class="logBox"></div>
+</div>
 
-    <div id="gameInfo"></div>
-    <div id="gameHint"></div>
+<!-- 퀴즈 영역 -->
+<div class="section">
+    <h2>Quiz</h2>
+    <button onclick="getQuiz()">Get Quiz Question</button>
+    <button onclick="requestQuizHint()">Get Quiz Hint</button>
+    <div id="quizQuestion" class="logBox"></div>
+    <br/>
+    <input type="text" id="quizAnswer" placeholder="Your Answer" />
+    <button onclick="submitQuizAnswer()">Submit Answer</button>
+    <div id="quizResult" class="logBox"></div>
 </div>
 
 <script>
     let stompClient = null;
 
-    // WebSocket 연결
+    // WebSocket 연결 및 구독 설정
     function connect() {
         const socket = new SockJS('/ws/firechat'); // WebSocket(STOMP) 엔드포인트
         stompClient = Stomp.over(socket);
 
-        stompClient.connect({}, function (frame) {
+        stompClient.connect({}, function(frame) {
             console.log('Connected: ' + frame);
             const roomId = document.getElementById('roomId').value;
 
             // 채팅 메시지 구독
-            stompClient.subscribe(`/topic/chat/${roomId}`, function (message) {
+            stompClient.subscribe(`/topic/chat/${roomId}`, function(message) {
                 const chatMessage = JSON.parse(message.body);
-                console.log("Received Chat:", chatMessage);
-                appendChat(chatMessage.sender, chatMessage.content);
+                appendLog('chatLog', chatMessage.sender + ": " + chatMessage.content);
             });
 
             // 게임 정보 구독
-            stompClient.subscribe(`/topic/game/${roomId}-getInfo`, function (info) {
+            stompClient.subscribe(`/topic/game/${roomId}-getInfo`, function(info) {
                 const gameData = JSON.parse(info.body);
-                console.log("Game Info:", gameData);
                 displayGameInfo(gameData);
             });
 
             // 게임 힌트 구독
-            stompClient.subscribe(`/topic/game/${roomId}-hint`, function (hint) {
-                console.log("Hint:", hint.body);
+            stompClient.subscribe(`/topic/game/${roomId}-hint`, function(hint) {
                 displayGameHint(hint.body);
+            });
+
+            // 퀴즈 문제 구독
+            stompClient.subscribe(`/topic/game/${roomId}-quiz`, function(message) {
+                const quizData = JSON.parse(message.body);
+                document.getElementById('quizQuestion').textContent = "Question: " + quizData.question;
+            });
+
+            // 퀴즈 정답 결과 구독
+            stompClient.subscribe(`/topic/game/${roomId}-quizResult`, function(message) {
+                const resultData = JSON.parse(message.body);
+                document.getElementById('quizResult').textContent = "Result: " + resultData.result;
+            });
+
+            // 퀴즈 힌트 구독
+            stompClient.subscribe(`/topic/game/${roomId}-quizHint`, function(message) {
+                const hintData = JSON.parse(message.body);
+                // hintData는 { hint1: "first hint", hint2: "second hint" } 형태라고 가정합니다.
+                document.getElementById('quizQuestion').textContent +=
+                    "\nHint 1: " + hintData.hint1 + "\nHint 2: " + hintData.hint2;
             });
         });
     }
@@ -94,9 +118,8 @@
         const roomId = document.getElementById('roomId').value;
         const content = document.getElementById('chatMessage').value;
         if (!roomId || !content) return;
-
         const msgObj = {
-            sender: 'User123', // 고정 값 (필요시 로그인 사용자 정보 연동)
+            sender: 'User123',  // 필요에 따라 로그인한 사용자 정보로 대체
             content: content,
             roomId: roomId
         };
@@ -112,19 +135,43 @@
     }
 
     // 게임 힌트 요청
-    function requestHint() {
+    function requestGameHint() {
         const roomId = document.getElementById('roomId').value;
         if (!roomId) return;
         stompClient.send(`/app/game/${roomId}-hint`, {}, {});
     }
 
-    // 채팅 로그 표시
-    function appendChat(sender, message) {
-        const chatLog = document.getElementById('chatLog');
+    // 퀴즈 문제 요청
+    function getQuiz() {
+        const roomId = document.getElementById('roomId').value;
+        if (!roomId) return;
+        stompClient.send(`/app/game/${roomId}-getQuiz`, {}, {});
+    }
+
+    // 퀴즈 힌트 요청 (hint1, hint2 내용 불러오기)
+    function requestQuizHint() {
+        const roomId = document.getElementById('roomId').value;
+        if (!roomId) return;
+        stompClient.send(`/app/game/${roomId}-quizHint`, {}, {});
+    }
+
+    // 퀴즈 정답 제출
+    function submitQuizAnswer() {
+        const roomId = document.getElementById('roomId').value;
+        const answer = document.getElementById('quizAnswer').value;
+        if (!roomId || !answer) return;
+        const payload = { userAnswer: answer };
+        stompClient.send(`/app/game/${roomId}-checkAnswer`, {}, JSON.stringify(payload));
+        document.getElementById('quizAnswer').value = '';
+    }
+
+    // 로그 영역에 메시지 추가 (채팅 등)
+    function appendLog(elementId, message) {
+        const logDiv = document.getElementById(elementId);
         const newLine = document.createElement('div');
-        newLine.textContent = sender + ": " + message;
-        chatLog.appendChild(newLine);
-        chatLog.scrollTop = chatLog.scrollHeight;
+        newLine.textContent = message;
+        logDiv.appendChild(newLine);
+        logDiv.scrollTop = logDiv.scrollHeight;
     }
 
     // 게임 정보 표시
@@ -136,7 +183,7 @@
     // 게임 힌트 표시
     function displayGameHint(hint) {
         const gameHintDiv = document.getElementById('gameHint');
-        gameHintDiv.textContent = "Hint: " + hint;
+        gameHintDiv.textContent = "Game Hint: " + hint;
     }
 </script>
 </body>

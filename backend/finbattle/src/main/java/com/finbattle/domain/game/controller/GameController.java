@@ -33,4 +33,7 @@ public class GameController {
         log.info("Received game hint request for roomId: {}", roomId);
         gameService.publishGameHint(roomId);
     }
+
+    // 필요하다면 추가로:
+    // /game/{roomId}-score, /game/{roomId}-life, /game/{roomId}-question 등
 }

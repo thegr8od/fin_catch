@@ -4,9 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 게임 정보 DTO
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

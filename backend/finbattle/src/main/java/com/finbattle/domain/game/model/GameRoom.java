@@ -1,9 +1,8 @@
 package com.finbattle.domain.game.model;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
 
 @Getter
 @NoArgsConstructor
@@ -15,8 +14,8 @@ public class GameRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String roomId; // 게임 방 식별자
-    private String status; // 예: READY, PLAYING, FINISHED 등
+    private String roomId; // 예: 실제 room PK가 아니라 별도 식별자
+    private String status; // READY, PLAYING, FINISHED
     private int score;
 
     public GameRoom(String roomId, String status, int score) {
