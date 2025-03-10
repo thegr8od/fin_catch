@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket(STOMP) with Redis Pub/Sub Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+<body>
+<h1>WebSocket(STOMP) with Redis Pub/Sub Test</h1>
+<div>
+    <label>Room ID: </label>
+    <input type="text" id="roomId" placeholder="Room ID"/>
+    <button onclick="connect()">Connect</button>
+</div>
+<hr/>
+
+<div>
+    <label>Chat Message: </label>
+    <input type="text" id="chatMessage" placeholder="Chat Message"/>
+    <button onclick="sendChat()">Send Chat</button>
+</div>
+<hr/>
+
+<div>
+    <button onclick="requestGameInfo()">Get Game Info</button>
+    <button onclick="requestHint()">Request Hint</button>
+</div>
+
+<script>
+    let stompClient = null;
+
+    function connect() {
+        const socket = new SockJS('/ws/firechat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            const roomId = document.getElementById('roomId').value;
+
+            // 채팅 메시지 구독
+            stompClient.subscribe(`/topic/chat/${roomId}`, function (message) {
+                const chatMessage = JSON.parse(message.body);
+                console.log("Received Chat:", chatMessage);
+            });
+
+            // 게임 정보 구독
+            stompClient.subscribe(`/topic/game/${roomId}-getInfo`, function (info) {
+                console.log("Game Info:", JSON.parse(info.body));
+            });
+
+            // 게임 힌트 구독
+            stompClient.subscribe(`/topic/game/${roomId}-hint`, function (hint) {
+                console.log("Hint:", hint.body);
+            });
+        });
+    }
+
+    function sendChat() {
+        const roomId = document.getElementById('roomId').value;
+        const content = document.getElementById('chatMessage').value;
+        const msgObj = {
+            sender: 'User123',
+            content: content,
+            roomId: roomId
+        };
+        // 클라이언트 → 서버: /app/chat/{roomId}
+        stompClient.send(`/app/chat/${roomId}`, {}, JSON.stringify(msgObj));
+    }
+
+    function requestGameInfo() {
+        const roomId = document.getElementById('roomId').value;
+        stompClient.send(`/app/game/${roomId}-getInfo`, {}, {});
+    }
+
+    function requestHint() {
+        const roomId = document.getElementById('roomId').value;
+        stompClient.send(`/app/game/${roomId}-hint`, {}, {});
+    }
+</script>
+</body>
+</html>

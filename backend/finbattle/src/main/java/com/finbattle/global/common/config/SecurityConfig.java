@@ -34,32 +34,29 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf((auth) -> auth.disable())
-            .oauth2Login((oauth2) -> oauth2
-                .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                    .userService(customOAuth2UserService))
-                .successHandler(customSuccessHandler)
-            )
-            .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/", "/login", "/api/member/public/**", "/oauth2/**").permitAll()
-                .requestMatchers("/error", "/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .sessionManagement((session) -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .exceptionHandling(exception ->
-                exception
-                    .defaultAuthenticationEntryPointFor(
-                        authenticationEntryPoint,
-                        new AntPathRequestMatcher("/api/**")
-                    ) // 401 예외 핸들러 적용
-                    .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
-            )
-            .formLogin((auth) -> auth.disable())
-            .httpBasic((auth) -> auth.disable());
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2UserService))
+                        .successHandler(customSuccessHandler)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/**", "/login", "/api/member/public/**", "/oauth2/**", "/websocket-test.html").permitAll()
+                        .requestMatchers("/error", "/swagger-ui/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception ->
+                        exception
+                                .defaultAuthenticationEntryPointFor(
+                                        authenticationEntryPoint,
+                                        new AntPathRequestMatcher("/api/**")
+                                )
+                                .accessDeniedHandler(accessDeniedHandler)
+                )
+                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic -> httpBasic.disable());
 
         return http.build();
     }
@@ -67,15 +64,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");
-        //config.setAllowedOrigins(
-        //    Arrays.asList("http://localhost:3000", "http://localhost:8080")); // 프론트엔드 주소
+        // 오직 allowedOriginPatterns만 사용 (allowedOrigins 목록이 없도록 합니다)
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
+        config.setAllowCredentials(true);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
