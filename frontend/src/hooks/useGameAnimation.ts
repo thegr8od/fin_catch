@@ -12,6 +12,7 @@ export enum AnimationState {
   DEAD = "dead",
   VICTORY = "victory",
   GAME_OVER = "gameOver",
+  ATTACK = "attack",
 }
 
 // 이미지 사전 로딩 함수 (단일 이미지)
@@ -80,6 +81,7 @@ export interface CommonAnimationOptions {
   gameOverAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions; // 게임 종료 애니메이션 옵션
   hurtAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
   sleepAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
+  attackAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
 }
 
 // 애니메이션 옵션 타입
@@ -116,6 +118,7 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
     deadAnimationOptions,
     victoryAnimationOptions,
     gameOverAnimationOptions,
+    attackAnimationOptions,
   } = options;
 
   // PixiJS 앱 참조
@@ -159,7 +162,7 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
         }
 
         // 추가 애니메이션 리소스 로드 (피격, 사망, 승리, 게임 종료)
-        const additionalResources = [hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions].filter(Boolean);
+        const additionalResources = [hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions, attackAnimationOptions,].filter(Boolean);
 
         for (const resource of additionalResources) {
           if (resource?.type === "spriteSheet") {
@@ -289,10 +292,16 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
       } else {
         texturesMapRef.current[AnimationState.GAME_OVER] = mainTextures;
       }
+
+      if (attackAnimationOptions) {
+        texturesMapRef.current[AnimationState.ATTACK] = createTextures(attackAnimationOptions)
+      } else {
+        texturesMapRef.current[AnimationState.ATTACK] = mainTextures
+      }
     } catch (error) {
       console.error("텍스처 생성 실패:", error);
     }
-  }, [isLoaded, options, createTextures, hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions]);
+  }, [isLoaded, options, createTextures, hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions, attackAnimationOptions]);
 
   // PixiJS 앱 초기화 및 애니메이션 생성 함수
   const initializeApp = useCallback(
@@ -538,6 +547,9 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
             animationRef.current.loop = true;
             break;
           case AnimationState.GAME_OVER:
+            animationRef.current.loop = false;
+            break;
+          case AnimationState.ATTACK:
             animationRef.current.loop = false;
             break;
           default:

@@ -33,6 +33,7 @@ import { useGameAnimation, AnimationState, AnimationOptions, SpriteSheetOptions,
  * @property {SpriteSheetOptions|ImageSequenceOptions} deadAnimationOptions - 사망 애니메이션 옵션 (사망 상태일 때 사용할 애니메이션 정의)
  * @property {SpriteSheetOptions|ImageSequenceOptions} victoryAnimationOptions - 승리 애니메이션 옵션 (승리 상태일 때 사용할 애니메이션 정의)
  * @property {SpriteSheetOptions|ImageSequenceOptions} gameOverAnimationOptions - 게임 종료 애니메이션 옵션 (게임 종료 상태일 때 사용할 애니메이션 정의)
+ * @property {SpriteSheetOptions|ImageSequenceOptions} attackAnimationOptions - 공격 애니메이션 옵션 (공격 상태일 때 사용할 애니메이션 정의)
  */
 interface GameAnimationProps {
   isPlaying: boolean;
@@ -65,6 +66,7 @@ interface GameAnimationProps {
   gameOverAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
   hurtAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
   sleepAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
+  attackAnimationOptions?: SpriteSheetOptions | ImageSequenceOptions;
 }
 
 /**
@@ -127,6 +129,7 @@ const GameAnimation: React.FC<GameAnimationProps> = (props) => {
         gameOverAnimationOptions: props.gameOverAnimationOptions,
         hurtAnimationOptions: props.hurtAnimationOptions,
         sleepAnimationOptions: props.sleepAnimationOptions,
+        attackAnimationOptions: props.attackAnimationOptions,
       };
       return spriteSheetOptions as AnimationOptions;
     }
@@ -153,6 +156,7 @@ const GameAnimation: React.FC<GameAnimationProps> = (props) => {
         gameOverAnimationOptions: props.gameOverAnimationOptions,
         hurtAnimationOptions: props.hurtAnimationOptions,
         sleepAnimationOptions: props.sleepAnimationOptions,
+        attackAnimationOptions: props.attackAnimationOptions,
       };
       return imageSequenceOptions as AnimationOptions;
     }
