@@ -179,7 +179,7 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
     };
 
     loadResources();
-  }, [options, hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions]);
+  }, [options, hitAnimationOptions, deadAnimationOptions, victoryAnimationOptions, gameOverAnimationOptions, attackAnimationOptions]);
 
   // 텍스처 생성 함수
   const createTextures = useCallback((animOptions: SpriteSheetOptions | ImageSequenceOptions): PIXI.Texture[] => {
