@@ -70,7 +70,7 @@ public class SecurityConfig {
         config.addAllowedOriginPattern("*");
         //config.setAllowedOrigins(
         //    Arrays.asList("http://localhost:3000", "http://localhost:8080")); // 프론트엔드 주소
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
 

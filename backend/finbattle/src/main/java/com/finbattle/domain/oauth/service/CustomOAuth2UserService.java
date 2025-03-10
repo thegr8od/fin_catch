@@ -1,12 +1,14 @@
 package com.finbattle.domain.oauth.service;
 
+import com.finbattle.domain.cat.entity.Cat;
+import com.finbattle.domain.cat.repository.CatRepository;
+import com.finbattle.domain.member.dto.MemberDto;
+import com.finbattle.domain.member.model.Member;
+import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.domain.oauth.dto.GoogleResponse;
 import com.finbattle.domain.oauth.dto.KakaoResponse;
 import com.finbattle.domain.oauth.dto.OAuth2Response;
-import com.finbattle.domain.member.entity.Member;
-import com.finbattle.domain.member.entity.dto.MemberDto;
-import com.finbattle.domain.member.repository.MemberRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
+    private final CatRepository catRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -28,21 +31,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         OAuth2Response oAuth2Response = null;
-        if(registrationId.equals("google")) {
+        if (registrationId.equals("google")) {
             oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
-        } else if(registrationId.equals("kakao")) {
+        } else if (registrationId.equals("kakao")) {
             oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        } else return null;
+        } else {
+            return null;
+        }
 
         String providerId = oAuth2Response.getProvider() + "_" + oAuth2Response.getProviderId();
-        Optional<Member> optionalMember = Optional.ofNullable(
-            memberRepository.findByProviderId(providerId));
+        Optional<Member> optionalMember = memberRepository.findByProviderId(providerId);
         Member member;
-        if(optionalMember.isEmpty()) {
+        if (optionalMember.isEmpty()) {
             member = Member.of(providerId, oAuth2Response.getName(), oAuth2Response.getEmail());
+            Cat dafaultCat = catRepository.findById(1L).orElse(new Cat());
+            member.acquireCat(dafaultCat);
             memberRepository.save(member);
-        }
-        else{
+        } else {
             member = optionalMember.get();
         }
 

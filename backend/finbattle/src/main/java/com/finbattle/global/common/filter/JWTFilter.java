@@ -1,7 +1,7 @@
 package com.finbattle.global.common.filter;
 
+import com.finbattle.domain.member.dto.MemberDto;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
-import com.finbattle.domain.member.entity.dto.MemberDto;
 import com.finbattle.global.common.Util.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;

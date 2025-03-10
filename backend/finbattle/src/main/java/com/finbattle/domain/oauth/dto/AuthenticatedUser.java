@@ -1,6 +1,6 @@
 package com.finbattle.domain.oauth.dto;
 
-import com.finbattle.domain.member.entity.dto.MemberDto;
+import com.finbattle.domain.member.dto.MemberDto;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -14,7 +14,7 @@ public class AuthenticatedUser implements OAuth2User {
     private final MemberDto memberDto;
 
     @Override
-    public Map<String, Object> getAttributes(){
+    public Map<String, Object> getAttributes() {
         return null;
     }
 

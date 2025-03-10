@@ -1,17 +1,23 @@
 package com.finbattle.domain.cat.entity;
 
+import com.finbattle.domain.member.model.MemberCat;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
@@ -19,6 +25,7 @@ import org.springframework.data.annotation.CreatedDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class) // Auditing 기능 활성화
 public class Cat {
 
     @Id
@@ -30,5 +37,8 @@ public class Cat {
     private LocalDateTime createdAt;
 
     @Column(nullable = false, unique = true)
-    private String characterName; // 캐릭터 이름
+    private String catName; // 캐릭터 이름
+
+    @OneToMany(mappedBy = "cat")
+    private List<MemberCat> memberCats = new ArrayList<>();
 }

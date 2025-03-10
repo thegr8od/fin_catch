@@ -1,6 +1,6 @@
-package com.finbattle.domain.member.entity.dto;
+package com.finbattle.domain.member.dto;
 
-import com.finbattle.domain.member.entity.Member;
+import com.finbattle.domain.member.model.Member;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberDto {
+
     private Long memberId;
     private String providerId;
     private String email;

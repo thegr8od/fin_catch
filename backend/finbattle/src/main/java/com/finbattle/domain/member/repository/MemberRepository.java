@@ -1,13 +1,16 @@
 package com.finbattle.domain.member.repository;
 
-import com.finbattle.domain.member.entity.Member;
+import com.finbattle.domain.member.model.Member;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    Member findByProviderId(String providerId);
+    Optional<Member> findByProviderId(String providerId);
 
-    Member findByMemberId(Long memberId);
+    Optional<Member> findByMemberId(Long memberId);
+
+    Optional<Member> findByNickname(String nickname);
 }
