@@ -1,7 +1,7 @@
 package com.finbattle.domain.room.model;
 
 public enum RoomType {
-    QUIZ,      // 퀴즈방
-    GENERAL,   // 일반방
-    PRIVATE    // 비공개방
+    ONE_ON_ONE,   // 1대1 방
+    MULTI,        // 다인전 (최소 3명 이상)
+    AI_BATTLE     // AI 배틀
 }

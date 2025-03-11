@@ -10,7 +10,6 @@ import com.finbattle.domain.room.model.RoomStatus;
 import com.finbattle.domain.room.model.RoomType;
 import com.finbattle.domain.room.repository.MemberToRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -71,11 +70,6 @@ public class RoomService {
         room.setStatus(RoomStatus.CLOSED); // 방 상태 변경
         roomRepository.save(room);
 
-        // 참여자들의 종료 시간 업데이트
-        List<MemberToRoom> members = memberToRoomRepository.findAllByRoom(room);
-        members.forEach(memberToRoom -> memberToRoom.setCloseAt(LocalDateTime.now()));
-        memberToRoomRepository.saveAll(members);
-
         return mapToRoomResponse(room);
     }
 
@@ -83,7 +77,15 @@ public class RoomService {
      * 방 삭제
      */
     public void deleteRoom(Long roomId) {
-        roomRepository.deleteById(roomId);
+        Room room = roomRepository.findById(roomId)
+            .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+
+        if (room.getStatus() == RoomStatus.IN_PROGRESS) {
+            throw new IllegalStateException("게임이 진행 중인 방은 삭제할 수 없습니다.");
+        }
+
+        room.setStatus(RoomStatus.CLOSED);
+        roomRepository.save(room);
     }
 
     /**
@@ -111,6 +113,27 @@ public class RoomService {
         return roomRepository.findById(roomId)
             .map(this::mapToRoomResponse)
             .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+    }
+
+    /**
+     * 방장이 방을 나갈 시
+     */
+    public Long assignNewHost(Long roomId, Long oldHostId) {
+        List<MemberToRoom> members = memberToRoomRepository.findAllByRoomId(roomId);
+
+        if (members.size() > 1) {
+            MemberToRoom newHost = members.stream()
+                .filter(m -> !m.getMember().getMemberId().equals(oldHostId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("방장이 될 사람이 없습니다."));
+
+            // 이 로직은 실제로 '방장' 필드를 Room에 따로 두고 관리하는 경우에 맞게 수정 필요.
+            // 현재 Room 테이블엔 별도의 '방장 ID'가 없으므로, 예시로만 두겠습니다.
+            newHost.getRoom().setRoomId(newHost.getMember().getMemberId());
+            roomRepository.save(newHost.getRoom());
+            return newHost.getMember().getMemberId();
+        }
+        return null;
     }
 
     private RoomResponse mapToRoomResponse(Room room) {

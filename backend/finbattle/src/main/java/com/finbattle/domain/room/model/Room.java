@@ -44,5 +44,9 @@ public class Room {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoomType roomType; // 방 유형 (예: QUIZ, GENERAL)
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuizType quizType;
 }
 
