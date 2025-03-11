@@ -35,9 +35,9 @@ public class SecurityConfig {
 
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf((auth) -> auth.disable())
-            .oauth2Login((oauth2) -> oauth2
-                .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+            .csrf(csrf -> csrf.disable())
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
                     .userService(customOAuth2UserService))
                 .successHandler(customSuccessHandler)
             )
@@ -60,8 +60,9 @@ public class SecurityConfig {
                     ) // 401 예외 핸들러 적용
                     .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
             )
-            .formLogin((auth) -> auth.disable())
-            .httpBasic((auth) -> auth.disable());
+            .formLogin(form -> form.disable())
+            .httpBasic(httpBasic -> httpBasic.disable());
+
 
         return http.build();
     }
