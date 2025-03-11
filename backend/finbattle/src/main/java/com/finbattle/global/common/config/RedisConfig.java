@@ -15,7 +15,7 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        // 기본 설정 (필요 시 host/port 커스터마이징)
+        //  기본 설정 (필요 시 host/port 커스터마이징)
         return new LettuceConnectionFactory();
     }
 
