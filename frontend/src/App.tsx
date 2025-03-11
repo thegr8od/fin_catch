@@ -15,6 +15,7 @@ import MyPage from "./pages/MyPage";
 import RoomPreparePage from "./pages/RoomPreparePage";
 import { LoadingProvider, useLoading } from "./contexts/LoadingContext";
 import LoadingScreen from "./components/common/LoadingScreen";
+import OAuthRedirectPage from "./pages/OAuthRedirectPage";
 
 /**
  * 라우트 변경 감지 및 로딩 상태 초기화 컴포넌트
@@ -85,6 +86,8 @@ function AppContent() {
               <Route path="/game/survival" element={<SurvivalPage />} />
               <Route path="/game/bot" element={<BotPage />} />
               <Route path="/:nickname" element={<MyPage />} />
+              <Route path="/oauth/redirect" element={<OAuthRedirectPage />} />
+              <Route path="/oauth2/authorization/*" element={<LoadingScreen />} />
             </Routes>
           </div>
 

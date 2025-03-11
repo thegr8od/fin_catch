@@ -16,7 +16,9 @@ import RecentActivitiesSection from "../components/mypage/RecentActivitiesSectio
 import WrongAnswerNoteModal from "../components/mypage/WrongAnswerNoteModal";
 import AccountLinkModal from "../components/mypage/AccountLinkModal";
 import AccountAnalysisModal from "../components/mypage/AccountAnalysisModal";
+import NicknameChangeModal from "../components/mypage/NicknameChangeModal";
 import { AccountInfo } from "../components/mypage/AccountLinkModal";
+import { useUserInfo } from "../hooks/useUserInfo";
 
 // 타입 정의
 interface Problem {
@@ -48,69 +50,21 @@ const getAccountInfoFromStorage = (): AccountInfo | null => {
 };
 
 const MyPage = () => {
+  // 사용자 정보 가져오기
+  const { user, loading: userLoading, fetchUserInfo } = useUserInfo();
+
   // 상태 관리
   const [showWrongAnswerNote, setShowWrongAnswerNote] = useState(false);
   const [showAccountLinkModal, setShowAccountLinkModal] = useState(false);
   const [showAccountAnalysisModal, setShowAccountAnalysisModal] = useState(false);
+  const [showNicknameChangeModal, setShowNicknameChangeModal] = useState(false);
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(() => {
     // 컴포넌트 초기화 시 로컬 스토리지에서 계좌 정보 로드
     return getAccountInfoFromStorage();
   });
 
-  // 컴포넌트 마운트 시 계좌 연동 상태 확인
-  useEffect(() => {
-    // 계좌 정보가 없으면 3초 후 모달 표시
-    if (!accountInfo) {
-      const timer = setTimeout(() => {
-        setShowAccountLinkModal(true);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // 계좌 연동 처리
-  const handleLinkAccount = (info: AccountInfo) => {
-    console.log("계좌 연동 처리:", info);
-
-    // 계좌 정보 상태 업데이트
-    setAccountInfo(info);
-
-    // 로컬 스토리지에 계좌 정보 저장
-    try {
-      localStorage.setItem("accountInfo", JSON.stringify(info));
-      console.log("계좌 정보 로컬 스토리지에 저장 완료");
-    } catch (error) {
-      console.error("계좌 정보 저장 오류:", error);
-    }
-
-    // 모달 닫기
-    setShowAccountLinkModal(false);
-  };
-
-  // 계좌 연동 해제 처리
-  const handleUnlinkAccount = () => {
-    // 계좌 정보 상태 초기화
-    setAccountInfo(null);
-
-    // 로컬 스토리지에서 계좌 정보 삭제
-    try {
-      localStorage.removeItem("accountInfo");
-      console.log("계좌 정보 로컬 스토리지에서 삭제 완료");
-    } catch (error) {
-      console.error("계좌 정보 삭제 오류:", error);
-    }
-  };
-
-  // 계좌 분석 모달 열기
-  const handleOpenAccountAnalysis = () => {
-    if (accountInfo) {
-      setShowAccountAnalysisModal(true);
-    }
-  };
-
-  // 임시 데이터
-  const userData = {
+  // 임시 데이터 (사용자 정보가 없을 때 사용)
+  const [userData, setUserData] = useState({
     nickname: "김냥냥",
     level: 7,
     exp: 3250,
@@ -182,6 +136,65 @@ const MyPage = () => {
         { id: 3, title: "문제 3번", correctRate: 58, keywords: ["FT", "분석", "내용", "어쩌구"] },
       ],
     } as WrongAnswers,
+  });
+
+  // 컴포넌트 마운트 시 계좌 연동 상태 확인
+  useEffect(() => {
+    // 계좌 정보가 없으면 3초 후 모달 표시
+    if (!accountInfo) {
+      const timer = setTimeout(() => {
+        setShowAccountLinkModal(true);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // 계좌 연동 처리
+  const handleLinkAccount = (info: AccountInfo) => {
+    console.log("계좌 연동 처리:", info);
+
+    // 계좌 정보 상태 업데이트
+    setAccountInfo(info);
+
+    // 로컬 스토리지에 계좌 정보 저장
+    try {
+      localStorage.setItem("accountInfo", JSON.stringify(info));
+      console.log("계좌 정보 로컬 스토리지에 저장 완료");
+    } catch (error) {
+      console.error("계좌 정보 저장 오류:", error);
+    }
+
+    // 모달 닫기
+    setShowAccountLinkModal(false);
+  };
+
+  // 계좌 연동 해제 처리
+  const handleUnlinkAccount = () => {
+    // 계좌 정보 상태 초기화
+    setAccountInfo(null);
+
+    // 로컬 스토리지에서 계좌 정보 삭제
+    try {
+      localStorage.removeItem("accountInfo");
+      console.log("계좌 정보 로컬 스토리지에서 삭제 완료");
+    } catch (error) {
+      console.error("계좌 정보 삭제 오류:", error);
+    }
+  };
+
+  // 계좌 분석 모달 열기
+  const handleOpenAccountAnalysis = () => {
+    if (accountInfo) {
+      setShowAccountAnalysisModal(true);
+    }
+  };
+
+  // 닉네임 변경 처리
+  const handleUpdateNickname = (newNickname: string) => {
+    // 닉네임 변경 후 사용자 정보 다시 가져오기
+    fetchUserInfo();
+    console.log("닉네임 변경 완료:", newNickname);
   };
 
   // AI 배틀 현황 데이터
@@ -197,6 +210,17 @@ const MyPage = () => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  // 실제 사용자 정보와 임시 데이터를 합친 데이터 생성
+  const displayUserData = user
+    ? {
+        ...userData,
+        nickname: user.nickname,
+        exp: user.exp,
+        coins: user.point,
+        // 기타 필요한 정보 추가
+      }
+    : userData;
+
   return (
     <Background backgroundImage={myPageBg}>
       <div className="w-full max-w-[1800px] h-[900px] bg-white/95 rounded-2xl shadow-2xl p-8">
@@ -206,7 +230,7 @@ const MyPage = () => {
           <div className="w-1/3 h-full flex flex-col gap-6">
             {/* 프로필 섹션 */}
             <div className="flex-grow">
-              <ProfileSection userData={userData} />
+              <ProfileSection userData={displayUserData} onNicknameChangeClick={() => setShowNicknameChangeModal(true)} />
             </div>
 
             {/* 계좌 정보 섹션 */}
@@ -298,6 +322,9 @@ const MyPage = () => {
 
       {/* 계좌 분석 모달 */}
       {showAccountAnalysisModal && accountInfo && <AccountAnalysisModal onClose={() => setShowAccountAnalysisModal(false)} accountInfo={accountInfo} />}
+
+      {/* 닉네임 변경 모달 */}
+      {showNicknameChangeModal && <NicknameChangeModal onClose={() => setShowNicknameChangeModal(false)} currentNickname={displayUserData.nickname} onUpdateNickname={handleUpdateNickname} />}
     </Background>
   );
 };
