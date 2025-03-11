@@ -10,16 +10,33 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         .section {
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 15px;
             margin-bottom: 20px;
+            border-radius: 5px;
         }
         .logBox {
             border: 1px solid #aaa;
-            padding: 5px;
-            height: 80px;
+            padding: 10px;
+            height: 100px;
             overflow-y: auto;
             margin-top: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
         }
+        .statusBox {
+            border: 1px solid #aaa;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            background: #f0f8ff;
+            border-radius: 5px;
+        }
+        .userItem { margin: 5px 0; }
+        .correct { color: green; font-weight: bold; margin-left: 10px; }
+        button { padding: 5px 10px; margin: 0 5px; border-radius: 3px; cursor: pointer; }
+        input[type="text"] { padding: 5px; border-radius: 3px; border: 1px solid #ccc; }
+        h2 { margin-top: 0; }
     </style>
 </head>
 <body>
@@ -29,7 +46,15 @@
 <div class="section">
     <label>Room ID: </label>
     <input type="text" id="roomId" placeholder="Enter Room ID" />
+    <label>User ID: </label>
+    <input type="text" id="userId" placeholder="Enter Your ID" />
     <button onclick="connect()">Connect</button>
+</div>
+
+<!-- 접속 상태 영역 -->
+<div class="section">
+    <h2>Online Users</h2>
+    <div id="userStatus" class="statusBox"></div>
 </div>
 
 <!-- 채팅 영역 -->
@@ -64,20 +89,36 @@
 
 <script>
     let stompClient = null;
+    let currentUserId = null;
+    let users = {}; // 접속한 사용자 상태를 저장하는 객체
 
     // WebSocket 연결 및 구독 설정
     function connect() {
-        const socket = new SockJS('/ws/firechat'); // WebSocket(STOMP) 엔드포인트
+        const socket = new SockJS('/ws/firechat');
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, function(frame) {
             console.log('Connected: ' + frame);
             const roomId = document.getElementById('roomId').value;
+            currentUserId = document.getElementById('userId').value || 'Anonymous';
+
+            // 사용자 접속 메시지 전송
+            stompClient.send(`/app/game/${roomId}-connect`, {}, JSON.stringify({ userId: currentUserId }));
+
+            // 사용자 상태 구독
+            stompClient.subscribe(`/topic/game/${roomId}-userStatus`, function(message) {
+                const userList = JSON.parse(message.body);
+                users = {};
+                userList.forEach(user => {
+                    users[user.userId] = { id: user.userId, correct: user.correct };
+                });
+                updateUserStatus();
+            });
 
             // 채팅 메시지 구독
             stompClient.subscribe(`/topic/chat/${roomId}`, function(message) {
                 const chatMessage = JSON.parse(message.body);
-                appendLog('chatLog', chatMessage.sender + ": " + chatMessage.content);
+                appendLog('chatLog', `${chatMessage.sender}: ${chatMessage.content}`);
             });
 
             // 게임 정보 구독
@@ -100,13 +141,13 @@
             // 퀴즈 정답 결과 구독
             stompClient.subscribe(`/topic/game/${roomId}-quizResult`, function(message) {
                 const resultData = JSON.parse(message.body);
-                document.getElementById('quizResult').textContent = "Result: " + resultData.result;
+                document.getElementById('quizResult').textContent = `Result: ${resultData.result} (User: ${resultData.userId})`;
+                // 상태는 userStatus 구독에서 업데이트되므로 여기서는 결과만 표시
             });
 
             // 퀴즈 힌트 구독
             stompClient.subscribe(`/topic/game/${roomId}-quizHint`, function(message) {
                 const hintData = JSON.parse(message.body);
-                // hintData는 { hint1: "first hint", hint2: "second hint" } 형태라고 가정합니다.
                 document.getElementById('quizQuestion').textContent +=
                     "\nHint 1: " + hintData.hint1 + "\nHint 2: " + hintData.hint2;
             });
@@ -117,9 +158,9 @@
     function sendChat() {
         const roomId = document.getElementById('roomId').value;
         const content = document.getElementById('chatMessage').value;
-        if (!roomId || !content) return;
+        if (!roomId || !content || !currentUserId) return;
         const msgObj = {
-            sender: 'User123',  // 필요에 따라 로그인한 사용자 정보로 대체
+            sender: currentUserId,
             content: content,
             roomId: roomId
         };
@@ -148,7 +189,7 @@
         stompClient.send(`/app/game/${roomId}-getQuiz`, {}, {});
     }
 
-    // 퀴즈 힌트 요청 (hint1, hint2 내용 불러오기)
+    // 퀴즈 힌트 요청
     function requestQuizHint() {
         const roomId = document.getElementById('roomId').value;
         if (!roomId) return;
@@ -159,10 +200,29 @@
     function submitQuizAnswer() {
         const roomId = document.getElementById('roomId').value;
         const answer = document.getElementById('quizAnswer').value;
-        if (!roomId || !answer) return;
-        const payload = { userAnswer: answer };
+        if (!roomId || !answer || !currentUserId) return;
+        const payload = { userAnswer: answer, userId: currentUserId };
         stompClient.send(`/app/game/${roomId}-checkAnswer`, {}, JSON.stringify(payload));
         document.getElementById('quizAnswer').value = '';
+    }
+
+    // 사용자 상태 업데이트
+    function updateUserStatus() {
+        const statusDiv = document.getElementById('userStatus');
+        statusDiv.innerHTML = '';
+        for (const userId in users) {
+            const user = users[userId];
+            const userDiv = document.createElement('div');
+            userDiv.className = 'userItem';
+            userDiv.textContent = user.id;
+            if (user.correct) {
+                const correctSpan = document.createElement('span');
+                correctSpan.className = 'correct';
+                correctSpan.textContent = 'O';
+                userDiv.appendChild(correctSpan);
+            }
+            statusDiv.appendChild(userDiv);
+        }
     }
 
     // 로그 영역에 메시지 추가 (채팅 등)

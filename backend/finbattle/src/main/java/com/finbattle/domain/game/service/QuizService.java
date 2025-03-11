@@ -1,18 +1,22 @@
 package com.finbattle.domain.game.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finbattle.domain.game.dto.UserStatus;
 import com.finbattle.domain.game.model.ShortAnswerQuiz;
 import com.finbattle.domain.game.repository.ShortAnswerQuizRepository;
+import com.finbattle.domain.game.util.UserStatusUtil;
 import com.finbattle.global.common.redis.RedisPublisher;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +25,8 @@ public class QuizService {
     private final ShortAnswerQuizRepository quizRepository;
     private final RedisPublisher redisPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final GameService gameService;
 
     // 각 방의 현재 활성 퀴즈를 저장 (힌트와 정답 검사용)
     private final ConcurrentMap<String, ShortAnswerQuiz> activeQuizMap = new ConcurrentHashMap<>();
@@ -36,7 +42,6 @@ public class QuizService {
             return;
         }
         ShortAnswerQuiz quiz = list.get(0);
-        // 해당 방의 활성 퀴즈로 저장
         activeQuizMap.put(roomId, quiz);
 
         Map<String, Object> payload = new HashMap<>();
@@ -45,6 +50,7 @@ public class QuizService {
         payload.put("roomId", roomId);
 
         try {
+            // 기존에는 JSON 문자열로 변환했으나 여기서는 그대로 객체(Map)를 발행할 수도 있습니다.
             String jsonMessage = objectMapper.writeValueAsString(payload);
             redisPublisher.publish("game-quiz", jsonMessage);
         } catch (Exception e) {
@@ -76,7 +82,7 @@ public class QuizService {
     /**
      * 제출된 정답과 활성 퀴즈의 정답을 비교 후, 결과를 Redis 채널 "game-quizResult"에 발행합니다.
      */
-    public void checkQuizAnswer(String roomId, String userAnswer) {
+    public void checkQuizAnswer(String roomId, String userAnswer, String userId) {
         ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
         if (quiz == null) {
             return;
@@ -86,6 +92,19 @@ public class QuizService {
         payload.put("quizId", quiz.getQuizId());
         payload.put("result", isCorrect ? "정답입니다" : "오답입니다");
         payload.put("roomId", roomId);
+        payload.put("userId", userId);
+
+        String key = "room:users:" + roomId;
+        // Redis에 저장된 값은 문자열 형태이므로, 가져올 때 형변환 후 역직렬화
+        Object obj = redisTemplate.opsForHash().get(key, userId);
+        if (obj != null) {
+            String stored = (String) obj;
+            UserStatus userStatus = UserStatusUtil.deserialize(stored);
+            if (isCorrect) {
+                userStatus.setCorrect(true);
+                redisTemplate.opsForHash().put(key, userId, UserStatusUtil.serialize(userStatus));
+            }
+        }
 
         try {
             String jsonMessage = objectMapper.writeValueAsString(payload);
@@ -93,7 +112,9 @@ public class QuizService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 퀴즈 완료 후 활성 퀴즈 제거
-        activeQuizMap.remove(roomId);
+        if (isCorrect) {
+            activeQuizMap.remove(roomId);
+            gameService.publishUserStatus(roomId); // 상태 발행
+        }
     }
 }

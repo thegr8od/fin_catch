@@ -37,22 +37,20 @@ public class RedisConfig {
             RedisConnectionFactory connectionFactory,
             RedisChatSubscriber chatSubscriber,
             RedisGameInfoSubscriber gameInfoSubscriber,
-            // 게임 관련 채널은 제외 (힌트는 퀴즈에만 있음)
             RedisGameQuizSubscriber gameQuizSubscriber,
             RedisGameQuizResultSubscriber gameQuizResultSubscriber,
-            RedisGameQuizHintSubscriber gameQuizHintSubscriber
+            RedisGameQuizHintSubscriber gameQuizHintSubscriber,
+            RedisGameUserStatusSubscriber gameUserStatusSubscriber
     ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
 
-        // 기존 채팅, 게임 정보 리스너
         container.addMessageListener(chatSubscriber, new PatternTopic("chat"));
         container.addMessageListener(gameInfoSubscriber, new PatternTopic("game-info"));
-
-        // 퀴즈 관련 리스너 등록
         container.addMessageListener(gameQuizSubscriber, new PatternTopic("game-quiz"));
         container.addMessageListener(gameQuizResultSubscriber, new PatternTopic("game-quizResult"));
         container.addMessageListener(gameQuizHintSubscriber, new PatternTopic("game-quizHint"));
+        container.addMessageListener(gameUserStatusSubscriber, new PatternTopic("game-userStatus"));
 
         return container;
     }
