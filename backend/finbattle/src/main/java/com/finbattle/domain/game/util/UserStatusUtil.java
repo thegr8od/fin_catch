@@ -4,17 +4,17 @@ import com.finbattle.domain.game.dto.UserStatus;
 
 public class UserStatusUtil {
 
-    // UserStatus를 "userId|correct" 형태의 문자열로 직렬화
+    // UserStatus를 "userId|life" 형태의 문자열로 직렬화
     public static String serialize(UserStatus userStatus) {
-        return userStatus.getUserId() + "|" + userStatus.isCorrect();
+        return userStatus.getUserId() + "|" + userStatus.getLife();
     }
 
-    // 문자열을 UserStatus 객체로 역직렬화 ("userId|correct")
+    // 문자열을 UserStatus 객체로 역직렬화 ("userId|life")
     public static UserStatus deserialize(String str) {
         String[] parts = str.split("\\|");
         UserStatus u = new UserStatus();
         u.setUserId(parts[0]);
-        u.setCorrect(Boolean.parseBoolean(parts[1]));
+        u.setLife(Integer.parseInt(parts[1]));
         return u;
     }
 }

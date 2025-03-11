@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class UserStatus {
     private String userId;
-    private boolean correct; // 퀴즈 정답 여부
+    private int life; // 플레이어의 남은 라이프 (예: 3)
 }

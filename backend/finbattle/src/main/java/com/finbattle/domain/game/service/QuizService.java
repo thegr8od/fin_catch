@@ -30,10 +30,11 @@ public class QuizService {
 
     // 각 방의 현재 활성 퀴즈를 저장 (힌트와 정답 검사용)
     private final ConcurrentMap<String, ShortAnswerQuiz> activeQuizMap = new ConcurrentHashMap<>();
+    // 각 방에서 첫 정답 제출자를 기록 (전투 모드용)
+    private final ConcurrentMap<String, String> firstCorrectAnswerMap = new ConcurrentHashMap<>();
 
     /**
      * 랜덤 퀴즈 문제를 가져와 Redis 채널 "game-quiz"에 발행합니다.
-     * 요청 시마다 새로운 퀴즈를 선택하고, 활성 퀴즈로 저장합니다.
      */
     public void publishRandomQuiz(String roomId) {
         Pageable pageable = PageRequest.of(0, 1);
@@ -43,6 +44,8 @@ public class QuizService {
         }
         ShortAnswerQuiz quiz = list.get(0);
         activeQuizMap.put(roomId, quiz);
+        // 초기화: 이전 첫 정답 기록 삭제
+        firstCorrectAnswerMap.remove(roomId);
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("quizId", quiz.getQuizId());
@@ -50,7 +53,6 @@ public class QuizService {
         payload.put("roomId", roomId);
 
         try {
-            // 기존에는 JSON 문자열로 변환했으나 여기서는 그대로 객체(Map)를 발행할 수도 있습니다.
             String jsonMessage = objectMapper.writeValueAsString(payload);
             redisPublisher.publish("game-quiz", jsonMessage);
         } catch (Exception e) {
@@ -80,7 +82,9 @@ public class QuizService {
     }
 
     /**
-     * 제출된 정답과 활성 퀴즈의 정답을 비교 후, 결과를 Redis 채널 "game-quizResult"에 발행합니다.
+     * 제출된 정답과 활성 퀴즈의 정답을 비교 후, 전투모드 로직을 적용합니다.
+     * - 첫 정답 제출 시, 해당 사용자가 정답이면 상대방의 라이프를 1 감소시킵니다.
+     * - 이후 정답 제출은 무시됩니다.
      */
     public void checkQuizAnswer(String roomId, String userAnswer, String userId) {
         ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
@@ -95,15 +99,21 @@ public class QuizService {
         payload.put("userId", userId);
 
         String key = "room:users:" + roomId;
-        // Redis에 저장된 값은 문자열 형태이므로, 가져올 때 형변환 후 역직렬화
-        Object obj = redisTemplate.opsForHash().get(key, userId);
-        if (obj != null) {
-            String stored = (String) obj;
-            UserStatus userStatus = UserStatusUtil.deserialize(stored);
-            if (isCorrect) {
-                userStatus.setCorrect(true);
-                redisTemplate.opsForHash().put(key, userId, UserStatusUtil.serialize(userStatus));
+        if (isCorrect && !firstCorrectAnswerMap.containsKey(roomId)) {
+            // 첫 정답 제출 처리
+            firstCorrectAnswerMap.put(roomId, userId);
+            // 모든 사용자 상태를 가져와서, 본인을 제외한 상대방의 라이프 1 감소
+            Map<Object, Object> userMap = redisTemplate.opsForHash().entries(key);
+            for (Map.Entry<Object, Object> entry : userMap.entrySet()) {
+                String stored = (String) entry.getValue();
+                UserStatus status = UserStatusUtil.deserialize(stored);
+                if (!status.getUserId().equals(userId)) {
+                    status.setLife(status.getLife() - 1);
+                    redisTemplate.opsForHash().put(key, status.getUserId(), UserStatusUtil.serialize(status));
+                }
             }
+            // 변경된 사용자 상태 발행
+            gameService.publishUserStatus(roomId);
         }
 
         try {
@@ -114,7 +124,7 @@ public class QuizService {
         }
         if (isCorrect) {
             activeQuizMap.remove(roomId);
-            gameService.publishUserStatus(roomId); // 상태 발행
+            firstCorrectAnswerMap.remove(roomId);
         }
     }
 }

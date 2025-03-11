@@ -27,7 +27,6 @@ public class GameService {
         GameInfo gameInfo = gameRoomRepository.findByRoomId(roomId)
                 .map(room -> new GameInfo(room.getStatus(), room.getScore(), room.getRoomId()))
                 .orElse(new GameInfo("NOT_FOUND", 0, roomId));
-        // 간단하게 toString()으로 발행 (실제 사용 시 포맷에 맞게 수정 가능)
         redisPublisher.publish("game-info", gameInfo.toString());
     }
 
@@ -37,23 +36,21 @@ public class GameService {
         Map<String, String> map = new HashMap<>();
         map.put("roomId", roomId);
         map.put("hint", hint);
-        // Map의 toString() 결과를 발행
         redisPublisher.publish("game-hint", map.toString());
     }
 
-    // 사용자 접속 처리
+    // 사용자 접속 처리 (라이프 초기값 3)
     public void userConnected(String roomId, String userId) {
         String key = USER_STATUS_KEY_PREFIX + roomId;
         UserStatus userStatus = new UserStatus();
         userStatus.setUserId(userId);
-        userStatus.setCorrect(false);
-        // 사용자 상태를 문자열로 저장
+        userStatus.setLife(3); // 초기 라이프 3
         String serialized = UserStatusUtil.serialize(userStatus);
         redisTemplate.opsForHash().put(key, userId, serialized);
         publishUserStatus(roomId);
     }
 
-    // 사용자 상태 발행 (문자열 형식)
+    // 사용자 상태 발행 (문자열 형식: "roomId:1234;users:user1|3,user2|2")
     public void publishUserStatus(String roomId) {
         String key = USER_STATUS_KEY_PREFIX + roomId;
         Map<Object, Object> userMap = redisTemplate.opsForHash().entries(key);
@@ -61,7 +58,6 @@ public class GameService {
                 .map(val -> UserStatusUtil.deserialize((String) val))
                 .collect(Collectors.toList());
 
-        // payload를 "roomId:1234;users:user1|false,user2|true" 형태의 문자열로 구성
         StringBuilder sb = new StringBuilder();
         sb.append("roomId:").append(roomId).append(";users:");
         boolean first = true;

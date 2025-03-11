@@ -22,9 +22,9 @@ public class RedisGameUserStatusSubscriber implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            // 메시지를 문자열로 직접 변환 (RedisTemplate에서 StringRedisSerializer 사용)
+            // 메시지를 문자열로 직접 변환 (StringRedisSerializer 사용)
             String payloadStr = new String(message.getBody(), StandardCharsets.UTF_8);
-            // 예시: "roomId:1234;users:user1|false,user2|true"
+            // 예상 포맷: "roomId:1234;users:user1|3,user2|2"
             String roomId = "";
             List<UserStatus> userList = new ArrayList<>();
 
@@ -41,14 +41,13 @@ public class RedisGameUserStatusSubscriber implements MessageListener {
                             if (userParts.length == 2) {
                                 UserStatus u = new UserStatus();
                                 u.setUserId(userParts[0]);
-                                u.setCorrect(Boolean.parseBoolean(userParts[1]));
+                                u.setLife(Integer.parseInt(userParts[1]));
                                 userList.add(u);
                             }
                         }
                     }
                 }
             }
-            // WebSocket으로 발송
             messagingTemplate.convertAndSend("/topic/game/" + roomId + "-userStatus", userList);
             log.info("RedisGameUserStatusSubscriber sent user status for room {}: {}", roomId, userList);
         } catch (Exception e) {
