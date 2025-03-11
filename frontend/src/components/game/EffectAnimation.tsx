@@ -58,62 +58,97 @@ const EffectAnimation: React.FC<EffectAnimationProps> = ({
     containerRef.current.appendChild(app.view as HTMLCanvasElement)
     appRef.current = app
 
-    const textures = imagePaths.map((path) => PIXI.Texture.from(path))
-    const animation = new PIXI.AnimatedSprite(textures)
+    // 전역 설정으로 NEAREST 스케일 모드 적용
+    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
-    animation.animationSpeed = animationSpeed
-    animation.loop = loop
-    animation.anchor.set(0.5)
+    // 모든 텍스처가 로드될 때까지 기다림
+    const loadTextures = async () => {
+      try {
+        const texturePromises = imagePaths.map((path) => {
+          return new Promise<PIXI.Texture>((resolve, reject) => {
+            const texture = PIXI.Texture.from(path)
+            if (texture.baseTexture.valid) {
+              texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST
+              resolve(texture)
+            } else {
+              texture.baseTexture.once("loaded", () => {
+                texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST
+                resolve(texture)
+              })
+              texture.baseTexture.once("error", (err) => reject(err))
+            }
+          })
+        })
 
-    if (moving) {
-      if (direction) {
-        animation.x = width / 4
-      } else {
-        animation.x = (width * 3) / 4
-        animation.scale.x = -1
-      }
-    } else {
-      animation.x = width / 2
-    }
+        const textures = await Promise.all(texturePromises)
+        if (!mountedRef.current) return
 
-    animation.y = height / 2
-    animation.width = width
-    animation.height = height
+        const animation = new PIXI.AnimatedSprite(textures)
+        animation.animationSpeed = animationSpeed
+        animation.loop = loop
+        animation.anchor.set(0.5)
 
-    animation.onComplete = () => {
-      if (onAnimationComplete) {
-        onAnimationComplete()
-      }
-    }
-
-    app.stage.addChild(animation)
-    animationRef.current = animation
-
-    if (moving) {
-      app.ticker.add(() => {
-        if (!animationRef.current) return
-
-        if (direction) {
-          animationRef.current.x += 5
-          if (animationRef.current.x > width * 0.65 && !hitRightRef.current && onHitRight) {
-            console.log("오른쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.65)
-            hitRightRef.current = true
-            onHitRight()
+        if (moving) {
+          if (direction) {
+            animation.x = width / 4
+          } else {
+            animation.x = (width * 3) / 4
+            animation.scale.x = -1
           }
         } else {
-          animationRef.current.x -= 5
-          if (animationRef.current.x < width * 0.35 && !hitLeftRef.current && onHitLeft) {
-            console.log("왼쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.35)
-            hitLeftRef.current = true
-            onHitLeft()
+          animation.x = width / 2
+        }
+
+        animation.y = height / 2
+        animation.width = width
+        animation.height = height
+
+        animation.onComplete = () => {
+          if (onAnimationComplete) {
+            onAnimationComplete()
           }
         }
-      })
+
+        app.stage.addChild(animation)
+        animationRef.current = animation
+
+        if (moving) {
+          app.ticker.add(() => {
+            if (!animationRef.current) return
+
+            if (direction) {
+              animationRef.current.x += 5
+              if (animationRef.current.x > width * 0.65 && !hitRightRef.current && onHitRight) {
+                console.log("오른쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.65)
+                hitRightRef.current = true
+                onHitRight()
+              }
+            } else {
+              animationRef.current.x -= 5
+              if (animationRef.current.x < width * 0.35 && !hitLeftRef.current && onHitLeft) {
+                console.log("왼쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.35)
+                hitLeftRef.current = true
+                onHitLeft()
+              }
+            }
+          })
+        }
+
+        setIsLoaded(true)
+
+        if (isPlaying) {
+          animation.visible = true
+          animation.play()
+        }
+      } catch (error) {
+        console.error("텍스처 로드 중 오류 발생:", error)
+      }
     }
 
-    setIsLoaded(true)
+    loadTextures()
 
     return () => {
+      mountedRef.current = false
       if (appRef.current) {
         appRef.current.destroy(true)
         appRef.current = null

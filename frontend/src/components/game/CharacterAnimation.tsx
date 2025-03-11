@@ -32,12 +32,10 @@ const CharacterAnimation: React.FC<CharacterAnimationProps> = ({
   const appRef = useRef<PIXI.Application | null>(null)
   const animationRef = useRef<PIXI.AnimatedSprite | null>(null)
   const prevStateRef = useRef(state)
+  const [isLoaded, setIsLoaded] = React.useState(false)
 
   useEffect(() => {
     if (!containerRef.current || appRef.current) return
-
-    // 전역 설정: 모든 텍스처에 NEAREST 스케일링 모드 적용
-    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
 
     const app = new PIXI.Application({
       width: frameWidth * scale,
@@ -49,15 +47,14 @@ const CharacterAnimation: React.FC<CharacterAnimationProps> = ({
     containerRef.current.appendChild(app.view as HTMLCanvasElement)
     appRef.current = app
 
+    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
+
     const baseTexture = PIXI.BaseTexture.from(spriteSheet)
-    // 개별 텍스처에도 NEAREST 스케일링 모드 적용
     baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST
 
     const textures = []
-
     for (let i = 0; i < frameCount; i++) {
-      const frame = new PIXI.Rectangle(i * frameWidth, 0, frameWidth, frameHeight)
-      const texture = new PIXI.Texture(baseTexture, frame)
+      const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(i * frameWidth, 0, frameWidth, frameHeight))
       textures.push(texture)
     }
 
@@ -65,25 +62,49 @@ const CharacterAnimation: React.FC<CharacterAnimationProps> = ({
     animation.animationSpeed = animationSpeed
     animation.loop = state === "idle"
     animation.anchor.set(0.5)
+    animation.scale.set(scale)
     animation.x = (frameWidth * scale) / 2
     animation.y = (frameHeight * scale) / 2
-    animation.width = frameWidth * scale
-    animation.height = frameHeight * scale
 
     if (!direction) {
-      animation.scale.x *= -1
+      animation.scale.x = -scale
     }
 
-    if (onAnimationComplete) {
-      animation.onComplete = onAnimationComplete
+    animation.onComplete = () => {
+      if (state === "die" && onAnimationComplete) {
+        onAnimationComplete()
+      }
     }
 
     app.stage.addChild(animation)
     animationRef.current = animation
 
+    const updateTextures = () => {
+      if (!animationRef.current) return
+
+      const newBaseTexture = PIXI.BaseTexture.from(spriteSheet)
+      newBaseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST
+
+      const newTextures = []
+      for (let i = 0; i < frameCount; i++) {
+        const texture = new PIXI.Texture(newBaseTexture, new PIXI.Rectangle(i * frameWidth, 0, frameWidth, frameHeight))
+        newTextures.push(texture)
+      }
+
+      animationRef.current.textures = newTextures
+      animationRef.current.loop = state === "idle"
+    }
+
+    if (prevStateRef.current !== state) {
+      updateTextures()
+      prevStateRef.current = state
+    }
+
     if (isPlaying) {
       animation.play()
     }
+
+    setIsLoaded(true)
 
     return () => {
       if (appRef.current) {
@@ -92,25 +113,6 @@ const CharacterAnimation: React.FC<CharacterAnimationProps> = ({
       }
     }
   }, [spriteSheet, frameWidth, frameHeight, frameCount, animationSpeed, direction, state, scale, onAnimationComplete])
-
-  useEffect(() => {
-    if (!animationRef.current) return
-
-    // 상태가 변경되었을 때만 처리
-    if (prevStateRef.current !== state) {
-      animationRef.current.loop = state === "idle"
-
-      if (state === "die") {
-        // 죽는 모션일 때는 처음부터 재생
-        animationRef.current.gotoAndPlay(0)
-      } else if (state === "idle") {
-        // idle 상태일 때는 계속 재생
-        animationRef.current.play()
-      }
-
-      prevStateRef.current = state
-    }
-  }, [state])
 
   useEffect(() => {
     if (!animationRef.current) return
