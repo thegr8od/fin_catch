@@ -1,6 +1,6 @@
 package com.finbattle.global.common.filter;
 
-import com.finbattle.domain.member.dto.MemberDto;
+import com.finbattle.domain.member.dto.AuthenticUser;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.Util.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -63,7 +63,7 @@ public class JWTFilter extends OncePerRequestFilter {
         String providerId = jwtUtil.getAccessProviderId(token);
         Long memberId = jwtUtil.getAccessMemberId(token);
 
-        MemberDto memberDto = MemberDto.builder()
+        AuthenticUser memberDto = AuthenticUser.builder()
             .providerId(providerId)
             .memberId(memberId)
             .build();

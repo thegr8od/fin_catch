@@ -17,12 +17,15 @@ public enum BaseResponseStatus {
     JWT_NOT_FOUND(false, HttpStatus.UNAUTHORIZED, 1001, "JWT를 찾을 수 없습니다."),
     JWT_EXPIRED(false, HttpStatus.UNAUTHORIZED, 1002, "만료된 JWT입니다."),
     JWT_INVALID(false, HttpStatus.UNAUTHORIZED, 1003, "유효하지 않은 JWT입니다."),
+    REFRESH_TOKEN_INVALID(false, HttpStatus.UNAUTHORIZED, 1004, "유효하지 않은 Refresh Token입니다."),
+    REFRESH_TOKEN_NOT_FOUND(false, HttpStatus.UNAUTHORIZED, 1005, "Refresh Token이 없습니다."),
 
-    // Member (2001 ~ 2099)
+    // Member+Cat (2001 ~ 2099)
     MEMBER_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2001, "맴버를 찾을 수 없습니다."),
-    MEMBER_IS_DELETED(false, HttpStatus.BAD_REQUEST, 2002, "삭제된 회원 입니다.");
+    MEMBER_IS_DELETED(false, HttpStatus.BAD_REQUEST, 2002, "삭제된 회원 입니다."),
+    CAT_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2003, "고양이가 도망갔습니다."),
+    POINT_NOT_ENOUGH(false, HttpStatus.BAD_REQUEST, 2004, "포인트가 부족합니다.");
 
-    
     private final boolean isSuccess;
     @JsonIgnore
     private final HttpStatus httpStatus;

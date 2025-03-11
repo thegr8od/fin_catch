@@ -1,6 +1,6 @@
 package com.finbattle.domain.oauth.dto;
 
-import com.finbattle.domain.member.dto.MemberDto;
+import com.finbattle.domain.member.dto.AuthenticUser;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 @RequiredArgsConstructor
 public class AuthenticatedUser implements OAuth2User {
 
-    private final MemberDto memberDto;
+    private final AuthenticUser memberDto;
 
     @Override
     public Map<String, Object> getAttributes() {

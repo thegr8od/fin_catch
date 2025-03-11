@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import net.minidev.json.annotate.JsonIgnore;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -44,11 +45,16 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default // ✅ 기본값 추가
+    @JsonIgnore
     private List<MemberCat> memberCats = new ArrayList<>();
 
     @Column(nullable = false)
     @Builder.Default // ✅ 기본값 추가
     private Long exp = 0L; // 경험치 (기본값: 0)
+
+    @Column(nullable = false)
+    @Builder.Default // ✅ 기본값 추가
+    private Long point = 100000L; // 포인트 (기본값: 0)
 
     public static Member of(String providerId, String nickname, String email) {
         // Member 생성
@@ -56,7 +62,6 @@ public class Member extends BaseEntity {
             .providerId(providerId)
             .nickname(nickname)
             .email(email)
-            //.memberCats(new ArrayList<>())
             .build();
     }
 
@@ -67,13 +72,23 @@ public class Member extends BaseEntity {
         }
     }
 
-    // 특정 고양이를 삭제하는 메서드
-    public void removeCat(Cat cat) {
-        memberCats.removeIf(memberCat -> memberCat.getCat().equals(cat));
-    }
-
     // 해당 고양이를 보유하고 있는지 확인
     public boolean hasCat(Cat cat) {
         return memberCats.stream().anyMatch(memberCat -> memberCat.getCat().equals(cat));
+    }
+
+    public Long increasePoint(Long point) {
+        this.point += point;
+        return this.point;
+    }
+
+    public Long decreasePoint(Long point) {
+        this.point -= point;
+        return this.point;
+    }
+
+    public Long increaseExp(Long exp) {
+        this.exp += exp;
+        return this.exp;
     }
 }

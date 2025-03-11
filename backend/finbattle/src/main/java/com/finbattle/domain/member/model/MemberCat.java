@@ -2,6 +2,7 @@ package com.finbattle.domain.member.model;
 
 import com.finbattle.domain.cat.entity.Cat;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,13 +18,13 @@ public class MemberCat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long memberCatid;
+    private Long memberCatId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cat_id")
     private Cat cat;
 

@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MemberDto {
+public class AuthenticUser {
 
     private Long memberId;
     private String providerId;
@@ -18,15 +18,15 @@ public class MemberDto {
     private String nickname;
 
     @Builder
-    public MemberDto(Long memberId, String providerId, String email, String nickname) {
+    public AuthenticUser(Long memberId, String providerId, String email, String nickname) {
         this.memberId = memberId;
         this.providerId = providerId;
         this.email = email;
         this.nickname = nickname;
     }
 
-    public static MemberDto from(Member member) {
-        return MemberDto.builder()
+    public static AuthenticUser from(Member member) {
+        return AuthenticUser.builder()
             .memberId(member.getMemberId())
             .providerId(member.getProviderId())
             .email(member.getEmail())
