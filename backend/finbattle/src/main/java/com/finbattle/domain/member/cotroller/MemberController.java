@@ -51,7 +51,7 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>(myInfoDto));
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃 후 리프레시 토큰을 제거합니다.", security = @SecurityRequirement(name = "JWT"))
+    @Operation(summary = "로그아웃", description = "로그아웃 후 리프레시 토큰을 제거합니다.")
     @ApiResponse(responseCode = "200", description = "로그아웃 성공")
     @PostMapping("/logout")
     public ResponseEntity<BaseResponse<String>> logout(
@@ -86,7 +86,7 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>(responseBody));
     }
 
-    @Operation(summary = "닉네임 변경", description = "사용자의 닉네임을 변경합니다.", security = @SecurityRequirement(name = "JWT"))
+    @Operation(summary = "닉네임 변경", description = "사용자의 닉네임을 변경합니다.")
     @ApiResponse(responseCode = "200", description = "닉네임 변경 성공")
     @PatchMapping("/nickname")
     public ResponseEntity<BaseResponse<String>> updateNickname(
@@ -109,7 +109,7 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>(check));
     }
 
-    @Operation(summary = "사용자의 고양이 목록 조회", description = "로그인한 사용자가 보유한 고양이 목록을 조회합니다.", security = @SecurityRequirement(name = "JWT"))
+    @Operation(summary = "사용자의 고양이 목록 조회", description = "로그인한 사용자가 보유한 고양이 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "고양이 목록 조회 성공")
     @GetMapping("/mycat")
     public ResponseEntity<BaseResponse<List<Cat>>> getMyCats(
@@ -119,7 +119,7 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>(cats));
     }
 
-    @Operation(summary = "랜덤 고양이 뽑기", description = "로그인한 사용자가 랜덤으로 고양이를 뽑습니다.", security = @SecurityRequirement(name = "JWT"))
+    @Operation(summary = "랜덤 고양이 뽑기", description = "로그인한 사용자가 랜덤으로 고양이를 뽑습니다.")
     @ApiResponse(responseCode = "200", description = "랜덤 고양이 뽑기 성공")
     @GetMapping("/pick/cat")
     public ResponseEntity<BaseResponse<CatDto>> pickCat(

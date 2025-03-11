@@ -4,7 +4,9 @@ package com.finbattle.global.common.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,5 +30,26 @@ public class SpringdocConfig {
                     .description("JWT 토큰을 입력하세요. 예: Bearer eyJhbGciOiJ...")
                 )
             );
+    }
+
+    @Bean
+    public OpenApiCustomizer customOpenApi() {
+        return openApi -> openApi.getComponents().getSchemas().keySet()
+            .removeIf(name -> name.startsWith("BaseResponse"));
+    }
+
+    // OpenApiCustomiser를 이용해, "/api/member/public" 경로를 제외한 엔드포인트에 자동으로 보안 요구사항 추가
+    @Bean
+    public OpenApiCustomizer securityOpenApiCustomiser() {
+        return openApi -> {
+            openApi.getPaths().forEach((path, pathItem) -> {
+                // public 경로가 포함된 경우는 건너뜁니다.
+                if (!path.matches("^/api/[^/]+/public.*")) {
+                    pathItem.readOperations().forEach(operation -> {
+                        operation.addSecurityItem(new SecurityRequirement().addList("JWT"));
+                    });
+                }
+            });
+        };
     }
 }
