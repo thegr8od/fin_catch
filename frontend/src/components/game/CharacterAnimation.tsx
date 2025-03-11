@@ -1,22 +1,23 @@
-import React, { useRef } from "react";
+import React from "react";
 import { CharacterAnimationProps } from "./types/character";
 import { useCharacterAnimation } from "./hooks/useCharacterAnimation";
 
-const CharacterAnimation: React.FC<CharacterAnimationProps> = ({ state, isPlaying = true, direction = true, scale = 3, className = "", onAnimationComplete }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { appRef, isLoaded } = useCharacterAnimation({
+interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
+  resourcesLoaded?: boolean;
+}
+
+const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({ state, isPlaying = true, direction = true, scale = 3, className = "", onAnimationComplete, resourcesLoaded = false }) => {
+  const { containerRef } = useCharacterAnimation({
     state,
     direction,
     scale,
     onAnimationComplete,
   });
 
-  // 컴포넌트가 마운트되면 PIXI 앱을 컨테이너에 추가
-  React.useEffect(() => {
-    if (containerRef.current && appRef.current && isLoaded) {
-      containerRef.current.appendChild(appRef.current.view as HTMLCanvasElement);
-    }
-  }, [appRef, isLoaded]);
+  // 리소스가 로드되지 않았으면 아무것도 렌더링하지 않음
+  if (!resourcesLoaded) {
+    return null;
+  }
 
   return (
     <div className={`relative w-full h-full ${className}`}>

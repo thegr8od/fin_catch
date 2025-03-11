@@ -37,16 +37,26 @@ const EffectAnimation: React.FC<EffectAnimationProps> = ({
   const mountedRef = useRef<boolean>(true);
   const hitLeftRef = useRef<boolean>(false);
   const hitRightRef = useRef<boolean>(false);
+  const cleanupScheduledRef = useRef<boolean>(false);
 
   const cleanupAnimation = () => {
-    if (appRef.current) {
-      if (containerRef.current && containerRef.current.contains(appRef.current.view)) {
-        containerRef.current.removeChild(appRef.current.view);
+    if (cleanupScheduledRef.current) return;
+    cleanupScheduledRef.current = true;
+
+    // requestAnimationFrame을 사용하여 다음 프레임에서 정리
+    requestAnimationFrame(() => {
+      if (!mountedRef.current) return;
+
+      if (appRef.current) {
+        if (containerRef.current && containerRef.current.contains(appRef.current.view)) {
+          containerRef.current.removeChild(appRef.current.view);
+        }
+        appRef.current.destroy(true);
+        appRef.current = null;
       }
-      appRef.current.destroy(true);
-      appRef.current = null;
-    }
-    animationRef.current = null;
+      animationRef.current = null;
+      cleanupScheduledRef.current = false;
+    });
   };
 
   useEffect(() => {
@@ -117,10 +127,12 @@ const EffectAnimation: React.FC<EffectAnimationProps> = ({
 
         animation.onComplete = () => {
           if (!loop) {
-            // 애니메이션이 완료되면 캔버스 제거
+            if (onAnimationComplete) {
+              onAnimationComplete();
+            }
+            // 애니메이션 완료 후 정리 예약
             cleanupAnimation();
-          }
-          if (onAnimationComplete) {
+          } else if (onAnimationComplete) {
             onAnimationComplete();
           }
         };

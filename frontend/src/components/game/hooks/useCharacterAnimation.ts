@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as PIXI from "pixi.js";
-import { CharacterState } from "../types/character";
+import { CharacterState, CharacterSpriteConfig } from "../types/character";
 import { characterAnimations } from "../constants/animations";
 
 interface UseCharacterAnimationProps {
@@ -11,115 +11,158 @@ interface UseCharacterAnimationProps {
 }
 
 export const useCharacterAnimation = ({ state, direction = true, scale = 3, onAnimationComplete }: UseCharacterAnimationProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef<boolean>(false);
   const appRef = useRef<PIXI.Application | null>(null);
   const animationRef = useRef<PIXI.AnimatedSprite | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const mountedRef = useRef<boolean>(true);
-  const prevStateRef = useRef(state);
+  const initialRenderRef = useRef<boolean>(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  const createAnimation = async (config: (typeof characterAnimations)[CharacterState]) => {
-    try {
-      const baseTexture = PIXI.BaseTexture.from(config.spriteSheet);
-      baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
-
-      const textures = [];
-      for (let i = 0; i < config.frameCount; i++) {
-        const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(i * config.frameWidth, 0, config.frameWidth, config.frameHeight));
-        textures.push(texture);
-      }
-
-      if (!mountedRef.current) return null;
-
-      const animation = new PIXI.AnimatedSprite(textures);
-      animation.animationSpeed = config.animationSpeed;
-      animation.loop = config.loop ?? false;
-      animation.anchor.set(0.5);
-      animation.scale.set(scale);
-      animation.x = (config.frameWidth * scale) / 2;
-      animation.y = (config.frameHeight * scale) / 2;
-
-      if (!direction) {
-        animation.scale.x = -scale;
-      }
-
-      animation.onComplete = () => {
-        if (onAnimationComplete) {
-          onAnimationComplete();
-        }
-      };
-
-      return animation;
-    } catch (error) {
-      console.error("텍스처 로드 중 오류 발생:", error);
-      return null;
+  // 컨테이너 표시/숨김 설정 함수
+  const setContainerVisibility = (visible: boolean) => {
+    if (containerRef.current) {
+      containerRef.current.style.display = visible ? "block" : "none";
     }
   };
 
-  // 초기 애니메이션 설정
   useEffect(() => {
-    if (!mountedRef.current || appRef.current) return;
+    mountedRef.current = true;
 
-    const config = characterAnimations[state];
-    const app = new PIXI.Application({
-      width: config.frameWidth * scale,
-      height: config.frameHeight * scale,
-      backgroundAlpha: 0,
-      antialias: false,
-    });
+    const createAndSetupAnimation = async () => {
+      if (!containerRef.current || !mountedRef.current) return;
 
-    appRef.current = app;
-    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+      // 애니메이션 생성 전에 컨테이너 숨김
+      setContainerVisibility(false);
 
-    createAnimation(config).then((animation) => {
-      if (animation && appRef.current) {
-        appRef.current.stage.addChild(animation);
-        animationRef.current = animation;
-        animation.play();
-        setIsLoaded(true);
-      }
-    });
+      try {
+        const config = characterAnimations[state];
+        const result = await createAnimation(config);
 
-    return () => {
-      if (appRef.current) {
-        appRef.current.destroy(true);
-        appRef.current = null;
-      }
-    };
-  }, []);
-
-  // 상태 변경 시 애니메이션 업데이트
-  useEffect(() => {
-    if (prevStateRef.current === state || !appRef.current || !isLoaded) return;
-
-    const config = characterAnimations[state];
-
-    createAnimation(config).then((newAnimation) => {
-      if (newAnimation && appRef.current) {
-        // 이전 애니메이션 제거
-        if (animationRef.current) {
-          appRef.current.stage.removeChild(animationRef.current);
-          animationRef.current.destroy();
+        if (!result || !mountedRef.current || !containerRef.current) {
+          if (result?.app) {
+            result.app.destroy(true);
+          }
+          return;
         }
 
-        // 새 애니메이션 추가
-        appRef.current.stage.addChild(newAnimation);
-        animationRef.current = newAnimation;
-        newAnimation.play();
-        prevStateRef.current = state;
+        const { app, animation } = result;
+
+        // 방향 설정
+        if (!direction) {
+          animation.scale.x *= -1;
+        }
+
+        // 크기 설정
+        animation.scale.set(scale * (direction ? 1 : -1), scale);
+
+        if (onAnimationComplete) {
+          animation.onComplete = onAnimationComplete;
+        }
+
+        // 새 애니메이션이 준비된 후에 기존 애니메이션 정리
+        const oldApp = appRef.current;
+        const oldAnimation = animationRef.current;
+
+        // 새 애니메이션 설정
+        appRef.current = app;
+        animationRef.current = animation;
+        containerRef.current.appendChild(app.view as HTMLCanvasElement);
+
+        // 이전 애니메이션 정리
+        if (oldAnimation) {
+          oldAnimation.destroy();
+        }
+        if (oldApp) {
+          oldApp.destroy(true);
+        }
+
+        // 모든 설정이 완료된 후 컨테이너 표시
+        requestAnimationFrame(() => {
+          setContainerVisibility(true);
+        });
+      } catch (error) {
+        console.error("애니메이션 생성 중 오류 발생:", error);
       }
-    });
+    };
+
+    // 초기 렌더링인 경우 지연 실행
+    if (initialRenderRef.current) {
+      const timer = setTimeout(() => {
+        if (mountedRef.current) {
+          createAndSetupAnimation();
+          initialRenderRef.current = false;
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      // 상태 변경 시에는 즉시 실행
+      createAndSetupAnimation();
+    }
+
+    return () => {
+      if (!initialRenderRef.current) {
+        if (animationRef.current) {
+          animationRef.current.destroy();
+        }
+        if (appRef.current) {
+          appRef.current.destroy(true);
+        }
+      }
+    };
   }, [state, direction, scale, onAnimationComplete]);
 
-  return {
-    appRef,
-    animationRef,
-    isLoaded,
+  const createAnimation = async (config: CharacterSpriteConfig) => {
+    return new Promise<{ app: PIXI.Application; animation: PIXI.AnimatedSprite } | null>(async (resolve) => {
+      try {
+        // 텍스처 로딩
+        const baseTexture = PIXI.BaseTexture.from(config.spriteSheet);
+        baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+
+        // 텍스처가 아직 로드되지 않았다면 기다립니다
+        if (!baseTexture.valid) {
+          await new Promise<void>((resolve, reject) => {
+            baseTexture.once("loaded", () => resolve());
+            baseTexture.once("error", (err) => reject(err));
+          });
+        }
+
+        if (!mountedRef.current) {
+          resolve(null);
+          return;
+        }
+
+        const app = new PIXI.Application({
+          width: config.frameWidth * scale,
+          height: config.frameHeight * scale,
+          backgroundAlpha: 0,
+          antialias: false,
+        });
+
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+
+        const textures = [];
+        for (let i = 0; i < config.frameCount; i++) {
+          const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(i * config.frameWidth, 0, config.frameWidth, config.frameHeight));
+          textures.push(texture);
+        }
+
+        const animation = new PIXI.AnimatedSprite(textures);
+        animation.animationSpeed = config.animationSpeed;
+        animation.loop = config.loop ?? false;
+        animation.anchor.set(0.5);
+        animation.scale.set(scale);
+        animation.x = (config.frameWidth * scale) / 2;
+        animation.y = (config.frameHeight * scale) / 2;
+
+        app.stage.addChild(animation);
+        animation.play();
+
+        resolve({ app, animation });
+      } catch (error) {
+        console.error("애니메이션 생성 중 오류 발생:", error);
+        resolve(null);
+      }
+    });
   };
+
+  return { containerRef };
 };
