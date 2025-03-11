@@ -2,7 +2,7 @@ package com.finbattle.domain.member.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.finbattle.domain.member.entity.Member;
+import com.finbattle.domain.member.model.Member;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

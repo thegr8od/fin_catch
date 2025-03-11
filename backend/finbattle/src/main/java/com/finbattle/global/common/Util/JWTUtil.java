@@ -2,9 +2,7 @@ package com.finbattle.global.common.Util;
 
 import com.finbattle.global.common.exception.exception.BusinessException;
 import com.finbattle.global.common.model.dto.BaseResponseStatus;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -26,7 +24,7 @@ public class JWTUtil {
     private long refreshTokenValidity;
 
     public JWTUtil(@Value("${spring.jwt.secret-access}") String access,
-                    @Value("${spring.jwt.secret-refresh}") String refresh) {
+        @Value("${spring.jwt.secret-refresh}") String refresh) {
         secretAccess = new SecretKeySpec(access.getBytes(StandardCharsets.UTF_8),
             Jwts.SIG.HS256.key().build().getAlgorithm());
         secretRefresh = new SecretKeySpec(refresh.getBytes(StandardCharsets.UTF_8),
@@ -76,7 +74,11 @@ public class JWTUtil {
     }
 
     public boolean validateRefreshToken(String token) {
-        return validateToken(token, secretRefresh);
+        try {
+            return validateToken(token, secretRefresh);
+        } catch (Exception e) {
+            throw new BusinessException(BaseResponseStatus.REFRESH_TOKEN_INVALID);
+        }
     }
 
     private Long getMemberId(String token, SecretKey secretkey) {

@@ -1,0 +1,42 @@
+package com.finbattle.domain.member.dto;
+
+import com.finbattle.domain.cat.entity.Cat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@ToString
+@NoArgsConstructor
+@Getter
+@Schema(description = "사용자 정보 DTO")
+public class MyInfoDto {
+
+    @Schema(description = "사용자 이메일", example = "user@example.com")
+    private String email;
+
+    @Schema(description = "사용자 닉네임", example = "고양이사랑해")
+    private String nickname;
+
+    @Schema(description = "사용자가 보유한 고양이 목록")
+    private List<CatDto> Cats;
+
+    @Schema(description = "사용자의 경험치", example = "1500")
+    private Long exp; // 경험치 (기본값: 0)
+
+    @Schema(description = "사용자의 포인트", example = "500")
+    private Long point; // 포인트 (기본값: 0)
+
+    public MyInfoDto(String email, String nickname, List<Cat> Cats, Long exp, Long point) {
+        this.email = email;
+        this.nickname = nickname;
+        this.Cats = Cats.stream()
+            .map(CatDto::new)
+            .collect(Collectors.toList());
+        ;
+        this.exp = exp;
+        this.point = point;
+    }
+}

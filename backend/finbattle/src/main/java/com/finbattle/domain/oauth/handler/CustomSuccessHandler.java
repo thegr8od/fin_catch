@@ -22,7 +22,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final AuthenticationUtil authenticationUtil;
 
     @Value("${app.baseUrl}")
-    private String baseUrl;
+    private String baseUrl = "http://localhost:3000";
     private static final String LOGIN_SUCCESS_URI = "/api/member/public/reissue";
 
     @Override
@@ -38,5 +38,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 응답 설정
         response.addCookie(cookieUtil.createCookie("REFRESH", refreshToken));
         response.sendRedirect(baseUrl + LOGIN_SUCCESS_URI);
+        //response.sendRedirect(baseUrl);
     }
 }
