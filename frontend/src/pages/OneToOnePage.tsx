@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import battleBackground from "../assets/battlebg.png";
-import GameAnimation from "../components/game/GameAnimation";
-import SpriteAnimation from "../components/game/SpriteAnimation";
-import { getMotionImages } from "../utils/motionLoader";
-import { useLoading } from "../contexts/LoadingContext";
+import React, { useState, useEffect, useRef } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import battleBackground from "../assets/battlebg.png"
+import CharacterAnimation from "../components/game/CharacterAnimation"
+import EffectAnimation from "../components/game/EffectAnimation"
+import { getMotionImages } from "../utils/motionLoader"
+import { useLoading } from "../contexts/LoadingContext"
 
 /**
  * 채팅 메시지 인터페이스
@@ -14,238 +14,223 @@ import { useLoading } from "../contexts/LoadingContext";
  * @property {boolean} isVisible - 메시지 표시 여부 (선택적)
  */
 interface ChatMessage {
-  sender: string;
-  message: string;
-  timestamp: Date;
-  isVisible?: boolean;
+  sender: string
+  message: string
+  timestamp: Date
+  isVisible?: boolean
 }
-
-/**
- * 이미지 사전 로드 함수
- * 이미지를 미리 로드하여 화면에 표시될 때 깜빡임 방지
- * @param {string} src - 이미지 경로
- * @returns {Promise<HTMLImageElement>} - 로드된 이미지 객체를 포함한 Promise
- */
-const preloadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = (e) => reject(e);
-    img.src = src;
-  });
-};
 
 /**
  * 1:1 대결 페이지 컴포넌트
  * 사용자와 상대방 간의 1:1 대결을 진행하는 페이지
  */
 const OneToOnePage: React.FC = () => {
-  const navigate = useNavigate();
-  const { category } = useParams<{ category: string }>();
-  const { setLoading, setProgress, completeLoading } = useLoading();
-  const [playerHealth, setPlayerHealth] = useState<number>(1);
-  const [opponentHealth, setOpponentHealth] = useState<number>(1);
-  const [chatInput, setChatInput] = useState<string>("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null);
-  const [timer, setTimer] = useState<number>(10);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [showAnimation, setShowAnimation] = useState<boolean>(false);
-  const [resourcesLoaded, setResourcesLoaded] = useState<boolean>(false);
+  const navigate = useNavigate()
+  const { category } = useParams<{ category: string }>()
+  const { setLoading, setProgress, completeLoading } = useLoading()
+  const [playerHealth, setPlayerHealth] = useState<number>(1)
+  const [opponentHealth, setOpponentHealth] = useState<number>(1)
+  const [chatInput, setChatInput] = useState<string>("")
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null)
+  const [timer, setTimer] = useState<number>(10)
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false)
+  const [showAnimation, setShowAnimation] = useState<boolean>(false)
+  const [resourcesLoaded, setResourcesLoaded] = useState<boolean>(false)
 
-  const resourcesLoadedRef = useRef<boolean>(false);
-  const isMountedRef = useRef<boolean>(false);
+  const resourcesLoadedRef = useRef<boolean>(false)
+  const isMountedRef = useRef<boolean>(false)
 
   useEffect(() => {
-    setLoading(true);
-    setProgress(0);
+    setLoading(true)
+    setProgress(0)
 
-    isMountedRef.current = true;
+    isMountedRef.current = true
 
     return () => {
-      isMountedRef.current = false;
-      setLoading(false);
-    };
-  }, [setLoading, setProgress]);
+      isMountedRef.current = false
+      setLoading(false)
+    }
+  }, [setLoading, setProgress])
 
   useEffect(() => {
     if (resourcesLoadedRef.current && isMountedRef.current) {
-      console.log("리소스가 이미 로드되어 있음, 로드 건너뜀");
-      completeLoading();
-      return;
+      console.log("리소스가 이미 로드되어 있음, 로드 건너뜀")
+      completeLoading()
+      return
     }
 
-    console.log("OneToOnePage 리소스 로드 시작");
+    console.log("OneToOnePage 리소스 로드 시작")
 
-    let isComponentMounted = true;
+    let isComponentMounted = true
 
     const loadImage = (src: string): Promise<HTMLImageElement> => {
       return new Promise((resolve, reject) => {
-        const img = new Image();
+        const img = new Image()
         const timeoutId = setTimeout(() => {
-          reject(new Error(`이미지 로드 타임아웃: ${src}`));
-        }, 5000);
+          reject(new Error(`이미지 로드 타임아웃: ${src}`))
+        }, 5000)
 
         img.onload = () => {
-          clearTimeout(timeoutId);
-          resolve(img);
-        };
+          clearTimeout(timeoutId)
+          resolve(img)
+        }
 
         img.onerror = (e) => {
-          clearTimeout(timeoutId);
-          reject(e);
-        };
+          clearTimeout(timeoutId)
+          reject(e)
+        }
 
-        img.src = `${src}?t=${new Date().getTime()}`;
-      });
-    };
+        img.src = `${src}?t=${new Date().getTime()}`
+      })
+    }
 
     const loadResources = async () => {
       try {
-        setProgress(10);
+        setProgress(10)
 
-        const fireImages = getMotionImages("fire", 5);
-        const imagesToLoad = [battleBackground, "/game/IdleCatt.png", ...fireImages];
+        const fireImages = getMotionImages("fire", 5)
+        const imagesToLoad = [battleBackground, "/game/IdleCatt.png", ...fireImages]
 
-        const totalImages = imagesToLoad.length;
+        const totalImages = imagesToLoad.length
 
         const imagePromises = imagesToLoad.map((src, index) => {
           return loadImage(src)
             .then((img) => {
               if (isComponentMounted) {
-                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80);
-                setProgress(newProgress);
+                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80)
+                setProgress(newProgress)
               }
-              return img;
+              return img
             })
             .catch((error) => {
-              console.error(`이미지 로드 실패: ${src}`, error);
+              console.error(`이미지 로드 실패: ${src}`, error)
               if (isComponentMounted) {
-                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80);
-                setProgress(newProgress);
+                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80)
+                setProgress(newProgress)
               }
-              return null;
-            });
-        });
+              return null
+            })
+        })
 
-        await Promise.all(imagePromises);
+        await Promise.all(imagePromises)
 
-        if (!isComponentMounted) return;
+        if (!isComponentMounted) return
 
-        setProgress(100);
-        setResourcesLoaded(true);
-        resourcesLoadedRef.current = true;
+        setProgress(100)
+        setResourcesLoaded(true)
+        resourcesLoadedRef.current = true
 
-        completeLoading();
+        completeLoading()
 
-        setIsTimerRunning(true);
+        setIsTimerRunning(true)
       } catch (error) {
-        console.error("리소스 로드 중 예외 발생:", error);
+        console.error("리소스 로드 중 예외 발생:", error)
 
-        if (!isComponentMounted) return;
+        if (!isComponentMounted) return
 
-        setProgress(100);
-        setResourcesLoaded(true);
-        completeLoading();
+        setProgress(100)
+        setResourcesLoaded(true)
+        completeLoading()
 
-        alert("게임 리소스를 로드하는 데 실패했습니다. 페이지를 새로고침하여 다시 시도해주세요.");
+        alert("게임 리소스를 로드하는 데 실패했습니다. 페이지를 새로고침하여 다시 시도해주세요.")
       }
-    };
+    }
 
-    loadResources();
+    loadResources()
 
     return () => {
-      isComponentMounted = false;
-    };
-  }, [completeLoading, setProgress]);
+      isComponentMounted = false
+    }
+  }, [completeLoading, setProgress])
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: NodeJS.Timeout | null = null
 
     if (isTimerRunning && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
+        setTimer((prevTimer) => prevTimer - 1)
+      }, 1000)
     } else if (timer === 0) {
-      setIsTimerRunning(false);
-      console.log("타이머 종료, 애니메이션 시작");
-      const fireImages = getMotionImages("fire", 5);
-      console.log("불꽃 이미지 경로:", fireImages);
-      setShowAnimation(true);
+      setIsTimerRunning(false)
+      console.log("타이머 종료, 애니메이션 시작")
+      const fireImages = getMotionImages("fire", 5)
+      console.log("불꽃 이미지 경로:", fireImages)
+      setShowAnimation(true)
     }
 
     return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [timer, isTimerRunning]);
+      if (interval) clearInterval(interval)
+    }
+  }, [timer, isTimerRunning])
 
   useEffect(() => {
     if (playerBubble) {
       const timer = setTimeout(() => {
-        setPlayerBubble(null);
-      }, 5000);
-      return () => clearTimeout(timer);
+        setPlayerBubble(null)
+      }, 5000)
+      return () => clearTimeout(timer)
     }
-  }, [playerBubble]);
+  }, [playerBubble])
 
   // 체력 상태 변경 감지 및 콘솔 출력
   useEffect(() => {
     // 중요한 상태 변화만 로그 출력
     if (playerHealth <= 0 || opponentHealth <= 0) {
-      console.log("플레이어 체력:", playerHealth);
-      console.log("상대방 체력:", opponentHealth);
+      console.log("플레이어 체력:", playerHealth)
+      console.log("상대방 체력:", opponentHealth)
 
       // 체력이 0이 되면 중앙 애니메이션 숨김
-      setShowAnimation(false);
+      setShowAnimation(false)
     }
-  }, [playerHealth, opponentHealth]);
+  }, [playerHealth, opponentHealth])
 
   const handleAnimationComplete = () => {
-    console.log("애니메이션 완료 핸들러 호출됨");
+    console.log("애니메이션 완료 핸들러 호출됨")
 
     // 일반 공격 애니메이션인 경우에만 애니메이션을 숨김
     // 체력이 0인 경우는 별도의 사망 애니메이션 컴포넌트가 처리함
     if (playerHealth > 0 && opponentHealth > 0) {
-      setShowAnimation(false);
+      setShowAnimation(false)
     }
 
     if (playerHealth <= 0 || opponentHealth <= 0) {
       if (playerHealth <= 0) {
-        console.log("게임 종료: 플레이어 패배 (체력: " + playerHealth + ")");
+        console.log("게임 종료: 플레이어 패배 (체력: " + playerHealth + ")")
       } else if (opponentHealth <= 0) {
-        console.log("게임 종료: 플레이어 승리 (상대방 체력: " + opponentHealth + ")");
+        console.log("게임 종료: 플레이어 승리 (상대방 체력: " + opponentHealth + ")")
       }
     } else {
-      console.log("게임 진행 중 - 플레이어 체력: " + playerHealth + ", 상대방 체력: " + opponentHealth);
+      console.log("게임 진행 중 - 플레이어 체력: " + playerHealth + ", 상대방 체력: " + opponentHealth)
     }
-  };
+  }
 
   const handleBackClick = () => {
-    setLoading(true);
+    setLoading(true)
     setTimeout(() => {
-      navigate("/main");
-    }, 300);
-  };
+      navigate("/main")
+    }, 300)
+  }
 
   const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChatInput(e.target.value);
-  };
+    setChatInput(e.target.value)
+  }
 
   const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (chatInput.trim() === "") return;
+    e.preventDefault()
+    if (chatInput.trim() === "") return
 
     const newMessage: ChatMessage = {
       sender: "김병년",
       message: chatInput,
       timestamp: new Date(),
-    };
+    }
 
-    setChatMessages([...chatMessages, newMessage]);
-    setPlayerBubble(newMessage);
+    setChatMessages([...chatMessages, newMessage])
+    setPlayerBubble(newMessage)
 
-    setChatInput("");
-  };
+    setChatInput("")
+  }
 
   const renderHearts = (count: number, total: number = 5) => {
     return Array(total)
@@ -254,12 +239,30 @@ const OneToOnePage: React.FC = () => {
         <span key={index} className="text-2xl mx-1">
           {index < count ? "❤️" : "🖤"}
         </span>
-      ));
-  };
+      ))
+  }
+
+  const handleHitLeft = () => {
+    console.log("왼쪽 플레이어 피격!")
+    setPlayerHealth((prev) => {
+      const newHealth = Math.max(0, prev - 1)
+      console.log("플레이어 체력 변경:", prev, "->", newHealth)
+      return newHealth
+    })
+  }
+
+  const handleHitRight = () => {
+    console.log("오른쪽 플레이어 피격!")
+    setOpponentHealth((prev) => {
+      const newHealth = Math.max(0, prev - 1)
+      console.log("상대방 체력 변경:", prev, "->", newHealth)
+      return newHealth
+    })
+  }
 
   const renderBattleScreen = () => {
     if (!resourcesLoaded) {
-      return <div className="h-full w-full"></div>;
+      return <div className="h-full w-full"></div>
     }
 
     return (
@@ -281,37 +284,9 @@ const OneToOnePage: React.FC = () => {
                 <div className="w-[185px] h-48 flex items-center justify-center mb-3 p-2">
                   <div className="w-full h-full">
                     {playerHealth > 0 ? (
-                      <SpriteAnimation
-                        isPlaying={true}
-                        spriteSheet="/game/IdleCatt.png"
-                        frameWidth={32}
-                        frameHeight={32}
-                        frameCount={7}
-                        width={96}
-                        height={96}
-                        animationSpeed={0.1}
-                        horizontal={true}
-                        rows={1}
-                        columns={7}
-                        loop={true}
-                        moving={false}
-                      />
+                      <CharacterAnimation spriteSheet="/game/classicCat/IdleCatt.png" frameWidth={32} frameHeight={32} frameCount={7} animationSpeed={0.1} state="idle" direction={true} scale={5} />
                     ) : (
-                      <SpriteAnimation
-                        isPlaying={true}
-                        spriteSheet="/game/classicCat/die/DieCatt.png"
-                        frameWidth={32}
-                        frameHeight={32}
-                        frameCount={15}
-                        width={96}
-                        height={96}
-                        animationSpeed={0.1}
-                        horizontal={true}
-                        rows={1}
-                        columns={15}
-                        loop={false}
-                        moving={false}
-                      />
+                      <CharacterAnimation spriteSheet="/game/classicCat/DieCatt.png" frameWidth={32} frameHeight={32} frameCount={14} animationSpeed={0.1} state="die" direction={true} scale={5} />
                     )}
                   </div>
                 </div>
@@ -355,39 +330,9 @@ const OneToOnePage: React.FC = () => {
                 <div className="w-[185px] h-48 flex items-center justify-center mb-3 p-2">
                   <div className="w-full h-full">
                     {opponentHealth > 0 ? (
-                      <SpriteAnimation
-                        isPlaying={true}
-                        spriteSheet="/game/IdleCatt.png"
-                        frameWidth={32}
-                        frameHeight={32}
-                        frameCount={7}
-                        width={96}
-                        height={96}
-                        animationSpeed={0.1}
-                        horizontal={true}
-                        rows={1}
-                        columns={7}
-                        loop={true}
-                        moving={false}
-                        direction={false}
-                      />
+                      <CharacterAnimation spriteSheet="/game/classicCat/IdleCatt.png" frameWidth={32} frameHeight={32} frameCount={7} animationSpeed={0.1} state="idle" direction={false} scale={5} />
                     ) : (
-                      <SpriteAnimation
-                        isPlaying={true}
-                        spriteSheet="/game/classicCat/die/DieCatt.png"
-                        frameWidth={32}
-                        frameHeight={32}
-                        frameCount={15}
-                        width={96}
-                        height={96}
-                        animationSpeed={0.1}
-                        horizontal={true}
-                        rows={1}
-                        columns={15}
-                        loop={false}
-                        moving={false}
-                        direction={false}
-                      />
+                      <CharacterAnimation spriteSheet="/game/classicCat/DieCatt.png" frameWidth={32} frameHeight={32} frameCount={14} animationSpeed={0.1} state="die" direction={false} scale={5} />
                     )}
                   </div>
                 </div>
@@ -412,39 +357,25 @@ const OneToOnePage: React.FC = () => {
 
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[400px] h-[300px] border border-transparent">
             {showAnimation && playerHealth > 0 && opponentHealth > 0 && (
-              <GameAnimation
+              <EffectAnimation
                 isPlaying={showAnimation}
-                type="imageSequence"
                 imagePaths={getMotionImages("fire", 5)}
                 width={400}
                 height={300}
                 animationSpeed={0.1}
-                hp={100}
-                onAnimationComplete={handleAnimationComplete}
-                onHitLeft={() => {
-                  setPlayerHealth((prev) => {
-                    const newHealth = Math.max(0, prev - 1);
-                    console.log(`왼쪽 캐릭터 피격! 이전 체력: ${prev}, 새 체력: ${newHealth}`);
-                    return newHealth;
-                  });
-                }}
-                onHitRight={() => {
-                  setOpponentHealth((prev) => {
-                    const newHealth = Math.max(0, prev - 1);
-                    console.log(`오른쪽 캐릭터 피격! 이전 체력: ${prev}, 새 체력: ${newHealth}`);
-                    return newHealth;
-                  });
-                }}
-                direction={Math.random() > 0.5}
                 moving={true}
+                direction={Math.random() > 0.5}
                 loop={false}
+                onAnimationComplete={handleAnimationComplete}
+                onHitLeft={handleHitLeft}
+                onHitRight={handleHitRight}
               />
             )}
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div
@@ -466,10 +397,10 @@ const OneToOnePage: React.FC = () => {
           className="bg-red-500 bg-opacity-70 text-white py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors"
           onClick={() => {
             // 먼저 공격 애니메이션을 표시한 후 체력을 0으로 설정
-            setShowAnimation(true);
+            setShowAnimation(true)
             setTimeout(() => {
-              setPlayerHealth(0);
-            }, 1000); // 애니메이션이 끝나기 전에 체력을 0으로 설정
+              setPlayerHealth(0)
+            }, 1000) // 애니메이션이 끝나기 전에 체력을 0으로 설정
           }}
         >
           플레이어 체력 0
@@ -478,10 +409,10 @@ const OneToOnePage: React.FC = () => {
           className="bg-red-500 bg-opacity-70 text-white py-2 px-4 rounded-full font-medium hover:bg-opacity-100 transition-colors"
           onClick={() => {
             // 먼저 공격 애니메이션을 표시한 후 체력을 0으로 설정
-            setShowAnimation(true);
+            setShowAnimation(true)
             setTimeout(() => {
-              setOpponentHealth(0);
-            }, 1000); // 애니메이션이 끝나기 전에 체력을 0으로 설정
+              setOpponentHealth(0)
+            }, 1000) // 애니메이션이 끝나기 전에 체력을 0으로 설정
           }}
         >
           상대방 체력 0
@@ -490,7 +421,7 @@ const OneToOnePage: React.FC = () => {
 
       {renderBattleScreen()}
     </div>
-  );
-};
+  )
+}
 
-export default OneToOnePage;
+export default OneToOnePage
