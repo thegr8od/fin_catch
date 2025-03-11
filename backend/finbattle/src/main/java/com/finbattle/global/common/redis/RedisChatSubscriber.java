@@ -22,7 +22,7 @@ public class RedisChatSubscriber implements MessageListener {
         try {
             String msgBody = new String(message.getBody());
             ChatMessage chatMessage = objectMapper.readValue(msgBody, ChatMessage.class);
-            // WebSocket 발송 대상: /topic/chat/{roomId}
+            //  WebSocket 발송 대상: /topic/chat/{roomId}
             String destination = "/topic/chat/" + chatMessage.getRoomId();
             messagingTemplate.convertAndSend(destination, chatMessage);
             log.info("RedisChatSubscriber sent message to destination: {}", destination);
