@@ -3,6 +3,7 @@ package com.finbattle.domain.cat.cotroller;
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.cat.service.CatService;
 import com.finbattle.global.common.model.dto.BaseResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/cat")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "고양이 API", description = "고양이 조회 기능을 제공하는 컨트롤러")
 public class CatController {
 
     private final CatService catService;

@@ -1,18 +1,21 @@
 package com.finbattle.global.common.model.dto;
 
+import static com.finbattle.global.common.model.dto.BaseResponseStatus.SUCCESS;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.ArrayList;
-
-import static com.finbattle.global.common.model.dto.BaseResponseStatus.SUCCESS;
 
 @Getter
 @AllArgsConstructor
 @JsonPropertyOrder({"isSuccess", "code", "message", "result"})
+@Schema(hidden = true)
+@Hidden // Swagger에서 해당 DTO를 완전히 숨김
 public class BaseResponse<T> {//BaseResponse 객체를 사용할때 성공, 실패 경우
     @JsonProperty("isSuccess")
     private final Boolean isSuccess;

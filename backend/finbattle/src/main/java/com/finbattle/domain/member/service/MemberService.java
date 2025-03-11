@@ -5,6 +5,7 @@ import static com.finbattle.global.common.model.dto.BaseResponseStatus.POINT_NOT
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.cat.repository.CatRepository;
+import com.finbattle.domain.member.dto.CatDto;
 import com.finbattle.domain.member.dto.MyInfoDto;
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
@@ -69,7 +70,7 @@ public class MemberService {
     }
 
     // 8. 고양이 뽑기
-    public Cat pickCat(Long memberId) {
+    public CatDto pickCat(Long memberId) {
         Member member = findByMemberId(memberId);
         if (member.getPoint() < 500L) {
             throw new BusinessException(POINT_NOT_ENOUGH);
@@ -85,7 +86,7 @@ public class MemberService {
             log.info("{} 유저의 {}번 고양이 중복 보유로 50포인트 증가", member.getNickname(), pickedCat.getCatId());
         }
         memberRepository.save(member);
-        return pickedCat;
+        return new CatDto(pickedCat);
     }
 
     private Cat PickCat() {
