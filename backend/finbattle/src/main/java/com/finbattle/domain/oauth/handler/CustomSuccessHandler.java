@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -15,15 +16,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final TokenService tokenService;
     private final CookieUtil cookieUtil;
     private final AuthenticationUtil authenticationUtil;
 
-    @Value("${app.baseUrl}")
-    private String baseUrl = "http://localhost:3000";
-    private static final String LOGIN_SUCCESS_URI = "/api/member/public/reissue";
+    @Value("${app.clientUrl}")
+    private String baseUrl;
+    private static final String LOGIN_SUCCESS_URI = "/login?success=true";
 
     @Override
     @Transactional
@@ -37,7 +39,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 응답 설정
         response.addCookie(cookieUtil.createCookie("REFRESH", refreshToken));
+        log.info("RefreshToken 생성 완료, {}", refreshToken);
         response.sendRedirect(baseUrl + LOGIN_SUCCESS_URI);
-        //response.sendRedirect(baseUrl);
     }
 }
