@@ -1,386 +1,290 @@
+import React, { useState, useEffect } from "react";
 import Background from "../components/layout/Background";
-import { useState, useEffect } from "react";
+import myPageBg from "../assets/mypage_bg.png";
+import catProfile from "../assets/characters/smoke_cat.png";
+import { useUserInfo } from "../hooks/useUserInfo";
+import LoadingScreen from "../components/common/LoadingScreen";
 import { useNavigate } from "react-router-dom";
-// 모드 이미지 import
-import botImg from "../assets/Bot.png";
-import oneVsOneImg from "../assets/one_vs_one.png";
-import multiImg from "../assets/multi.png";
-import mainBg from "../assets/main.gif";
-// 게임 모드 타입 정의
-type GameMode = "Bot" | "oneVsOne" | "Survival" | null;
+import { AccountInfo } from "../components/mypage/AccountLinkModal";
 
-// 방 인터페이스 정의
-interface Room {
-  id: string;
-  title: string;
-  mode: GameMode;
-  host: string;
-  players: number;
-  maxPlayers: number;
-  status: "waiting" | "playing";
-  category?: string;
-  difficulty?: string;
-  createdAt: Date;
-}
+// 컴포넌트 임포트
+import ProfileSection from "../components/mypage/ProfileSection";
+import CharacterDisplaySection from "../components/mypage/CharacterDisplaySection";
+import AccountLinkModal from "../components/mypage/AccountLinkModal";
+import AccountAnalysisModal from "../components/mypage/AccountAnalysisModal";
+import NicknameChangeModal from "../components/mypage/NicknameChangeModal";
+
+// 임시 캐릭터 데이터
+const characters = [
+  { id: 1, name: "연기 고양이", image: catProfile, selected: true },
+  { id: 2, name: "불꽃 고양이", image: catProfile, selected: false },
+  { id: 3, name: "물방울 고양이", image: catProfile, selected: false },
+  { id: 4, name: "바람 고양이", image: catProfile, selected: false },
+];
 
 const MainPage = () => {
+  const { user, loading, fetchUserInfo } = useUserInfo();
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [showAccountLinkModal, setShowAccountLinkModal] = useState(false);
+  const [featureMessage, setFeatureMessage] = useState("");
+  const [selectedCharacter, setSelectedCharacter] = useState(characters[0]);
 
-  const [selectedMode, setSelectedMode] = useState<GameMode>(null);
-  const [roomTitle, setRoomTitle] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
-
-  const handleModeSelect = (mode: GameMode) => {
-    setSelectedMode(mode);
-
-    // 선택한 모드에 따른 페이지 이동 처리
-    if (mode === "oneVsOne") {
-      navigate("/one-to-one");
-    } else if (mode === "Bot") {
-      // AI 모드 페이지로 이동 (구현 필요)
-      console.log("AI 모드 선택");
-    } else if (mode === "Survival") {
-      // 멀티 모드 페이지로 이동 (구현 필요)
-      console.log("멀티 모드 선택");
-    }
-  };
-  // 임시 방 데이터 생성
   useEffect(() => {
-    // 로컬 스토리지에서 방 목록 불러오기
-    try {
-      const storedRooms = localStorage.getItem("rooms");
-      if (storedRooms) {
-        const parsedRooms: Room[] = JSON.parse(storedRooms);
-        setRooms(parsedRooms);
-        return;
-      }
-    } catch (error) {
-      console.error("방 목록을 불러오는 중 오류 발생:", error);
+    // 로컬 스토리지에서 계좌 연동 여부 확인
+    const hasShownAccountModal = localStorage.getItem("hasShownAccountModal");
+    if (!hasShownAccountModal && user) {
+      setShowAccountLinkModal(true);
+      localStorage.setItem("hasShownAccountModal", "true");
     }
+  }, [user]);
 
-    // 로컬 스토리지에 방 목록이 없거나 오류 발생 시 기본 방 목록 사용
-    const dummyRooms: Room[] = [
-      {
-        id: "1",
-        title: "봇과 대결해보자!",
-        mode: "Bot",
-        host: "사용자1",
-        players: 1,
-        maxPlayers: 1,
-        status: "waiting",
-        category: "investment",
-        difficulty: "easy",
-        createdAt: new Date(),
-      },
-      {
-        id: "2",
-        title: "1:1 대결방",
-        mode: "oneVsOne",
-        host: "사용자2",
-        players: 1,
-        maxPlayers: 2,
-        status: "waiting",
-        category: "economy",
-        createdAt: new Date(),
-      },
-      {
-        id: "3",
-        title: "서바이벌 모드!",
-        mode: "Survival",
-        host: "사용자3",
-        players: 3,
-        maxPlayers: 8,
-        status: "playing",
-        createdAt: new Date(),
-      },
-    ];
-
-    setRooms(dummyRooms);
-
-    // 기본 방 목록을 로컬 스토리지에 저장
-    try {
-      localStorage.setItem("rooms", JSON.stringify(dummyRooms));
-    } catch (error) {
-      console.error("방 목록을 저장하는 중 오류 발생:", error);
-    }
-  }, []);
-
-  // 방 생성 처리
-  const handleCreateRoom = () => {
-    if (!roomTitle || !selectedMode) return;
-
-    // 새 방 ID 생성 (실제로는 서버에서 생성)
-    const newRoomId = Date.now().toString();
-
-    // 새 방 객체 생성
-    const newRoom: Room = {
-      id: newRoomId,
-      title: roomTitle,
-      mode: selectedMode,
-      host: "현재 사용자", // 실제로는 로그인한 사용자 정보
-      players: 1,
-      maxPlayers: selectedMode === "oneVsOne" ? 2 : selectedMode === "Survival" ? 8 : 1,
-      status: "waiting",
-      category: selectedCategory || undefined,
-      difficulty: selectedMode === "Bot" ? selectedDifficulty : undefined,
-      createdAt: new Date(),
-    };
-
-    // 방 목록에 추가 (실제로는 서버에 저장)
-    const updatedRooms = [...rooms, newRoom];
-    setRooms(updatedRooms);
-
-    // 로컬 스토리지에 방 정보 저장
-    try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
-    } catch (error) {
-      console.error("방 정보를 저장하는 중 오류 발생:", error);
-    }
-
-    // 모달 닫기 및 상태 초기화
-    setShowModal(false);
-    setSelectedMode(null);
-    setRoomTitle("");
-    setSelectedCategory("");
-    setSelectedDifficulty("");
-
-    // 준비 페이지로 이동
-    navigate(`/room/prepare/${newRoomId}`);
+  // 계좌 연동 처리
+  const handleAccountLink = (accountInfo: AccountInfo) => {
+    console.log("계좌 연동 완료:", accountInfo);
+    setShowAccountLinkModal(false);
   };
 
-  // 방 입장 처리
-  const handleJoinRoom = (roomId: string) => {
-    // 방 정보 확인 (실제로는 서버에서 확인)
-    const room = rooms.find((r) => r.id === roomId);
-
-    if (!room) {
-      alert("존재하지 않는 방입니다.");
-      return;
-    }
-
-    if (room.status === "playing") {
-      alert("이미 게임이 진행 중인 방입니다.");
-      return;
-    }
-
-    if (room.players >= room.maxPlayers) {
-      alert("방이 가득 찼습니다.");
-      return;
-    }
-
-    // 방 입장 처리 (실제로는 서버에 요청)
-    const updatedRooms = rooms.map((r) => (r.id === roomId ? { ...r, players: r.players + 1 } : r));
-
-    setRooms(updatedRooms);
-
-    // 로컬 스토리지 업데이트
-    try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
-    } catch (error) {
-      console.error("방 정보를 업데이트하는 중 오류 발생:", error);
-    }
-
-    // 준비 페이지로 이동
-    navigate(`/room/prepare/${roomId}`);
+  // 미구현 기능 접근 시 모달 표시 함수
+  const handleFeatureClick = (message: string) => {
+    setFeatureMessage(message);
+    setShowFeatureModal(true);
   };
 
-  // 모드 데이터 정의
-  const modeData = [
-    {
-      id: "Bot",
-      title: "Bot",
-      description: "인공지능이랑 맞짱 뒤지게 까셈 ㅋㅋㅋ",
-      imageSrc: botImg,
-    },
-    {
-      id: "oneVsOne",
-      title: "PVP",
-      description: "마 좀 치나 한 다이 할래?",
-      imageSrc: oneVsOneImg,
-    },
-    {
-      id: "Survival",
-      title: "Survival",
-      description: "이새기 ㅈ밥이네 ㅋㅋ",
-      imageSrc: multiImg,
-    },
-  ];
+  // 닉네임 변경 처리
+  const handleUpdateNickname = async (newNickname: string) => {
+    console.log("닉네임 변경 시작:", newNickname);
+    try {
+      await fetchUserInfo();
+      console.log("사용자 정보 갱신 완료");
+      setShowNicknameModal(false);
+    } catch (error) {
+      console.error("닉네임 변경 후 사용자 정보 갱신 실패:", error);
+    }
+  };
 
-  // 카테고리 데이터
-  const categories = [
-    { id: "investment", name: "투자" },
-    { id: "economy", name: "정책" },
-    { id: "product", name: "상품" },
-    { id: "delivery", name: "범죄" },
-  ];
+  const handleLobbyClick = () => {
+    navigate("/lobby");
+  };
 
-  // 난이도 데이터
-  const difficulties = [
-    { id: "easy", name: "쉬움" },
-    { id: "medium", name: "보통" },
-    { id: "hard", name: "어려움" },
-  ];
+  if (loading || !user) {
+    return <LoadingScreen />;
+  }
+
+  const profileData = {
+    nickname: user.nickname,
+    level: Math.floor(user.exp / 1000) + 1,
+    exp: user.exp,
+    maxExp: 1000,
+    coins: user.point,
+    profileImage: catProfile,
+  };
 
   return (
-    <Background backgroundImage={mainBg}>
-      <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
-        <div className="w-full max-w-6xl px-6">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl text-white font-bold tracking-wider text-shadow-lg">방 목록</h1>
-            <button onClick={() => setShowModal(true)} className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors">
-              방 생성하기
-            </button>
-          </div>
+    <Background backgroundImage={myPageBg}>
+      <div className="w-full h-screen overflow-y-auto">
+        <div className="w-full py-8 px-4">
+          <div className="max-w-[1800px] mx-auto pb-24">
+            {/* 상단 프로필 섹션 */}
+            <div className="bg-white/95 rounded-2xl shadow-2xl p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <img src={catProfile} alt="프로필" className="w-24 h-24 rounded-full border-4 border-yellow-400" />
+                  <div>
+                    <h2 className="text-2xl font-bold font-korean-pixel mb-2">{user.nickname}님, 환영합니다!</h2>
+                    <div className="flex items-center gap-4">
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-korean-pixel">Lv. {profileData.level}</span>
+                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-korean-pixel">🪙 {profileData.coins}</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLobbyClick}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-korean-pixel text-xl hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                >
+                  🎮 게임 시작하기
+                </button>
+              </div>
+            </div>
 
-          {/* 방 목록 테이블 */}
-          <div className="bg-white bg-opacity-80 rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="py-3 px-4 text-left">방 제목</th>
-                  <th className="py-3 px-4 text-left">모드</th>
-                  <th className="py-3 px-4 text-left">주제/난이도</th>
-                  <th className="py-3 px-4 text-left">방장</th>
-                  <th className="py-3 px-4 text-center">인원</th>
-                  <th className="py-3 px-4 text-center">상태</th>
-                  <th className="py-3 px-4 text-center">입장</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rooms.map((room) => (
-                  <tr key={room.id} className="border-t border-gray-300 hover:bg-gray-100">
-                    <td className="py-3 px-4">{room.title}</td>
-                    <td className="py-3 px-4">{room.mode}</td>
-                    <td className="py-3 px-4">
-                      {room.category && `${room.category}`}
-                      {room.difficulty && ` / ${room.difficulty}`}
-                    </td>
-                    <td className="py-3 px-4">{room.host}</td>
-                    <td className="py-3 px-4 text-center">
-                      {room.players}/{room.maxPlayers}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${room.status === "waiting" ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
-                        {room.status === "waiting" ? "대기중" : "게임중"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleJoinRoom(room.id)}
-                        disabled={room.status === "playing" || room.players >= room.maxPlayers}
-                        className={`px-4 py-1 rounded ${
-                          room.status === "playing" || room.players >= room.maxPlayers ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
-                      >
-                        입장
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {rooms.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-500">
-                      생성된 방이 없습니다. 새로운 방을 만들어보세요!
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 방 생성 모달 */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-md p-6">
-              <h2 className="text-2xl font-bold mb-4">방 생성하기</h2>
-
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">방 제목</label>
-                <input type="text" value={roomTitle} onChange={(e) => setRoomTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="방 제목을 입력하세요" />
+            {/* 메인 콘텐츠 그리드 */}
+            <div className="grid grid-cols-3 gap-6 mb-8">
+              {/* 계좌 연동 카드 */}
+              <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💳 계좌 연동</h3>
+                  <button
+                    onClick={() => setShowAccountLinkModal(true)}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
+                  >
+                    연동하기
+                  </button>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-xl text-center">
+                  <p className="text-gray-600 font-korean-pixel text-lg mb-2">계좌를 연동하고</p>
+                  <p className="text-gray-800 font-korean-pixel text-xl font-bold">더 많은 기능을 사용해보세요!</p>
+                </div>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">게임 모드</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {modeData.map((mode) => (
+              {/* 캐릭터 디스플레이 */}
+              <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
+                <h3 className="text-xl font-bold text-gray-800 font-korean-pixel mb-4">🎭 나의 캐릭터</h3>
+                <div className="flex items-center justify-center h-[300px]">
+                  <div className="relative w-48 h-48">
+                    <img src={selectedCharacter.image} alt={selectedCharacter.name} className="w-full h-full object-contain animate-bounce" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 캐릭터 목록 */}
+              <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
+                <h3 className="text-xl font-bold text-gray-800 font-korean-pixel mb-4">🎨 보유 캐릭터</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {characters.map((character) => (
                     <div
-                      key={mode.id}
-                      onClick={() => setSelectedMode(mode.id as GameMode)}
-                      className={`border rounded p-2 cursor-pointer flex flex-col items-center ${selectedMode === mode.id ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
+                      key={character.id}
+                      onClick={() => setSelectedCharacter(character)}
+                      className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                        selectedCharacter.id === character.id ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100"
+                      }`}
                     >
-                      <img src={mode.imageSrc} alt={mode.title} className="w-16 h-16 object-contain mb-2" />
-                      <span>{mode.title}</span>
+                      <div className="flex flex-col items-center">
+                        <img src={character.image} alt={character.name} className="w-20 h-20 object-contain mb-2" />
+                        <span className="font-korean-pixel text-sm text-center">{character.name}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
 
-              {/* 선택된 모드에 따른 추가 옵션 */}
-              {selectedMode === "oneVsOne" && (
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">주제 선택</label>
-                  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full p-2 border border-gray-300 rounded">
-                    <option value="">주제를 선택하세요</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+            {/* 소비패턴 분석 및 문제 풀이 결과 섹션 */}
+            <div className="mb-24">
+              {" "}
+              {/* 푸터와의 여백 */}
+              <div className="grid grid-cols-2 gap-8">
+                {/* 소비패턴 분석 */}
+                <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-transform duration-300">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-800 font-korean-pixel">📊 소비패턴 분석</h3>
+                    <button
+                      onClick={() => setShowAccountLinkModal(true)}
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
+                    >
+                      자세히 보기
+                    </button>
+                  </div>
+                  <div className="space-y-6">
+                    {/* 소비 카테고리 차트 */}
+                    <div className="bg-gray-50 p-6 rounded-xl">
+                      <h4 className="font-korean-pixel text-lg font-bold mb-4">주요 소비 카테고리</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <div className="w-32 font-korean-pixel">식비</div>
+                          <div className="flex-1 h-6 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: "65%" }}></div>
+                          </div>
+                          <div className="w-16 text-right font-korean-pixel">65%</div>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-32 font-korean-pixel">쇼핑</div>
+                          <div className="flex-1 h-6 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-purple-500 rounded-full" style={{ width: "20%" }}></div>
+                          </div>
+                          <div className="w-16 text-right font-korean-pixel">20%</div>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-32 font-korean-pixel">교통</div>
+                          <div className="flex-1 h-6 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-500 rounded-full" style={{ width: "15%" }}></div>
+                          </div>
+                          <div className="w-16 text-right font-korean-pixel">15%</div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* 소비 트렌드 */}
+                    <div className="bg-gray-50 p-6 rounded-xl">
+                      <h4 className="font-korean-pixel text-lg font-bold mb-4">이번 달 소비 트렌드</h4>
+                      <p className="text-gray-700 font-korean-pixel mb-2">
+                        전월 대비 식비가 <span className="text-red-500 font-bold">15% 증가</span>했어요.
+                      </p>
+                      <p className="text-gray-700 font-korean-pixel">배달음식 주문이 잦아진 것이 주요 원인으로 보여요.</p>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {selectedMode === "Bot" && (
-                <>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">주제 선택</label>
-                    <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full p-2 border border-gray-300 rounded">
-                      <option value="">주제를 선택하세요</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
+                {/* 소비패턴 기반 문제 풀이 결과 */}
+                <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-transform duration-300">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-800 font-korean-pixel">📝 AI 문제 풀이 결과</h3>
+                    <button
+                      onClick={() => navigate("/ai-quiz")}
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
+                    >
+                      다시 풀기
+                    </button>
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">난이도 선택</label>
-                    <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className="w-full p-2 border border-gray-300 rounded">
-                      <option value="">난이도를 선택하세요</option>
-                      {difficulties.map((difficulty) => (
-                        <option key={difficulty.id} value={difficulty.id}>
-                          {difficulty.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-6">
+                    {/* 최근 퀴즈 결과 */}
+                    <div className="bg-gray-50 p-6 rounded-xl">
+                      <h4 className="font-korean-pixel text-lg font-bold mb-4">최근 퀴즈 성적</h4>
+                      <div className="flex items-center justify-center gap-8">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-blue-600 font-korean-pixel">85점</div>
+                          <div className="text-gray-600 font-korean-pixel">평균 점수</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-green-600 font-korean-pixel">12회</div>
+                          <div className="text-gray-600 font-korean-pixel">총 응시 횟수</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-purple-600 font-korean-pixel">3일</div>
+                          <div className="text-gray-600 font-korean-pixel">연속 학습</div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* 취약 분야 */}
+                    <div className="bg-gray-50 p-6 rounded-xl">
+                      <h4 className="font-korean-pixel text-lg font-bold mb-4">집중 학습이 필요한 분야</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center bg-red-50 p-3 rounded-lg">
+                          <span className="text-red-500 font-bold font-korean-pixel mr-2">1</span>
+                          <span className="font-korean-pixel">투자 위험 관리</span>
+                        </div>
+                        <div className="flex items-center bg-orange-50 p-3 rounded-lg">
+                          <span className="text-orange-500 font-bold font-korean-pixel mr-2">2</span>
+                          <span className="font-korean-pixel">세금 계산</span>
+                        </div>
+                        <div className="flex items-center bg-yellow-50 p-3 rounded-lg">
+                          <span className="text-yellow-600 font-bold font-korean-pixel mr-2">3</span>
+                          <span className="font-korean-pixel">금융 상품 이해</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </>
-              )}
-
-              <div className="flex justify-end mt-6">
-                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-700 mr-2">
-                  취소
-                </button>
-                <button
-                  onClick={handleCreateRoom}
-                  disabled={!roomTitle || !selectedMode || (selectedMode === "oneVsOne" && !selectedCategory) || (selectedMode === "Bot" && (!selectedCategory || !selectedDifficulty))}
-                  className={`px-4 py-2 rounded ${
-                    !roomTitle || !selectedMode || (selectedMode === "oneVsOne" && !selectedCategory) || (selectedMode === "Bot" && (!selectedCategory || !selectedDifficulty))
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-blue-500 text-white hover:bg-blue-600"
-                  }`}
-                >
-                  생성하기
-                </button>
+                </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* 모달들 */}
+      {showFeatureModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md">
+            <h2 className="text-xl font-bold mb-3 font-korean-pixel">안내</h2>
+            <p className="mb-4 font-korean-pixel">{featureMessage}</p>
+            <button onClick={() => setShowFeatureModal(false)} className="w-full py-2 bg-blue-500 text-white rounded-lg font-korean-pixel hover:bg-blue-600 transition-colors">
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showNicknameModal && <NicknameChangeModal onClose={() => setShowNicknameModal(false)} currentNickname={user.nickname} onUpdateNickname={handleUpdateNickname} />}
+      {showAccountLinkModal && <AccountLinkModal onClose={() => setShowAccountLinkModal(false)} onLinkAccount={handleAccountLink} />}
     </Background>
   );
 };
