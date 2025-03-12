@@ -6,12 +6,13 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import Footer from "./components/layout/Footer";
 import Header from "./components/layout/Header";
-import MainPage from "./pages/MainPage";
+import LobbyPage from "./pages/LobbyPage";
 import ShopPage from "./pages/ShopPage";
 import OneToOnePage from "./pages/OneToOnePage";
 import SurvivalPage from "./pages/SurvivalPage";
 import BotPage from "./pages/BotPage";
-import MyPage from "./pages/MyPage";
+import MainPage from "./pages/MainPage";
+import AiQuizPage from "./pages/AiQuizPage";
 import RoomPreparePage from "./pages/RoomPreparePage";
 import { LoadingProvider, useLoading } from "./contexts/LoadingContext";
 import LoadingScreen from "./components/common/LoadingScreen";
@@ -84,6 +85,14 @@ function AppContent() {
 
               {/* 보호된 라우트 */}
               <Route
+                path="/lobby"
+                element={
+                  <PrivateRoute>
+                    <LobbyPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
                 path="/main"
                 element={
                   <PrivateRoute>
@@ -140,10 +149,10 @@ function AppContent() {
                 }
               />
               <Route
-                path="/:nickname"
+                path="/ai-quiz"
                 element={
                   <PrivateRoute>
-                    <MyPage />
+                    <AiQuizPage />
                   </PrivateRoute>
                 }
               />

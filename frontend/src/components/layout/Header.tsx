@@ -25,20 +25,16 @@ const Header: React.FC = () => {
 
   const handleMyPageClick = () => {
     if (!user) return;
-    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
-    // 약간의 지연 후 페이지 이동
     setTimeout(() => {
-      navigate(`/${user.nickname}`, { replace: true });
+      navigate("/main", { replace: true });
     }, 10);
   };
 
   const handleMainClick = () => {
-    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
-    // 약간의 지연 후 페이지 이동
     setTimeout(() => {
       navigate("/main", { replace: true });
     }, 10);
