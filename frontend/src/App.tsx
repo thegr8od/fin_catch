@@ -76,7 +76,7 @@ function AppContent() {
           <div className="flex-grow pt-12">
             <Routes>
               <Route path="/" element={<SplashPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signin" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/main" element={<MainPage />} />
               <Route path="/shop" element={<ShopPage />} />
@@ -87,7 +87,8 @@ function AppContent() {
               <Route path="/game/bot" element={<BotPage />} />
               <Route path="/:nickname" element={<MyPage />} />
               <Route path="/oauth/redirect" element={<OAuthRedirectPage />} />
-              <Route path="/oauth2/authorization/*" element={<LoadingScreen />} />
+              <Route path="/login" element={<OAuthRedirectPage />} />
+              <Route path="/oauth2/code/*" element={<OAuthRedirectPage />} />
             </Routes>
           </div>
 

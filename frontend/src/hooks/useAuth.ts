@@ -1,59 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axios";
 
-interface AuthResult {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
-
-// 디버깅 로그를 localStorage에 저장하는 함수
-const saveLog = (message: string) => {
-  try {
-    const logs = JSON.parse(localStorage.getItem("auth_logs") || "[]");
-    logs.push({
-      timestamp: new Date().toISOString(),
-      message,
-    });
-    // 최대 100개의 로그만 유지
-    if (logs.length > 100) {
-      logs.shift();
-    }
-    localStorage.setItem("auth_logs", JSON.stringify(logs));
-  } catch (error) {
-    console.error("로그 저장 오류:", error);
-  }
-};
-
-// 쿠키 관련 유틸리티 함수
-const getCookie = (name: string) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const cookieValue = parts.pop()?.split(";").shift();
-    return cookieValue ? decodeURIComponent(cookieValue) : null;
-  }
-  return null;
-};
-
-const deleteCookie = (name: string, path = "/") => {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; SameSite=Lax`;
-};
-
 // 모든 쿠키 출력 (디버깅용)
-const logAllCookies = () => {
-  const cookies = document.cookie.split(";").map((cookie) => cookie.trim());
-  console.log("모든 쿠키:", cookies);
-  saveLog(`모든 쿠키: ${cookies.join(", ")}`);
-  return cookies;
-};
-
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 초기화 및 URL 확인
+  // 초기화 및 토큰 확인
   useEffect(() => {
     console.log("인증 상태 초기화");
 
@@ -70,8 +24,11 @@ export const useAuth = () => {
     setLoading(true);
 
     try {
-      // 카카오 로그인 페이지로 리다이렉트
-      window.location.href = "/oauth2/authorization/kakao";
+      // 카카오 로그인 페이지로 리다이렉트 (백엔드 서버 직접 호출)
+      // 백엔드에서 설정한 기본 리다이렉트 URL 사용
+      const redirectUri = encodeURIComponent(window.location.origin + "/login");
+      console.log("카카오 로그인 리다이렉트 URL:", redirectUri);
+      window.location.href = `http://192.168.100.119:8080/oauth2/authorization/kakao?redirect_uri=${redirectUri}`;
       return { success: true };
     } catch (err) {
       setError("카카오 로그인을 시작하는 중 오류가 발생했습니다.");
@@ -86,8 +43,11 @@ export const useAuth = () => {
     setLoading(true);
 
     try {
-      // 구글 로그인 페이지로 리다이렉트
-      window.location.href = "/oauth2/authorization/google";
+      // 구글 로그인 페이지로 리다이렉트 (백엔드 서버 직접 호출)
+      // 백엔드에서 설정한 기본 리다이렉트 URL 사용
+      const redirectUri = encodeURIComponent(window.location.origin + "/login");
+      console.log("구글 로그인 리다이렉트 URL:", redirectUri);
+      window.location.href = `http://192.168.100.119:8080/oauth2/authorization/google?redirect_uri=${redirectUri}`;
       return { success: true };
     } catch (err) {
       setError("구글 로그인을 시작하는 중 오류가 발생했습니다.");
@@ -99,9 +59,18 @@ export const useAuth = () => {
 
   // 인증 상태 설정 함수
   const setAuthState = (token: string) => {
+    console.log("인증 상태 설정 시작, 토큰:", token.substring(0, 10) + "...");
+
     // Axios 인스턴스의 헤더에 토큰 설정
     axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("Axios 헤더에 토큰 설정 완료");
+
+    // 인증 상태 변경
     setIsAuthenticated(true);
+    console.log("인증 상태 변경 완료: true");
+
+    // 디버깅용 로그
+    console.log("현재 인증 상태:", isAuthenticated);
   };
 
   // 로그아웃
@@ -109,20 +78,19 @@ export const useAuth = () => {
     // 로컬 스토리지에서 액세스 토큰 삭제
     localStorage.removeItem("accessToken");
 
-    // 쿠키에서 리프레시 토큰 삭제
-    deleteCookie("REFRESH");
-
     try {
-      axiosInstance.post("/api/member/logout", {}, { withCredentials: true });
+      // 로그아웃 API 호출
+      axiosInstance.post("/api/member/logout");
     } catch (err) {
       console.error("로그아웃 API 호출 오류:", err);
     }
 
+    // 헤더에서 인증 정보 제거
     delete axiosInstance.defaults.headers.common["Authorization"];
     setIsAuthenticated(false);
 
     // 로그인 페이지로 리다이렉트
-    window.location.href = "/login";
+    window.location.href = "/signin";
   }, []);
 
   // 디버깅 로그 가져오기
@@ -155,9 +123,6 @@ export const useAuth = () => {
     getAuthLogs,
     setDebugMode,
     clearAuthLogs,
-    getCookie,
-    deleteCookie,
-    logAllCookies,
     setAuthState,
   };
 };
