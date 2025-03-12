@@ -4,6 +4,7 @@ import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.model.RoomType;
 import com.finbattle.domain.room.service.RoomService;
+import com.finbattle.domain.room.service.RoomSubscriptionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoomController {
 
     private final RoomService roomService;
+    private final RoomSubscriptionService roomSubscriptionService;
 
     /**
      * 방 생성
      */
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(@RequestBody RoomCreateRequest request) {
-        return ResponseEntity.ok(roomService.createRoom(request));
+        RoomResponse response = roomService.createRoom(request);
+        roomSubscriptionService.createRoomSubscription(response.getRoomId());
+        return ResponseEntity.ok(response);
     }
 
     /**

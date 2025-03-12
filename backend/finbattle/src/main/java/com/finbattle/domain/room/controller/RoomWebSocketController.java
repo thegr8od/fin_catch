@@ -1,14 +1,11 @@
 package com.finbattle.domain.room.controller;
 
-import com.finbattle.domain.room.dto.RoomCreateRequest;
-import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.service.RoomService;
 import com.finbattle.domain.room.service.RoomSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 @Slf4j
@@ -18,20 +15,25 @@ public class RoomWebSocketController {
 
     private final RoomService roomService;
     private final RoomSubscriptionService roomSubscriptionService;
-    private final SimpMessagingTemplate messagingTemplate;
 
     /**
-     * 방 생성 WebSocket 요청 처리
+     * WebSocket을 통해 방 이벤트를 처리하면 RoomSubscriptionService로 위임하여 Redis Pub/Sub을 활용
      */
-    @MessageMapping("/room/create")
-    public void createRoom(RoomCreateRequest request) {
-        log.info("Creating room: {}", request);
-        RoomResponse roomResponse = roomService.createRoom(request);
-        // RDB에 저장된 Room 정보를 바탕으로 Redis JSON 생성 메서드로 교체
-        roomSubscriptionService.createRoomSubscription(roomResponse.getRoomId());
+//    @MessageMapping("/room/{roomId}/event")
+//    public void handleRoomEvent(@DestinationVariable Long roomId, String message) {
+//        log.info("Received WebSocket event for room {}: {}", roomId, message);
+//        // --- Redis Pub/Sub으로 메시지 전송을 서비스에서 처리하도록 위임 ---
+//        roomSubscriptionService.publishEvent(message, roomId, null, null, 0);
+//        // ---
+//    }
 
-        messagingTemplate.convertAndSend("/topic/room/event",
-            String.format("{\"event\":\"CREATE\", \"roomId\":\"%s\"}", roomResponse.getRoomId()));
+    /**
+     * 방 정보 요청 -> RedisRoom 정보 조회
+     */
+    @MessageMapping("/room/{roomId}/info")
+    public void getRoomInfo(@DestinationVariable Long roomId) {
+        log.info("Requesting info for room {}", roomId);
+        roomSubscriptionService.getRoomUserCount(roomId);
     }
 
     /**
@@ -40,18 +42,7 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{roomId}/join/{userId}")
     public void joinRoom(@DestinationVariable Long roomId, @DestinationVariable Long userId) {
         log.info("User {} joining room {}", userId, roomId);
-        // 방 정보를 JSON으로 받아 인원 체크 후 상태 업데이트
-        try {
-            roomSubscriptionService.joinRoom(roomId, userId);
-            messagingTemplate.convertAndSend("/topic/room/" + roomId,
-                String.format("{\"event\":\"JOIN\",\"roomId\":\"%s\",\"userId\":\"%s\"}", roomId,
-                    userId));
-        } catch (IllegalStateException e) {
-            // 인원 초과 등 불가능한 경우를 처리
-            log.warn("Cannot join room {}: {}", roomId, e.getMessage());
-            messagingTemplate.convertAndSend("/topic/room/" + roomId,
-                String.format("{\"event\":\"JOIN_FAIL\",\"reason\":\"%s\"}", e.getMessage()));
-        }
+        roomSubscriptionService.joinRoom(roomId, userId);
     }
 
     /**
@@ -59,11 +50,8 @@ public class RoomWebSocketController {
      */
     @MessageMapping("/room/{roomId}/count")
     public void getRoomUserCount(@DestinationVariable Long roomId) {
-        // JSON에 저장된 members 사이즈 반환
-        long userCount = roomSubscriptionService.getRoomUserCount(roomId);
-
-        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/count",
-            String.format("{\"roomId\":\"%s\",\"userCount\":%d}", roomId, userCount));
+        log.info("Checking user count for room {}", roomId);
+        roomSubscriptionService.getRoomUserCount(roomId);
     }
 
     /**
@@ -71,23 +59,34 @@ public class RoomWebSocketController {
      */
     @MessageMapping("/room/{roomId}/leave/{userId}")
     public void leaveRoom(@DestinationVariable Long roomId, @DestinationVariable Long userId) {
-        //   JSON 구조 이용
-        //   실제론 JSON에서 관리하므로 아래에서 새 로직으로 처리
-
         log.info("User {} leaving room {}", userId, roomId);
-        boolean deleted = roomSubscriptionService.leaveRoom(roomId, userId);
-        // leaveRoom 메서드가 방 삭제까지 처리한 경우 deleted = true
+        roomSubscriptionService.leaveRoom(roomId, userId);
+    }
 
-        if (deleted) {
-            // 방이 완전히 삭제된 경우
-            roomService.deleteRoom(roomId);
-            messagingTemplate.convertAndSend("/topic/room/event",
-                String.format("{\"event\":\"DELETE\",\"roomId\":\"%s\"}", roomId));
-        } else {
-            // 아직 방이 존재하는 경우
-            messagingTemplate.convertAndSend("/topic/room/" + roomId,
-                String.format("{\"event\":\"LEAVE\",\"roomId\":\"%s\",\"userId\":\"%s\"}", roomId,
-                    userId));
-        }
+    /**
+     * 강퇴(kick) 요청 처리
+     */
+    @MessageMapping("/room/{roomId}/kick/{targetUserId}")
+    public void kickUser(@DestinationVariable Long roomId, @DestinationVariable Long targetUserId) {
+        log.info("Kicking user {} from room {}", targetUserId, roomId);
+        roomSubscriptionService.kickUser(roomId, targetUserId);
+    }
+
+    /**
+     * 준비(ready) 요청 처리
+     */
+    @MessageMapping("/room/{roomId}/ready/{userId}")
+    public void setReady(@DestinationVariable Long roomId, @DestinationVariable Long userId) {
+        log.info("User {} set READY in room {}", userId, roomId);
+        roomSubscriptionService.setUserReady(roomId, userId);
+    }
+
+    /**
+     * 방 삭제 요청 처리
+     */
+    @MessageMapping("/room/{roomId}/delete")
+    public void deleteRoom(@DestinationVariable Long roomId) {
+        log.info("Deleting room {}", roomId);
+        roomSubscriptionService.deleteRoom(roomId);
     }
 }

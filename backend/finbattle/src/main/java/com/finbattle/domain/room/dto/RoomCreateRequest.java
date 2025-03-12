@@ -10,4 +10,5 @@ public class RoomCreateRequest {
     private String password;
     private int maxPlayer;
     private String roomType; // ENUM (QUIZ, GENERAL, PRIVATE)
+    private String quizType;
 }

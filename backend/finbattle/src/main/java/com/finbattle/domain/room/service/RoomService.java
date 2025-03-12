@@ -5,6 +5,7 @@ import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.model.MemberToRoom;
+import com.finbattle.domain.room.model.QuizType;
 import com.finbattle.domain.room.model.Room;
 import com.finbattle.domain.room.model.RoomStatus;
 import com.finbattle.domain.room.model.RoomType;
@@ -38,6 +39,7 @@ public class RoomService {
         room.setMaxPlayer(request.getMaxPlayer());
         room.setRoomType(RoomType.valueOf(request.getRoomType().toUpperCase()));
         room.setStatus(RoomStatus.OPEN); // 기본 상태
+        room.setQuizType(QuizType.valueOf(request.getQuizType().toUpperCase()));
 
         Room savedRoom = roomRepository.save(room);
 
@@ -119,7 +121,7 @@ public class RoomService {
      * 방장이 방을 나갈 시
      */
     public Long assignNewHost(Long roomId, Long oldHostId) {
-        List<MemberToRoom> members = memberToRoomRepository.findAllByRoomId(roomId);
+        List<MemberToRoom> members = memberToRoomRepository.findAllByRoom_RoomId(roomId);
 
         if (members.size() > 1) {
             MemberToRoom newHost = members.stream()
@@ -144,6 +146,7 @@ public class RoomService {
         response.setRoomType(room.getRoomType());
         response.setMaxPlayer(room.getMaxPlayer());
         response.setCreatedAt(room.getCreatedAt());
+        response.setQuizType(room.getQuizType());
         return response;
     }
 }
