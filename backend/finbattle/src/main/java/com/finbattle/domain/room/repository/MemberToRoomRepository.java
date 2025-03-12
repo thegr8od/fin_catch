@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberToRoomRepository extends JpaRepository<MemberToRoom, Long> {
 
-    List<MemberToRoom> findAllByRoomId(Long roomId);
+    List<MemberToRoom> findAllByRoom_RoomId(Long roomId);
 }

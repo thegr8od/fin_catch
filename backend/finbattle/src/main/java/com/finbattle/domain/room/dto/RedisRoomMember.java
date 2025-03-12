@@ -1,4 +1,4 @@
-package com.finbattle.domain.room.model;
+package com.finbattle.domain.room.dto;
 
 // (추가 부분)
 // RedisRoom 내부에 들어갈 멤버 정보
