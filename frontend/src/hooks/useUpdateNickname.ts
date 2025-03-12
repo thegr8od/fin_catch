@@ -5,7 +5,7 @@ import { User } from "../types/Auth/User"; // 경로는 실제 구조에 맞게 
  * 닉네임 중복 체크 훅
  */
 export const useCheckNickname = () => {
-  const { loading, error, execute: checkNickname } = useApi<boolean>("api/member/nickname", "GET");
+  const { loading, error, execute: checkNickname } = useApi<boolean>("api/member/public/nickname", "GET");
 
   /**
    * 닉네임 중복 체크 함수
@@ -15,7 +15,7 @@ export const useCheckNickname = () => {
    */
   const checkNicknameAvailability = async (nickname: string) => {
     return await checkNickname(undefined, {
-      url: `api/member/nickname?nickname=${encodeURIComponent(nickname)}`,
+      url: `api/member/public/nickname`,
     });
   };
 
@@ -39,7 +39,7 @@ export const useUpdateNickname = () => {
    */
   const changeNickname = async (nickname: string) => {
     return await updateNickname(undefined, {
-      url: `api/member/nickname?nickname=${encodeURIComponent(nickname)}`,
+      params: { nickname },
     });
   };
 
@@ -67,6 +67,7 @@ export const useNicknameManager = () => {
   const checkAndUpdateNickname = async (nickname: string) => {
     // 1. 닉네임 중복 체크
     const checkResult = await checkNicknameAvailability(nickname);
+    console.log("닉네임 체크 결과:", checkResult);
 
     if (!checkResult.success) {
       return {

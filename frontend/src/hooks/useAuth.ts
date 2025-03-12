@@ -28,7 +28,7 @@ export const useAuth = () => {
       // 백엔드에서 설정한 기본 리다이렉트 URL 사용
       const redirectUri = encodeURIComponent(window.location.origin + "/login");
       console.log("카카오 로그인 리다이렉트 URL:", redirectUri);
-      window.location.href = `http://192.168.100.119:8080/oauth2/authorization/kakao?redirect_uri=${redirectUri}`;
+      window.location.href = `http://localhost:8080/oauth2/authorization/kakao`;
       return { success: true };
     } catch (err) {
       setError("카카오 로그인을 시작하는 중 오류가 발생했습니다.");
@@ -45,9 +45,7 @@ export const useAuth = () => {
     try {
       // 구글 로그인 페이지로 리다이렉트 (백엔드 서버 직접 호출)
       // 백엔드에서 설정한 기본 리다이렉트 URL 사용
-      const redirectUri = encodeURIComponent(window.location.origin + "/login");
-      console.log("구글 로그인 리다이렉트 URL:", redirectUri);
-      window.location.href = `http://192.168.100.119:8080/oauth2/authorization/google?redirect_uri=${redirectUri}`;
+      window.location.href = `http://localhost:8080/oauth2/authorization/google`;
       return { success: true };
     } catch (err) {
       setError("구글 로그인을 시작하는 중 오류가 발생했습니다.");
@@ -59,18 +57,9 @@ export const useAuth = () => {
 
   // 인증 상태 설정 함수
   const setAuthState = (token: string) => {
-    console.log("인증 상태 설정 시작, 토큰:", token.substring(0, 10) + "...");
-
     // Axios 인스턴스의 헤더에 토큰 설정
     axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    console.log("Axios 헤더에 토큰 설정 완료");
-
-    // 인증 상태 변경
     setIsAuthenticated(true);
-    console.log("인증 상태 변경 완료: true");
-
-    // 디버깅용 로그
-    console.log("현재 인증 상태:", isAuthenticated);
   };
 
   // 로그아웃

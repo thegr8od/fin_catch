@@ -2,8 +2,9 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
 
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "http://192.168.100.119:8080", // 백엔드 서버 URL
+  baseURL: "http://localhost:8080", // 백엔드 서버 URL
   timeout: 30000, // 요청 타임아웃 (30초)
+  withCredentials: true, // 쿠키를 포함한 요청을 위해 필요
   headers: {
     "Content-Type": "application/json",
   },
@@ -14,6 +15,8 @@ axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // 로컬 스토리지에서 액세스 토큰 가져오기
     const token = localStorage.getItem("accessToken");
+    console.log("요청 전 저장된 토큰:", token);
+
     if (token && config.headers) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -24,13 +27,13 @@ axiosInstance.interceptors.request.use(
       method: config.method,
       params: config.params,
       headers: config.headers,
-      data: config.data,
+      withCredentials: config.withCredentials,
+      cookies: document.cookie,
     });
 
     return config;
   },
   (error: AxiosError) => {
-    // 요청 오류 처리
     console.error("API 요청 오류:", error);
     return Promise.reject(error);
   }
@@ -39,34 +42,38 @@ axiosInstance.interceptors.request.use(
 // 응답 인터셉터
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 디버깅용 로그
-    console.log("API 응답 성공:", {
-      url: response.config.url,
-      status: response.status,
-      data: response.data,
-    });
-
     return response;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig;
 
-    // 응답 오류 처리
-    console.error("API 응답 오류:", {
-      url: originalRequest?.url,
-      method: originalRequest?.method,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
+    // 401 에러 (인증 실패) 처리
+    if (error.response?.status === 401) {
+      try {
+        // 토큰 갱신 요청
+        const response = await axios.get(`http://localhost:8080/api/member/public/reissue`);
 
-    // 401 Unauthorized 오류 처리 (토큰 만료 등)
-    if (error.response && error.response.status === 401) {
-      // 로컬 스토리지에서 토큰 제거
-      localStorage.removeItem("accessToken");
+        if (response.data && response.data.isSuccess && response.data.result && response.data.result.accessToken) {
+          // 새 액세스 토큰 저장
+          const newAccessToken = response.data.result.accessToken;
+          localStorage.setItem("accessToken", newAccessToken);
 
-      // 로그인 페이지로 리다이렉트
-      window.location.href = "/signin";
+          // 원래 요청 재시도
+          if (originalRequest.headers) {
+            originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+          }
+          return axiosInstance(originalRequest);
+        } else {
+          // 토큰 갱신 실패 시 로그인 페이지로 이동
+          localStorage.removeItem("accessToken");
+          window.location.href = "/signin";
+        }
+      } catch (refreshError) {
+        // 토큰 갱신 실패 시 로그인 페이지로 이동
+        localStorage.removeItem("accessToken");
+        window.location.href = "/signin";
+        return Promise.reject(refreshError);
+      }
     }
 
     return Promise.reject(error);

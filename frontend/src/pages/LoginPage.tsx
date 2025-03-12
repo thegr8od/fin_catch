@@ -45,6 +45,9 @@ const LoginPage = () => {
       localStorage.setItem("accessToken", accessToken);
       console.log("토큰 저장 완료");
 
+      // tokenChange 이벤트 발생
+      window.dispatchEvent(new Event("tokenChange"));
+
       // 인증 상태 설정
       setAuthState(accessToken);
       console.log("인증 상태 설정 완료");
@@ -53,13 +56,60 @@ const LoginPage = () => {
       navigate("/signin", { replace: true });
       return;
     }
-  }, [location.pathname, location.search, isAuthenticated, setAuthState, navigate]);
+
+    // 소셜 로그인 성공 후 토큰 요청
+    if ((success || code) && !isAuthenticated && !loginProcessing) {
+      setLoginProcessing(true);
+      console.log("소셜 로그인 성공 감지, 토큰 요청 시작");
+
+      // 토큰 요청 함수
+      const fetchToken = async () => {
+        try {
+          console.log("토큰 요청 시작");
+
+          // API 호출하여 토큰 받아오기
+          const response = code ? await axiosInstance.get("/api/member/public/reissue", { params: { code } }) : await axiosInstance.get("/api/member/public/reissue");
+
+          const data = response.data;
+          console.log("API 응답 받음:", data);
+
+          if (data && data.isSuccess && data.result && data.result.accessToken) {
+            const accessToken = data.result.accessToken;
+            console.log("토큰 추출 성공");
+
+            // 액세스 토큰을 로컬 스토리지에 저장
+            localStorage.setItem("accessToken", accessToken);
+
+            // tokenChange 이벤트 발생
+            window.dispatchEvent(new Event("tokenChange"));
+
+            // 인증 상태 설정
+            setAuthState(accessToken);
+
+            // URL 파라미터 제거 (보안상 이유로)
+            navigate("/login", { replace: true });
+          } else {
+            console.error("토큰을 찾을 수 없습니다:", data);
+            setError("토큰을 찾을 수 없습니다. 다시 로그인해주세요.");
+          }
+        } catch (error) {
+          console.error("토큰 요청 중 오류 발생:", error);
+          setError("토큰 요청 중 오류가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+          setLoginProcessing(false);
+        }
+      };
+
+      fetchToken();
+    }
+  }, [location.pathname, location.search, isAuthenticated, setAuthState, loginProcessing, navigate]);
 
   // 인증 상태에 따른 리다이렉트 처리
   useEffect(() => {
     if (isAuthenticated) {
       // 로컬 스토리지에서 이전에 로그인한 적이 있는지 확인
       const hasLoggedInBefore = localStorage.getItem("hasLoggedInBefore");
+      const from = location.state?.from?.pathname || "/main";
 
       if (!hasLoggedInBefore) {
         // 처음 로그인하는 경우에만 모달 표시
@@ -67,18 +117,18 @@ const LoginPage = () => {
         // 로그인 이력 저장
         localStorage.setItem("hasLoggedInBefore", "true");
 
-        // 일정 시간 후 메인 페이지로 이동
+        // 일정 시간 후 원래 가려던 페이지로 이동
         const timer = setTimeout(() => {
-          navigate("/main");
+          navigate(from);
         }, 2000);
 
         return () => clearTimeout(timer);
       } else {
-        // 이전에 로그인한 적이 있으면 바로 메인 페이지로 이동
-        navigate("/main");
+        // 이전에 로그인한 적이 있으면 바로 원래 가려던 페이지로 이동
+        navigate(from);
       }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location]);
 
   const handleKakaoLogin = () => {
     try {

@@ -2,20 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { useUserInfo } from "../../hooks/useUserInfo";
 
 const Header: React.FC = () => {
-  const { user, loading } = useUserInfo();
+  const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
   const isLoggedIn = !!user;
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
+    clearUserInfo();
 
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
-    setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 10);
-
-    window.location.reload();
+    navigate("/signin", { replace: true });
   };
 
   const handleShopClick = () => {

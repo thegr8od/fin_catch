@@ -16,6 +16,7 @@ import RoomPreparePage from "./pages/RoomPreparePage";
 import { LoadingProvider, useLoading } from "./contexts/LoadingContext";
 import LoadingScreen from "./components/common/LoadingScreen";
 import OAuthRedirectPage from "./pages/OAuthRedirectPage";
+import PrivateRoute from "./components/auth/PrivateRoute";
 
 /**
  * 라우트 변경 감지 및 로딩 상태 초기화 컴포넌트
@@ -75,20 +76,77 @@ function AppContent() {
           {/* 메인 콘텐츠 영역 */}
           <div className="flex-grow pt-12">
             <Routes>
+              {/* 공개 라우트 */}
               <Route path="/" element={<SplashPage />} />
               <Route path="/signin" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/main" element={<MainPage />} />
-              <Route path="/shop" element={<ShopPage />} />
-              <Route path="/room/prepare/:roomId" element={<RoomPreparePage />} />
-              <Route path="/one-to-one" element={<OneToOnePage />} />
-              <Route path="/one-to-one/:category" element={<OneToOnePage />} />
-              <Route path="/game/survival" element={<SurvivalPage />} />
-              <Route path="/game/bot" element={<BotPage />} />
-              <Route path="/:nickname" element={<MyPage />} />
-              <Route path="/oauth/redirect" element={<OAuthRedirectPage />} />
               <Route path="/login" element={<OAuthRedirectPage />} />
-              <Route path="/oauth2/code/*" element={<OAuthRedirectPage />} />
+
+              {/* 보호된 라우트 */}
+              <Route
+                path="/main"
+                element={
+                  <PrivateRoute>
+                    <MainPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/shop"
+                element={
+                  <PrivateRoute>
+                    <ShopPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/room/prepare/:roomId"
+                element={
+                  <PrivateRoute>
+                    <RoomPreparePage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/one-to-one"
+                element={
+                  <PrivateRoute>
+                    <OneToOnePage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/one-to-one/:category"
+                element={
+                  <PrivateRoute>
+                    <OneToOnePage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/game/survival"
+                element={
+                  <PrivateRoute>
+                    <SurvivalPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/game/bot"
+                element={
+                  <PrivateRoute>
+                    <BotPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/:nickname"
+                element={
+                  <PrivateRoute>
+                    <MyPage />
+                  </PrivateRoute>
+                }
+              />
             </Routes>
           </div>
 

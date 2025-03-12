@@ -2,32 +2,37 @@ import { useCallback, useState } from "react";
 import axiosInstance from "../api/axios";
 import { Response } from "../types/response/Response";
 
-export const useApi = <T, P = void>(endpoint: string, method: "GET" | "POST" | "PATCH" | "DELETE" = "GET") => {
+interface CustomConfig {
+  url?: string;
+  headers?: Record<string, string>;
+  params?: Record<string, any>;
+}
+
+export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "DELETE" = "GET") => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
 
   const execute = useCallback(
-    async (payload?: P, customHeaders?: Record<string, string>) => {
+    async (payload?: P, config?: CustomConfig) => {
       setLoading(true);
       setError(null);
 
       try {
         let response;
-        const headers = customHeaders ? { ...customHeaders } : {};
+        const url = config?.url || endpoint;
+        const headers = config?.headers || {};
+        const params = config?.params;
 
         switch (method) {
           case "GET":
-            response = await axiosInstance.get<Response<T>>(endpoint, { headers });
-            break;
-          case "POST":
-            response = await axiosInstance.post<Response<T>>(endpoint, payload, { headers });
+            response = await axiosInstance.get<Response<T>>(url, { headers });
             break;
           case "PATCH":
-            response = await axiosInstance.put<Response<T>>(endpoint, payload, { headers });
+            response = await axiosInstance.patch<Response<T>>(url, payload, { headers, params });
             break;
           case "DELETE":
-            response = await axiosInstance.delete<Response<T>>(endpoint, {
+            response = await axiosInstance.delete<Response<T>>(url, {
               headers,
               data: payload,
             });
@@ -61,5 +66,5 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "POST" | "
     [endpoint, method]
   );
 
-  return { data, loading, error, execute };
+  return { data, loading, error, execute, setData };
 };
