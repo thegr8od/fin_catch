@@ -1,65 +1,36 @@
-import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUserInfo } from "../../hooks/useUserInfo";
 
 const Header: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [nickname, setNickname] = useState("");
+  const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
-
-  // 로그인 상태 확인 함수
-  const checkLoginStatus = () => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const userNickname = localStorage.getItem("userNickname") || "";
-    setIsLoggedIn(loggedIn);
-    setNickname(userNickname);
-  };
-
-  // 컴포넌트가 마운트될 때 로그인 상태 확인
-  useEffect(() => {
-    checkLoginStatus();
-
-    // 주기적으로 로그인 상태 확인 (1초마다)
-    const interval = setInterval(() => {
-      checkLoginStatus();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const isLoggedIn = !!user;
 
   const handleLogout = () => {
-    // 로그아웃 시 localStorage에서 사용자 정보 삭제
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userNickname");
-    setIsLoggedIn(false);
-    setNickname("");
+    localStorage.removeItem("accessToken");
+    clearUserInfo();
 
-    // 로그아웃 후 로그인 페이지로 이동
-    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
-    // 약간의 지연 후 페이지 이동
-    setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 10);
+    navigate("/signin", { replace: true });
   };
 
   const handleShopClick = () => {
-    // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
-    // 약간의 지연 후 페이지 이동
     setTimeout(() => {
       navigate("/shop", { replace: true });
     }, 10);
   };
 
   const handleMyPageClick = () => {
+    if (!user) return;
     // 페이지 이동 전에 이벤트 발생시켜 다른 컴포넌트들이 정리될 수 있도록 함
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
     // 약간의 지연 후 페이지 이동
     setTimeout(() => {
-      navigate(`/${nickname}`, { replace: true });
+      navigate(`/${user.nickname}`, { replace: true });
     }, 10);
   };
 
@@ -73,6 +44,8 @@ const Header: React.FC = () => {
     }, 10);
   };
 
+  // 로그인 상태 확인 함수
+  // 컴포넌트가 마운트될 때 로그인 상태 확인
   return (
     <header className="bg-gray-800 text-white py-2 px-4 fixed top-0 w-full z-50">
       <div className="container mx-auto flex justify-between items-center">
@@ -81,7 +54,7 @@ const Header: React.FC = () => {
             <div className="flex items-center bg-gray-700 px-3 py-1 rounded-md">
               <span className="font-korean-pixel text-sm mr-2">유저:</span>
               <button onClick={handleMyPageClick} className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-korean-pixel flex items-center">
-                <span className="font-korean-pixel text-sm font-bold">{nickname}</span>
+                <span className="font-korean-pixel text-sm font-bold">{loading ? "로딩 중..." : user?.nickname}</span>
               </button>
             </div>
           )}

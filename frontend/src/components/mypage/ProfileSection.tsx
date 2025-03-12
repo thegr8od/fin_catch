@@ -13,9 +13,10 @@ interface ProfileSectionProps {
     coins: number;
     profileImage: string;
   };
+  onNicknameChangeClick?: () => void; // 닉네임 변경 버튼 클릭 핸들러
 }
 
-const ProfileSection: React.FC<ProfileSectionProps> = ({ userData }) => {
+const ProfileSection: React.FC<ProfileSectionProps> = ({ userData, onNicknameChangeClick }) => {
   const [showCharacterModal, setShowCharacterModal] = useState(false);
   const [currentCharacterId, setCurrentCharacterId] = useState(1);
   const [currentCharacter, setCurrentCharacter] = useState<Character | undefined>(undefined);
@@ -74,7 +75,16 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ userData }) => {
       <div className="w-full">
         {/* 닉네임 및 레벨 */}
         <div className="mb-5 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{userData.nickname}</h2>
+          <div className="flex items-center justify-center mb-2">
+            <h2 className="text-2xl font-bold text-gray-800">{userData.nickname}</h2>
+            {onNicknameChangeClick && (
+              <button onClick={onNicknameChangeClick} className="ml-2 text-gray-400 hover:text-gray-600 transition-colors" title="닉네임 변경">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            )}
+          </div>
           <div className="flex items-center justify-center mt-2">
             <span className="bg-white text-amber-700 px-4 py-1.5 rounded-lg text-sm mr-3 font-semibold shadow-sm border border-amber-200">Lv. {userData.level}</span>
           </div>
