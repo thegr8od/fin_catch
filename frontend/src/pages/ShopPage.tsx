@@ -6,12 +6,16 @@ import PaymentResultModal from "../components/shop/PaymentResultModal";
 import coinImg from "../assets/coin.png";
 import shopBg from "../assets/shop_bg.png";
 import { usePayment } from "../hooks/usePayment";
+import { useUserInfo } from "../hooks/useUserInfo";
+import LoadingScreen from "../components/common/LoadingScreen";
+import axiosInstance from "../api/axios";
 
 const ShopPage: React.FC = () => {
-  const [balance, setBalance] = useState(55000);
+  const { user, loading } = useUserInfo();
   const [isSpinning, setIsSpinning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [purchaseAmount, setPurchaseAmount] = useState<number | null>(null);
+  const [pickedCharacters, setPickedCharacters] = useState<any[]>([]);
 
   // 결제 관련 로직을 usePayment 훅으로 분리
   const {
@@ -30,33 +34,71 @@ const ShopPage: React.FC = () => {
     processPayment,
     closePaymentResult,
     chargeCoin,
-  } = usePayment(balance, setBalance);
+  } = usePayment(user?.point || 0, () => {});
 
   // 슬롯 구매 처리
-  const handlePurchase = (amount: number) => {
+  const handlePurchase = async (amount: number) => {
     const cost = amount === 1 ? 500 : 5000;
+    console.log("구매 시도:", { amount, cost });
+    console.log("현재 보유 코인:", user?.point);
 
     // 코인이 부족하면 알림창 띄우기
-    if (balance >= cost) {
-      setBalance((prevBalance) => prevBalance - cost);
+    if (user && user.point >= cost) {
       setPurchaseAmount(amount);
       setIsSpinning(true);
 
-      // 슬롯 애니메이션이 끝난 후 모달 표시
-      setTimeout(() => {
+      try {
+        console.log("뽑기 API 요청:", { count: amount === 1 ? 1 : 10 });
+        // 뽑기 API 호출
+        const response = await axiosInstance.get(`/api/member/pick/cat`, {
+          params: {
+            count: amount === 1 ? 1 : 10,
+          },
+        });
+
+        console.log("뽑기 API 응답:", response.data);
+
+        if (response.data.isSuccess && response.data.result) {
+          setPickedCharacters(response.data.result);
+        }
+
+        // 슬롯 애니메이션이 끝난 후 모달 표시
+        setTimeout(() => {
+          setIsSpinning(false);
+          setShowModal(true);
+        }, 3000);
+      } catch (error: any) {
+        console.error("뽑기 실패 상세:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
         setIsSpinning(false);
-        setShowModal(true);
-      }, 3000); // 슬롯 애니메이션 시간에 맞게 조정
+        alert("뽑기에 실패했습니다. 다시 시도해주세요.");
+      }
     } else {
+      console.log("코인 부족:", {
+        필요한_코인: cost,
+        보유_코인: user?.point,
+      });
       alert("코인이 부족합니다!");
     }
+  };
+
+  const handlePickCharacter = async () => {
+    const response = await axiosInstance.get(`/api/member/pick/cat`);
   };
 
   // 모달 닫기
   const handleCloseModal = () => {
     setShowModal(false);
     setPurchaseAmount(null);
+    setPickedCharacters([]);
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Background backgroundImage={shopBg}>
@@ -67,7 +109,7 @@ const ShopPage: React.FC = () => {
           {/* 잔액 표시 */}
           <div className="absolute top-4 right-4 bg-gray-800 rounded-lg p-3 flex items-center">
             <img src={coinImg} alt="코인" className="w-6 h-6 mr-2" />
-            <span className="text-yellow-400 font-bold font-korean-pixel">{balance.toLocaleString()}</span>
+            <span className="text-yellow-400 font-bold font-korean-pixel">{user?.point?.toLocaleString() || 0}</span>
             <button onClick={openPaymentModal} className="ml-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold">
               +
             </button>
@@ -77,7 +119,7 @@ const ShopPage: React.FC = () => {
           <SlotMachine isSpinning={isSpinning} onPurchase={handlePurchase} disabled={isSpinning || showModal} />
 
           {/* 캐릭터 획득 모달 */}
-          {showModal && <CharacterModal onClose={handleCloseModal} amount={purchaseAmount || 1} />}
+          {showModal && <CharacterModal onClose={handleCloseModal} amount={purchaseAmount || 1} characters={pickedCharacters} />}
 
           {/* 코인 충전 모달 */}
           {showPaymentModal && (

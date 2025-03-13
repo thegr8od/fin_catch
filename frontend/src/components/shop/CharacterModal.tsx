@@ -1,50 +1,35 @@
 import React, { useState, useEffect } from "react";
-import smokeCatImg from "../../assets/smoke_cat.png";
 import CharacterListModal from "./CharacterListModal";
+import coinImg from "../../assets/coin.png";
 
-// 캐릭터 타입 정의
 interface Character {
-  id: number;
-  name: string;
-  image: string;
-  rarity: number; // 1-5 (별 개수)
+  catId: number;
+  catName: string;
+  description: string;
+  grade: string;
+  isDuplicate?: boolean;
 }
 
 interface CharacterModalProps {
   onClose: () => void;
   amount: number;
+  characters: Character[];
 }
 
-const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, amount }) => {
+const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, amount, characters }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAllCharacters, setShowAllCharacters] = useState(false);
-  const [characters, setCharacters] = useState<Character[]>([]);
+  const [showRefundEffect, setShowRefundEffect] = useState(false);
 
-  // 캐릭터 데이터 생성 (실제로는 API에서 받아와야 함)
   useEffect(() => {
-    // 임시 캐릭터 데이터 생성
-    const generateCharacters = () => {
-      const characterNames = ["멋쟁이 고양이", "불꽃 여우", "전기 쥐", "물방울 거북", "잠자는 곰", "날개 달린 용", "빛나는 별", "그림자 늑대", "꽃 토끼", "무지개 새"];
-
-      const newCharacters: Character[] = [];
-
-      for (let i = 0; i < amount; i++) {
-        const randomRarity = Math.floor(Math.random() * 5) + 1; // 1-5 랜덤 희귀도
-        const randomNameIndex = Math.floor(Math.random() * characterNames.length);
-
-        newCharacters.push({
-          id: i + 1,
-          name: characterNames[randomNameIndex],
-          image: smokeCatImg, // 모든 캐릭터에 같은 이미지 사용 (실제로는 다른 이미지 사용)
-          rarity: randomRarity,
-        });
-      }
-
-      setCharacters(newCharacters);
-    };
-
-    generateCharacters();
-  }, [amount]);
+    if (currentCharacter?.isDuplicate) {
+      setShowRefundEffect(true);
+      const timer = setTimeout(() => {
+        setShowRefundEffect(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
 
   // 다음 캐릭터로 이동
   const handleNext = () => {
@@ -63,9 +48,46 @@ const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, amount }) => {
   // 현재 캐릭터
   const currentCharacter = characters[currentIndex];
 
-  // 희귀도 별 표시 생성
-  const renderRarityStars = (rarity: number) => {
-    return "★".repeat(rarity) + "☆".repeat(5 - rarity);
+  // 희귀도 표시 변환
+  const getGradeStars = (grade: string) => {
+    switch (grade) {
+      case "COMMON":
+        return "★";
+      case "RARE":
+        return "★★";
+      case "EPIC":
+        return "★★★";
+      case "UNIQUE":
+        return "★★★★";
+      case "LEGENDARY":
+        return "★★★★★";
+      default:
+        return "★";
+    }
+  };
+
+  // 등급별 색상 및 효과 클래스
+  const getGradeClass = (grade: string) => {
+    switch (grade) {
+      case "LEGENDARY":
+        return "animate-pulse text-yellow-400 font-bold text-3xl drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]";
+      case "EPIC":
+        return "animate-pulse text-purple-400 font-bold text-2xl drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]";
+      default:
+        return "text-white text-2xl";
+    }
+  };
+
+  // 등급별 설명 텍스트 스타일
+  const getDescriptionClass = (grade: string) => {
+    switch (grade) {
+      case "LEGENDARY":
+        return "text-yellow-300 animate-pulse";
+      case "EPIC":
+        return "text-purple-300 animate-pulse";
+      default:
+        return "text-gray-300";
+    }
   };
 
   // 전체 캐릭터 목록 모달
@@ -85,14 +107,36 @@ const CharacterModal: React.FC<CharacterModalProps> = ({ onClose, amount }) => {
 
         {currentCharacter && (
           <>
-            {/* 캐릭터 이미지 */}
-            <div className="w-full mb-4 flex justify-center">
-              <img src={currentCharacter.image} alt={currentCharacter.name} className="w-64 h-64 object-contain" />
-            </div>
-
             {/* 캐릭터 정보 */}
-            <h3 className="text-2xl text-white font-korean-pixel mb-2">{currentCharacter.name}</h3>
-            <p className="text-gray-300 text-center font-korean-pixel mb-6">희귀도: {renderRarityStars(currentCharacter.rarity)}</p>
+            <div className={`flex flex-col items-center ${currentCharacter.grade === "LEGENDARY" ? "animate-bounce" : ""}`}>
+              {/* 캐릭터 이미지 */}
+              <div className={`w-64 h-64 mb-4 relative ${currentCharacter.grade === "LEGENDARY" ? "animate-pulse" : ""}`}>
+                <img
+                  src={`/cats_assets/${currentCharacter.catName}/${currentCharacter.catName}_cat_static.png`}
+                  alt={currentCharacter.catName}
+                  className={`w-full h-full object-contain ${
+                    currentCharacter.grade === "LEGENDARY" ? "drop-shadow-[0_0_15px_rgba(234,179,8,0.8)]" : currentCharacter.grade === "EPIC" ? "drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" : ""
+                  }`}
+                />
+              </div>
+
+              <h3 className={`font-korean-pixel mb-2 ${getGradeClass(currentCharacter.grade)}`}>{currentCharacter.catName}</h3>
+              <p className={`text-center font-korean-pixel mb-2 ${getDescriptionClass(currentCharacter.grade)}`}>{currentCharacter.description}</p>
+              <p className="text-yellow-400 text-center font-korean-pixel mb-2 text-xl">{getGradeStars(currentCharacter.grade)}</p>
+
+              {/* 중복 캐릭터 환급 효과 */}
+              {currentCharacter.isDuplicate && (
+                <div className={`flex flex-col items-center transition-all duration-500 ${showRefundEffect ? "scale-110" : "scale-100"}`}>
+                  <div className="flex items-center bg-green-900 bg-opacity-50 rounded-lg px-4 py-2 mb-4">
+                    <p className="text-green-400 font-korean-pixel mr-2">보유 중인 고양이</p>
+                    <div className="flex items-center animate-bounce">
+                      <img src={coinImg} alt="코인" className="w-5 h-5 mr-1" />
+                      <span className="text-yellow-400 font-bold">+50</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 

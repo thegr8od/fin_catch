@@ -50,3 +50,4 @@ const AiQuizPage: React.FC = () => {
 };
 
 export default AiQuizPage;
+
