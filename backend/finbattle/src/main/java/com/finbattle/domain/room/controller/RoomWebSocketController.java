@@ -33,7 +33,7 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{roomId}/info")
     public void getRoomInfo(@DestinationVariable Long roomId) {
         log.info("Requesting info for room {}", roomId);
-        roomSubscriptionService.getRoomUserCount(roomId);
+        roomSubscriptionService.getRoomInfo(roomId);
     }
 
     /**

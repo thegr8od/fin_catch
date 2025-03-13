@@ -15,5 +15,6 @@ public class RoomResponse {
     private RoomType roomType;
     private QuizType quizType;
     private int maxPlayer;
+    private Long memberId;
     private LocalDateTime createdAt;
 }

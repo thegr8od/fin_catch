@@ -1,12 +1,16 @@
 package com.finbattle.domain.room.model;
 
+import com.finbattle.domain.member.model.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -48,5 +52,12 @@ public class Room {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private QuizType quizType;
+
+    // --- 1:N 관계 구현을 위한 핵심 ---
+    // "한 Member"가 "여러 Room"을 생성할 수 있으므로,
+    // Room 입장에서는 @ManyToOne으로 Member를 참조.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")  // 칼럼명: member_id
+    private Member hostMember;
 }
 

@@ -30,7 +30,7 @@ public class RoomController {
     @PostMapping
     public ResponseEntity<RoomResponse> createRoom(@RequestBody RoomCreateRequest request) {
         RoomResponse response = roomService.createRoom(request);
-        roomSubscriptionService.createRoomSubscription(response.getRoomId());
+        roomSubscriptionService.createRoomSubscription(response);
         return ResponseEntity.ok(response);
     }
 
