@@ -9,12 +9,22 @@ interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
   isPlaying?: boolean;
 }
 
-const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({ state, isPlaying = true, direction = true, scale = 3, className = "", onAnimationComplete, resourcesLoaded = false }) => {
+const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
+  state,
+  isPlaying = true,
+  direction = true,
+  scale = 3,
+  className = "",
+  onAnimationComplete,
+  resourcesLoaded = false,
+  characterType = "classic",
+}) => {
   const { containerRef } = useCharacterAnimation({
     state,
     direction,
     scale,
     onAnimationComplete,
+    characterType,
   });
 
   // 리소스가 로드되지 않았으면 아무것도 렌더링하지 않음
