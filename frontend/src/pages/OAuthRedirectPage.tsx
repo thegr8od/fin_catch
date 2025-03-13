@@ -3,6 +3,8 @@ import { useAuth } from "../hooks/useAuth";
 import LoadingScreen from "../components/common/LoadingScreen";
 import axiosInstance from "../api/axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setUser } from "../store/slices/userSlice";
 
 /**
  * 소셜 로그인 리다이렉트 처리 페이지
@@ -13,81 +15,78 @@ const OAuthRedirectPage = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    // 현재 URL과 쿠키 확인
-    console.log("현재 URL:", window.location.href);
-    console.log("현재 경로:", location.pathname);
-    console.log("현재 검색 파라미터:", location.search);
-    console.log("현재 쿠키:", document.cookie);
-
-    // JSESSIONID 쿠키 확인
-    const cookies = document.cookie.split(";");
-    const sessionCookie = cookies.find((cookie) => cookie.trim().startsWith("JSESSIONID="));
-    console.log("세션 쿠키:", sessionCookie);
-
-    // URL 파라미터 확인
-    const urlParams = new URLSearchParams(location.search);
-    const code = urlParams.get("code");
-    const state = urlParams.get("state");
-    const success = urlParams.get("success") === "true";
-
-    console.log("URL 파라미터:", { code, state, success });
-
-    // 소셜 로그인 성공 후 토큰 요청
     const fetchToken = async () => {
       try {
-        console.log("토큰 요청 시작");
+        // URL 파라미터 확인 및 로깅
+        const urlParams = new URLSearchParams(location.search);
+        const code = urlParams.get("code");
+        console.log("인증 코드:", code);
 
-        // API 호출하여 토큰 받아오기 (withCredentials 옵션 추가)
-        const response = await axiosInstance.get("/api/member/public/reissue", {
+        // API 요청 설정 로깅
+        const requestConfig = {
           withCredentials: true,
           params: code ? { code } : undefined,
-        });
+        };
+        console.log("API 요청 설정:", requestConfig);
+
+        // 토큰 요청
+        console.log("토큰 요청 시작 - /api/member/public/reissue");
+        const response = await axiosInstance.get("/api/member/public/reissue", requestConfig);
+        console.log("토큰 응답 전체:", response);
 
         const data = response.data;
-        console.log("API 응답 받음:", data);
+        console.log("토큰 응답 데이터:", data);
 
         if (data && data.isSuccess && data.result && data.result.accessToken) {
           const accessToken = data.result.accessToken;
-          console.log("토큰 추출 성공:", accessToken);
+          console.log("액세스 토큰 추출 성공:", accessToken);
 
-          // 액세스 토큰을 로컬 스토리지에 저장
+          // 토큰 저장
           localStorage.setItem("accessToken", accessToken);
-          console.log("토큰 저장 완료");
+          console.log("로컬 스토리지에 토큰 저장 완료");
 
-          // tokenChange 이벤트 발생
-          window.dispatchEvent(new Event("tokenChange"));
+          // axiosInstance 헤더 설정
+          axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+          console.log("axios 인스턴스 헤더 설정 완료");
 
-          // 인증 상태 설정
-          setAuthState(accessToken);
-          console.log("인증 상태 설정 완료");
+          try {
+            console.log("사용자 정보 요청 시작 - /api/member/myinfo");
+            const userResponse = await axiosInstance.get("/api/member/myinfo");
+            console.log("사용자 정보 응답:", userResponse);
 
-          // 메인 페이지로 이동
-          navigate("/main", { replace: true });
-        } else {
-          console.error("토큰을 찾을 수 없습니다:", data);
-          setError("토큰을 찾을 수 없습니다. 다시 로그인해주세요.");
+            if (userResponse.data && userResponse.data.isSuccess) {
+              console.log("사용자 정보 추출 성공:", userResponse.data.result);
+              dispatch(setUser(userResponse.data.result));
+              setAuthState(accessToken);
+              console.log("Redux store에 사용자 정보 저장 완료");
 
-          // 3초 후 로그인 페이지로 이동
-          setTimeout(() => {
+              console.log("메인 페이지로 이동");
+              navigate("/main", { replace: true });
+            } else {
+              throw new Error("사용자 정보 응답이 올바르지 않습니다.");
+            }
+          } catch (userError) {
+            console.error("사용자 정보 요청 실패:", userError);
+            localStorage.removeItem("accessToken");
+            setError("사용자 정보를 가져오는데 실패했습니다.");
             navigate("/signin", { replace: true });
-          }, 3000);
+          }
+        } else {
+          throw new Error("토큰 응답이 올바르지 않습니다.");
         }
-      } catch (error) {
-        console.error("토큰 요청 중 오류 발생:", error);
+      } catch (error: any) {
+        console.error("인증 처리 중 오류 발생:", error);
+        console.error("오류 상세:", error.response?.data);
         setError("로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
-
-        // 3초 후 로그인 페이지로 이동
-        setTimeout(() => {
-          navigate("/signin", { replace: true });
-        }, 3000);
+        navigate("/signin", { replace: true });
       }
     };
 
-    // 토큰 요청 실행
     fetchToken();
-  }, [setAuthState, navigate, location]);
+  }, [setAuthState, navigate, location, dispatch]);
 
   // 로딩 화면 또는 오류 메시지 표시
   return (

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { CharacterStateConfig } from "../types/character";
 
-export type CharacterType = "classic" | "batman" | "christmas" | "demonic" | "egypt" | "simase" | "tiger" | "yankee";
+export type CharacterType = "classic" | "batman" | "christmas" | "demonic" | "egypt" | "simase" | "tiger" | "yankee" | "nigger";
 
 interface CharacterFrameConfig {
   frameWidth: number;
@@ -47,6 +47,11 @@ const CHARACTER_DEFAULTS = {
     animationSpeed: 0.1,
   },
   yankee: {
+    frameWidth: 32,
+    frameHeight: 32,
+    animationSpeed: 0.1,
+  },
+  nigger: {
     frameWidth: 32,
     frameHeight: 32,
     animationSpeed: 0.1,
@@ -103,6 +108,13 @@ const CHARACTER_STATE_CONFIGS = {
     damage: { frames: 7 },
     victory: { frames: 13 },
   },
+  nigger: {
+    idle: { frames: 7 },
+    dead: { frames: 14 },
+    attack: { frames: 9 },
+    damage: { frames: 7 },
+    victory: { frames: 13 },
+  },
   yankee: {
     idle: { frames: 7 },
     dead: { frames: 14 },
@@ -137,7 +149,11 @@ const getSpritePath = (characterType: CharacterType, state: keyof CharacterState
 };
 
 const createStateConfig = (characterType: CharacterType, frameCount: number): CharacterFrameConfig => {
-  const defaults = CHARACTER_DEFAULTS[characterType];
+  const defaults = CHARACTER_DEFAULTS[characterType] as {
+    frameWidth: number;
+    frameHeight: number;
+    animationSpeed: number;
+  };
   return {
     ...defaults,
     frameCount,
@@ -145,7 +161,9 @@ const createStateConfig = (characterType: CharacterType, frameCount: number): Ch
 };
 
 export const createCharacterAnimations = (characterType: CharacterType): CharacterStateConfig => {
-  const stateConfigs = CHARACTER_STATE_CONFIGS[characterType];
+  const stateConfigs = CHARACTER_STATE_CONFIGS[characterType] as {
+    [key: string]: { frames: number };
+  };
 
   return Object.entries(stateConfigs).reduce((config, [state, { frames }]) => {
     const stateKey = state as keyof CharacterStateConfig;

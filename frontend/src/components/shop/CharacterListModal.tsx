@@ -1,11 +1,12 @@
 import React from "react";
-import smokeCatImg from "../../assets/smoke_cat.png";
+import coinImg from "../../assets/coin.png";
 
 interface Character {
-  id: number;
-  name: string;
-  image: string;
-  rarity: number; // 1-5 (별 개수)
+  catId: number;
+  catName: string;
+  description: string;
+  grade: string;
+  isDuplicate?: boolean;
 }
 
 interface CharacterListModalProps {
@@ -14,9 +15,58 @@ interface CharacterListModalProps {
 }
 
 const CharacterListModal: React.FC<CharacterListModalProps> = ({ characters, onClose }) => {
-  // 희귀도 별 표시 생성
-  const renderRarityStars = (rarity: number) => {
-    return "★".repeat(rarity) + "☆".repeat(5 - rarity);
+  // 희귀도 표시 변환
+  const getGradeStars = (grade: string) => {
+    switch (grade) {
+      case "COMMON":
+        return "★";
+      case "RARE":
+        return "★★";
+      case "EPIC":
+        return "★★★";
+      case "UNIQUE":
+        return "★★★★";
+      case "LEGENDARY":
+        return "★★★★★";
+      default:
+        return "★";
+    }
+  };
+
+  // 등급별 색상 및 효과 클래스
+  const getGradeClass = (grade: string) => {
+    switch (grade) {
+      case "LEGENDARY":
+        return "animate-pulse bg-gradient-to-r from-yellow-900 to-yellow-700 border-2 border-yellow-400";
+      case "EPIC":
+        return "animate-pulse bg-gradient-to-r from-purple-900 to-purple-700 border-2 border-purple-400";
+      default:
+        return "bg-gray-700";
+    }
+  };
+
+  // 등급별 이름 텍스트 스타일
+  const getNameClass = (grade: string) => {
+    switch (grade) {
+      case "LEGENDARY":
+        return "text-yellow-300 font-bold";
+      case "EPIC":
+        return "text-purple-300 font-bold";
+      default:
+        return "text-white";
+    }
+  };
+
+  // 등급별 설명 텍스트 스타일
+  const getDescriptionClass = (grade: string) => {
+    switch (grade) {
+      case "LEGENDARY":
+        return "text-yellow-200";
+      case "EPIC":
+        return "text-purple-200";
+      default:
+        return "text-gray-300";
+    }
   };
 
   return (
@@ -32,15 +82,39 @@ const CharacterListModal: React.FC<CharacterListModalProps> = ({ characters, onC
         {/* 모달 제목 */}
         <h2 className="text-2xl text-white font-korean-pixel mb-6">획득한 캐릭터</h2>
 
+        {/* 환급 총액 표시 */}
+        {characters.some((char) => char.isDuplicate) && (
+          <div className="bg-green-900 bg-opacity-50 rounded-lg px-6 py-3 mb-6 animate-pulse">
+            <div className="flex items-center justify-center">
+              <p className="text-green-400 font-korean-pixel mr-3">총 환급 코인</p>
+              <div className="flex items-center">
+                <img src={coinImg} alt="코인" className="w-6 h-6 mr-1" />
+                <span className="text-yellow-400 font-bold text-xl">+{characters.filter((char) => char.isDuplicate).length * 50}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 캐릭터 목록 */}
         <div className="grid grid-cols-5 gap-4 w-full">
           {characters.map((character) => (
-            <div key={character.id} className="bg-gray-700 rounded-lg p-3 flex flex-col items-center">
-              <div className="w-full aspect-square mb-2 flex justify-center items-center">
-                <img src={character.image} alt={character.name} className="w-full h-full object-contain" />
+            <div key={character.catId} className={`rounded-lg p-3 flex flex-col items-center ${getGradeClass(character.grade)} relative`}>
+              {/* 중복 표시 뱃지 */}
+              {character.isDuplicate && (
+                <div className="absolute -top-2 -right-2 bg-green-600 rounded-full px-2 py-1 flex items-center animate-bounce">
+                  <img src={coinImg} alt="코인" className="w-3 h-3 mr-1" />
+                  <span className="text-white text-xs font-bold">+50</span>
+                </div>
+              )}
+
+              {/* 캐릭터 이미지 */}
+              <div className="w-full aspect-square mb-2">
+                <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-full h-full object-contain" />
               </div>
-              <p className="text-white text-sm font-korean-pixel truncate w-full text-center">{character.name}</p>
-              <p className="text-yellow-400 text-xs font-korean-pixel">{renderRarityStars(character.rarity)}</p>
+
+              <p className={`text-sm font-korean-pixel truncate w-full text-center mb-2 ${getNameClass(character.grade)}`}>{character.catName}</p>
+              <p className={`text-xs font-korean-pixel mb-2 ${getDescriptionClass(character.grade)}`}>{character.description}</p>
+              <p className="text-yellow-400 text-xs font-korean-pixel">{getGradeStars(character.grade)}</p>
               <div className="flex items-center justify-center mt-1">
                 <div className="bg-purple-600 rounded-full w-4 h-4 flex items-center justify-center">
                   <span className="text-white text-xs">+1</span>
