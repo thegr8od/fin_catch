@@ -5,6 +5,8 @@ import com.finbattle.domain.member.model.MemberCat;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,11 +36,20 @@ public class Cat {
     @Column(nullable = false, unique = true)
     private String catName; // 캐릭터 이름
 
+    @Column(nullable = false)
+    private String description; // 캐릭터 설명
+
+    @Enumerated(EnumType.STRING)
+    private CatGrade grade; // 캐릭터 등급
+
     @OneToMany(mappedBy = "cat")
     @JsonIgnore
     private List<MemberCat> memberCats = new ArrayList<>();
 
-    public Cat(String catName) {
+    public Cat(String catName, CatGrade grade) {
         this.catName = catName;
+        this.description = "냥냥냥";
+        this.grade = grade;
     }
+
 }

@@ -46,7 +46,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (optionalMember.isEmpty()) {
             String tempNickname = oAuth2Response.getName() + UUID.randomUUID();
             member = Member.of(providerId, tempNickname, oAuth2Response.getEmail());
-            Cat dafaultCat = catRepository.findById(1L).orElse(new Cat());
+            Cat dafaultCat = catRepository.findByCatName("classic").orElse(new Cat());
             member.acquireCat(dafaultCat);
             memberRepository.save(member);
         } else {
