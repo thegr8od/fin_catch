@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -122,10 +123,10 @@ public class MemberController {
     @Operation(summary = "랜덤 고양이 뽑기", description = "로그인한 사용자가 랜덤으로 고양이를 뽑습니다.")
     @ApiResponse(responseCode = "200", description = "랜덤 고양이 뽑기 성공")
     @GetMapping("/pick/cat")
-    public ResponseEntity<BaseResponse<CatDto>> pickCat(
-        @AuthenticationPrincipal AuthenticatedUser detail) {
-        CatDto cat = memberService.pickCat(detail.getMemberId());
-        log.info("{} 번 고양이를 뽑았습니다.", cat.getCatId());
-        return ResponseEntity.ok(new BaseResponse<>(cat));
+    public ResponseEntity<BaseResponse<List<CatDto>>> pickCat(
+        @AuthenticationPrincipal AuthenticatedUser detail, @RequestParam Integer count) {
+        List<CatDto> cats = memberService.pickCat(detail.getMemberId(), count);
+        log.info("고양이 뽑기 성공");
+        return ResponseEntity.ok(new BaseResponse<>(cats));
     }
 }

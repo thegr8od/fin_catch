@@ -25,6 +25,7 @@ public enum BaseResponseStatus {
     MEMBER_IS_DELETED(false, HttpStatus.BAD_REQUEST, 2002, "삭제된 회원 입니다."),
     CAT_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2003, "고양이가 도망갔습니다."),
     POINT_NOT_ENOUGH(false, HttpStatus.BAD_REQUEST, 2004, "포인트가 부족합니다."),
+    CAT_ALL_GONE(false, HttpStatus.NOT_FOUND, 2005, "고양이가 모두 도망갔습니다."),
 
     // Banking (3001 ~ 3099)
     HEADER_INVALID(false, HttpStatus.BAD_REQUEST, 3000, "HEADER 정보가 유효하지 않습니다."),
