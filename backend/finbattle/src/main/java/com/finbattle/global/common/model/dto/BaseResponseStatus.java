@@ -24,7 +24,21 @@ public enum BaseResponseStatus {
     MEMBER_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2001, "맴버를 찾을 수 없습니다."),
     MEMBER_IS_DELETED(false, HttpStatus.BAD_REQUEST, 2002, "삭제된 회원 입니다."),
     CAT_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2003, "고양이가 도망갔습니다."),
-    POINT_NOT_ENOUGH(false, HttpStatus.BAD_REQUEST, 2004, "포인트가 부족합니다.");
+    POINT_NOT_ENOUGH(false, HttpStatus.BAD_REQUEST, 2004, "포인트가 부족합니다."),
+
+    // Banking (3001 ~ 3099)
+    HEADER_INVALID(false, HttpStatus.BAD_REQUEST, 3000, "HEADER 정보가 유효하지 않습니다."),
+    API_NAME_INVALID(false, HttpStatus.BAD_REQUEST, 3001, "API 이름이 유효하지 않습니다."),
+    TRANSMISSION_DATE_INVALID(false, HttpStatus.BAD_REQUEST, 3002, "전송일자 형식이 유효하지 않습니다."),
+    TRANSMISSION_TIME_INVALID(false, HttpStatus.BAD_REQUEST, 3003, "전송시각 형식이 유효하지 않습니다."),
+    INSTITUTION_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3004, "기관코드가 유효하지 않습니다."),
+    FINTECH_APP_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3005, "핀테크 앱 일련번호가 유효하지 않습니다."),
+    API_SERVICE_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3006, "API 서비스코드가 유효하지 않습니다."),
+    INSTITUTION_TRANSACTION_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3010, "기관거래고유번호가 유효하지 않습니다."),
+    INSTITUTION_TRANSACTION_NO_DUPLICATE(false, HttpStatus.BAD_REQUEST, 3007,
+        "기관거래고유번호가 중복된 값입니다."),
+    API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
+    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다.");
 
     private final boolean isSuccess;
     @JsonIgnore

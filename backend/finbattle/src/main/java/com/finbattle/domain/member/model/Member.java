@@ -1,5 +1,6 @@
 package com.finbattle.domain.member.model;
 
+import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.global.common.model.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
@@ -10,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -34,6 +36,9 @@ public class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
+
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
+    private FinanceMember financeMember; // 금융망회원 엔티티 (식별 1:1 관계)
 
     @Column(nullable = false, unique = true)
     private String providerId;
