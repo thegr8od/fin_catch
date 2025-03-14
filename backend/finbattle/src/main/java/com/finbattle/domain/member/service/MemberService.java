@@ -1,7 +1,10 @@
 package com.finbattle.domain.member.service;
 
 import static com.finbattle.global.common.model.dto.BaseResponseStatus.CAT_ALL_GONE;
+import static com.finbattle.global.common.model.dto.BaseResponseStatus.CAT_MAIN_ALREADY;
+import static com.finbattle.global.common.model.dto.BaseResponseStatus.CAT_NOT_FOUND;
 import static com.finbattle.global.common.model.dto.BaseResponseStatus.MEMBER_NOT_FOUND;
+import static com.finbattle.global.common.model.dto.BaseResponseStatus.NOT_HAVE_CAT;
 import static com.finbattle.global.common.model.dto.BaseResponseStatus.POINT_NOT_ENOUGH;
 
 import com.finbattle.domain.cat.entity.Cat;
@@ -27,52 +30,70 @@ public class MemberService {
     private final CatRepository catRepository;
     //private final MemberCatRepository memberCatRepository;
 
-    // 1. 특정 회원 조회
+    // 특정 회원 조회
     public Member findByMemberId(Long memberId) {
         return memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
     }
 
-    // 2. 특정 회원 조회
+    // 특정 회원 조회
     public MyInfoDto getMyInfo(Long memberId) {
         Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
 
         return new MyInfoDto(member.getEmail(), member.getNickname(),
-            getCatIdsByMemberId(memberId), member.getExp(), member.getPoint());
+            getCatIdsByMemberId(memberId), member.getMainCat(), member.getExp(), member.getPoint());
     }
 
-    // 3. 모든 회원 조회
+    // 모든 회원 조회
     public List<Member> findAllMembers() {
         return memberRepository.findAll();
     }
 
-    // 4. 닉네임 중복 확인
+    // 닉네임 중복 확인
     public boolean findByNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname).orElse(null);
         return member != null;
     }
 
-    // 5. 닉네임 변경
+    // 닉네임 변경
     public void updateNickname(Long memberId, String nickname) {
         Member member = findByMemberId(memberId);
         member.setNickname(nickname);
         memberRepository.save(member);
     }
 
-    // 6. 회원탈퇴
+    // 대표 고양이 변경
+    public Cat updateMainCat(Long memberId, Long catId) {
+        Member member = findByMemberId(memberId);
+        Cat cat = catRepository.findByCatId(catId).orElse(null);
+        if (cat == null) {
+            throw new BusinessException(CAT_NOT_FOUND);
+        }
+        if (!member.hasCat(cat)) {
+            throw new BusinessException(NOT_HAVE_CAT);
+        }
+        if (member.getMainCat().equals(cat.getCatName())) {
+            throw new BusinessException(CAT_MAIN_ALREADY);
+        }
+        member.setMainCat(cat.getCatName());
+        memberRepository.save(member);
+        return cat;
+    }
+
+    // 회원탈퇴
     public void deleteMember(Long memberId) {
         Member member = findByMemberId(memberId);
         member.changeStatusToInActive();
         memberRepository.save(member);
     }
 
-    // 7. 특정 회원이 보유한 캐릭터 목록 조회
+    // 특정 회원이 보유한 캐릭터 목록 조회
     public List<Cat> getCatIdsByMemberId(Long memberId) {
         return memberRepository.findCatsByMemberId(memberId);
     }
 
-    // 8. 고양이 뽑기
+    // 고양이 뽑기
     public List<CatDto> pickCat(Long memberId, Integer count) {
         Member member = findByMemberId(memberId);
         if (member.getPoint() < 500L * count) {

@@ -26,6 +26,8 @@ public enum BaseResponseStatus {
     CAT_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2003, "고양이가 도망갔습니다."),
     POINT_NOT_ENOUGH(false, HttpStatus.BAD_REQUEST, 2004, "포인트가 부족합니다."),
     CAT_ALL_GONE(false, HttpStatus.NOT_FOUND, 2005, "고양이가 모두 도망갔습니다."),
+    NOT_HAVE_CAT(false, HttpStatus.BAD_REQUEST, 2006, "해당 고양이를 아직 길들이지 못했습니다."),
+    CAT_MAIN_ALREADY(false, HttpStatus.BAD_REQUEST, 2007, "이미 주인공인 고양이 입니다."),
     ;
 
     private final boolean isSuccess;
