@@ -2,6 +2,7 @@ package com.finbattle.domain.member.model;
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.global.common.model.entity.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +36,7 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
+
     @Column(nullable = false, unique = true)
     private String providerId;
 
@@ -56,12 +58,16 @@ public class Member extends BaseEntity {
     @Builder.Default // ✅ 기본값 추가
     private Long point = 100000L; // 포인트 (기본값: 0)
 
+    @Schema(description = "사용자 대표 캐릭터", example = "default")
+    private String mainCat;
+
     public static Member of(String providerId, String nickname, String email) {
         // Member 생성
         return Member.builder()
             .providerId(providerId)
             .nickname(nickname)
             .email(email)
+            .mainCat("default")
             .build();
     }
 

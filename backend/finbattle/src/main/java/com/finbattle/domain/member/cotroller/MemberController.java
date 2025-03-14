@@ -87,11 +87,21 @@ public class MemberController {
         return ResponseEntity.ok(new BaseResponse<>(responseBody));
     }
 
+    @Operation(summary = "메인 고양이 변경", description = "사용자의 대표 고양이를 변경합니다.")
+    @ApiResponse(responseCode = "200", description = "대표 고양이 변경 성공")
+    @PatchMapping("/maincat")
+    public ResponseEntity<BaseResponse<Cat>> updateMainCat(
+        @AuthenticationPrincipal AuthenticatedUser detail, @RequestParam Long catId) {
+        Cat cat = memberService.updateMainCat(detail.getMemberId(), catId);
+        log.info("대표 고양이 변경 성공!, 변경된 고양이: {}", cat);
+        return ResponseEntity.ok(new BaseResponse<>(cat));
+    }
+
     @Operation(summary = "닉네임 변경", description = "사용자의 닉네임을 변경합니다.")
     @ApiResponse(responseCode = "200", description = "닉네임 변경 성공")
     @PatchMapping("/nickname")
     public ResponseEntity<BaseResponse<String>> updateNickname(
-        @AuthenticationPrincipal AuthenticatedUser detail, String nickname) {
+        @AuthenticationPrincipal AuthenticatedUser detail, @RequestParam String nickname) {
         memberService.updateNickname(detail.getMemberId(), nickname);
         log.info("닉네임 변경 성공! 변경된 닉네임: {}", nickname);
         return ResponseEntity.ok(new BaseResponse<>("Nickname update success!"));
