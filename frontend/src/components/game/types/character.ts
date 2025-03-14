@@ -1,4 +1,4 @@
-export type CharacterState = "idle" | "die" | "attack" | "hurt" | "victory";
+export type CharacterState = "idle" | "attack" | "damage" | "dead" | "victory";
 
 export interface CharacterSpriteConfig {
   spriteSheet: string;
@@ -18,4 +18,5 @@ export interface CharacterAnimationProps {
   scale?: number;
   className?: string;
   onAnimationComplete?: () => void;
+  loop?: boolean;
 }

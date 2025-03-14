@@ -1,23 +1,45 @@
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axios";
+import { useDispatch } from "react-redux";
+import { setUser } from "../store/slices/userSlice";
 
 // 모든 쿠키 출력 (디버깅용)
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch();
 
   // 초기화 및 토큰 확인
   useEffect(() => {
     console.log("인증 상태 초기화");
 
-    // 로컬 스토리지에서 토큰 확인
-    const accessToken = localStorage.getItem("accessToken");
+    const initializeAuth = async () => {
+      // 로컬 스토리지에서 토큰 확인
+      const accessToken = localStorage.getItem("accessToken");
 
-    if (accessToken) {
-      setAuthState(accessToken);
-    }
-  }, []);
+      if (accessToken) {
+        try {
+          // 토큰으로 사용자 정보 가져오기
+          const response = await axiosInstance.get("/api/member/info");
+          if (response.data && response.data.isSuccess) {
+            dispatch(setUser(response.data.result));
+            setAuthState(accessToken);
+          } else {
+            // 사용자 정보 가져오기 실패시 토큰 제거
+            localStorage.removeItem("accessToken");
+            setIsAuthenticated(false);
+          }
+        } catch (error) {
+          console.error("사용자 정보 가져오기 실패:", error);
+          localStorage.removeItem("accessToken");
+          setIsAuthenticated(false);
+        }
+      }
+    };
+
+    initializeAuth();
+  }, [dispatch]);
 
   // 카카오 로그인 함수
   const loginWithKakao = useCallback(() => {

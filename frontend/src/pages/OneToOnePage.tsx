@@ -13,10 +13,10 @@ import { useLoading } from "../contexts/LoadingContext"
  * @property {boolean} isVisible - 메시지 표시 여부 (선택적)
  */
 interface ChatMessage {
-  sender: string
-  message: string
-  timestamp: Date
-  isVisible?: boolean
+  sender: string;
+  message: string;
+  timestamp: Date;
+  isVisible?: boolean;
 }
 
 /**
@@ -39,187 +39,192 @@ const OneToOnePage: React.FC = () => {
     "임시 문제 길이 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
   )
 
-  const resourcesLoadedRef = useRef<boolean>(false)
-  const isMountedRef = useRef<boolean>(false)
+  const resourcesLoadedRef = useRef<boolean>(false);
+  const isMountedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    setLoading(true)
-    setProgress(0)
+    setLoading(true);
+    setProgress(0);
 
-    isMountedRef.current = true
+    isMountedRef.current = true;
 
     return () => {
-      isMountedRef.current = false
-      setLoading(false)
-    }
-  }, [setLoading, setProgress])
+      isMountedRef.current = false;
+      setLoading(false);
+    };
+  }, [setLoading, setProgress]);
 
   useEffect(() => {
     if (resourcesLoadedRef.current && isMountedRef.current) {
-      console.log("리소스가 이미 로드되어 있음, 로드 건너뜀")
-      completeLoading()
-      return
+      console.log("리소스가 이미 로드되어 있음, 로드 건너뜀");
+      completeLoading();
+      return;
     }
 
-    console.log("OneToOnePage 리소스 로드 시작")
+    console.log("OneToOnePage 리소스 로드 시작");
 
-    let isComponentMounted = true
+    let isComponentMounted = true;
 
     const loadImage = (src: string): Promise<HTMLImageElement> => {
       return new Promise((resolve, reject) => {
-        const img = new Image()
+        const img = new Image();
         const timeoutId = setTimeout(() => {
-          reject(new Error(`이미지 로드 타임아웃: ${src}`))
-        }, 5000)
+          reject(new Error(`이미지 로드 타임아웃: ${src}`));
+        }, 5000);
 
         img.onload = () => {
-          clearTimeout(timeoutId)
-          resolve(img)
-        }
+          clearTimeout(timeoutId);
+          resolve(img);
+        };
 
         img.onerror = (e) => {
-          clearTimeout(timeoutId)
-          reject(e)
-        }
+          clearTimeout(timeoutId);
+          reject(e);
+        };
 
-        img.src = `${src}?t=${new Date().getTime()}`
-      })
-    }
+        img.src = `${src}?t=${new Date().getTime()}`;
+      });
+    };
 
     const loadResources = async () => {
       try {
-        setProgress(10)
+        setProgress(10);
 
-        const fireImages = getMotionImages("fire", 5)
-        const imagesToLoad = [battleBackground, "/game/IdleCatt.png", ...fireImages]
+        const fireImages = getMotionImages("fire", 5);
+        const imagesToLoad = [battleBackground, "/game/IdleCatt.png", ...fireImages];
 
-        const totalImages = imagesToLoad.length
+        const totalImages = imagesToLoad.length;
 
         const imagePromises = imagesToLoad.map((src, index) => {
           return loadImage(src)
             .then((img) => {
               if (isComponentMounted) {
-                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80)
-                setProgress(newProgress)
+                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80);
+                setProgress(newProgress);
               }
-              return img
+              return img;
             })
             .catch((error) => {
-              console.error(`이미지 로드 실패: ${src}`, error)
+              console.error(`이미지 로드 실패: ${src}`, error);
               if (isComponentMounted) {
-                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80)
-                setProgress(newProgress)
+                const newProgress = Math.floor(10 + ((index + 1) / totalImages) * 80);
+                setProgress(newProgress);
               }
-              return null
-            })
-        })
+              return null;
+            });
+        });
 
-        await Promise.all(imagePromises)
+        await Promise.all(imagePromises);
 
-        if (!isComponentMounted) return
+        if (!isComponentMounted) return;
 
-        setProgress(100)
-        setResourcesLoaded(true)
-        resourcesLoadedRef.current = true
+        setProgress(100);
+        setResourcesLoaded(true);
+        resourcesLoadedRef.current = true;
 
-        completeLoading()
+        completeLoading();
 
-        setIsTimerRunning(true)
+        setIsTimerRunning(true);
       } catch (error) {
-        console.error("리소스 로드 중 예외 발생:", error)
+        console.error("리소스 로드 중 예외 발생:", error);
 
-        if (!isComponentMounted) return
+        if (!isComponentMounted) return;
 
-        setProgress(100)
-        setResourcesLoaded(true)
-        completeLoading()
+        setProgress(100);
+        setResourcesLoaded(true);
+        completeLoading();
 
-        alert("게임 리소스를 로드하는 데 실패했습니다. 페이지를 새로고침하여 다시 시도해주세요.")
+        alert("게임 리소스를 로드하는 데 실패했습니다. 페이지를 새로고침하여 다시 시도해주세요.");
       }
-    }
+    };
 
-    loadResources()
+    loadResources();
 
     return () => {
-      isComponentMounted = false
-    }
-  }, [completeLoading, setProgress])
+      isComponentMounted = false;
+    };
+  }, [completeLoading, setProgress]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    let interval: NodeJS.Timeout | null = null;
 
     if (isTimerRunning && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1)
-      }, 1000)
+        setTimer((prevTimer) => prevTimer - 1);
+      }, 1000);
     } else if (timer === 0) {
-      setIsTimerRunning(false)
-      console.log("타이머 종료, 애니메이션 시작")
-      const fireImages = getMotionImages("fire", 5)
-      console.log("불꽃 이미지 경로:", fireImages)
-      setShowAnimation(true)
+      setIsTimerRunning(false);
+      console.log("타이머 종료, 애니메이션 시작");
+      const fireImages = getMotionImages("fire", 5);
+      console.log("불꽃 이미지 경로:", fireImages);
+      setShowAnimation(true);
     }
 
     return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [timer, isTimerRunning])
+      if (interval) clearInterval(interval);
+    };
+  }, [timer, isTimerRunning]);
 
   useEffect(() => {
     if (playerBubble) {
       const timer = setTimeout(() => {
-        setPlayerBubble(null)
-      }, 5000)
-      return () => clearTimeout(timer)
+        setPlayerBubble(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
   }, [playerBubble])
 
   useEffect(() => {
     if (playerHealth <= 0 || opponentHealth <= 0) {
+      console.log("플레이어 체력:", playerHealth);
+      console.log("상대방 체력:", opponentHealth);
+
+      // 체력이 0이 되면 중앙 애니메이션 숨김
+      setShowAnimation(false);
       console.log("플레이어 체력:", playerHealth)
       console.log("상대방 체력:", opponentHealth)
       setShowAnimation(false)
     }
-  }, [playerHealth, opponentHealth])
+  }, [playerHealth, opponentHealth]);
 
   const handleAnimationComplete = () => {
-    console.log("애니메이션 완료 핸들러 호출됨")
+    console.log("애니메이션 완료 핸들러 호출됨");
 
     if (playerHealth > 0 && opponentHealth > 0) {
-      setShowAnimation(false)
+      setShowAnimation(false);
     }
 
     if (playerHealth <= 0 || opponentHealth <= 0) {
       if (playerHealth <= 0) {
-        console.log("게임 종료: 플레이어 패배 (체력: " + playerHealth + ")")
+        console.log("게임 종료: 플레이어 패배 (체력: " + playerHealth + ")");
       } else if (opponentHealth <= 0) {
-        console.log("게임 종료: 플레이어 승리 (상대방 체력: " + opponentHealth + ")")
+        console.log("게임 종료: 플레이어 승리 (상대방 체력: " + opponentHealth + ")");
       }
     } else {
-      console.log("게임 진행 중 - 플레이어 체력: " + playerHealth + ", 상대방 체력: " + opponentHealth)
+      console.log("게임 진행 중 - 플레이어 체력: " + playerHealth + ", 상대방 체력: " + opponentHealth);
     }
-  }
+  };
 
   const handleBackClick = () => {
-    setLoading(true)
+    setLoading(true);
     setTimeout(() => {
-      navigate("/main")
-    }, 300)
-  }
+      navigate("/main");
+    }, 300);
+  };
 
   const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChatInput(e.target.value)
-  }
+    setChatInput(e.target.value);
+  };
 
   const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (chatInput.trim() === "") return
+    e.preventDefault();
+    if (chatInput.trim() === "") return;
 
     const newMessage: ChatMessage = {
       sender: "김병년",
       message: chatInput,
       timestamp: new Date(),
-    }
+    };
 
     setChatMessages([...chatMessages, newMessage])
     setPlayerBubble(newMessage)
@@ -227,16 +232,16 @@ const OneToOnePage: React.FC = () => {
   }
 
   const handleHitLeft = () => {
-    console.log("왼쪽 플레이어 피격!")
+    console.log("왼쪽 플레이어 피격!");
     setPlayerHealth((prev) => {
-      const newHealth = Math.max(0, prev - 1)
-      console.log("플레이어 체력 변경:", prev, "->", newHealth)
-      return newHealth
-    })
-  }
+      const newHealth = Math.max(0, prev - 1);
+      console.log("플레이어 체력 변경:", prev, "->", newHealth);
+      return newHealth;
+    });
+  };
 
   const handleHitRight = () => {
-    console.log("오른쪽 플레이어 피격!")
+    console.log("오른쪽 플레이어 피격!");
     setOpponentHealth((prev) => {
       const newHealth = Math.max(0, prev - 1)
       console.log("상대방 체력 변경:", prev, "->", newHealth)
@@ -289,7 +294,7 @@ const OneToOnePage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OneToOnePage
+export default OneToOnePage;
