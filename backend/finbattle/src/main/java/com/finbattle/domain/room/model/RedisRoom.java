@@ -5,6 +5,7 @@ package com.finbattle.domain.room.model;
 // RoomSubscriptionService에서 직렬화/역직렬화하여 사용
 
 import com.finbattle.domain.room.dto.RedisRoomMember;
+import com.finbattle.domain.room.dto.RoomStatus;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;

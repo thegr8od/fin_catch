@@ -1,6 +1,8 @@
 package com.finbattle.global.common.config;
 
-import com.finbattle.global.common.redis.*;
+import com.finbattle.global.common.redis.RedisChatSubscriber;
+import com.finbattle.global.common.redis.RedisGameSubscriber;
+import com.finbattle.global.common.redis.RedisRoomSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -34,23 +36,17 @@ public class RedisConfig {
 
     @Bean
     public RedisMessageListenerContainer redisContainer(
-            RedisConnectionFactory connectionFactory,
-            RedisChatSubscriber chatSubscriber,
-            RedisGameInfoSubscriber gameInfoSubscriber,
-            RedisGameQuizSubscriber gameQuizSubscriber,
-            RedisGameQuizResultSubscriber gameQuizResultSubscriber,
-            RedisGameQuizHintSubscriber gameQuizHintSubscriber,
-            RedisGameUserStatusSubscriber gameUserStatusSubscriber
+        RedisConnectionFactory connectionFactory,
+        RedisChatSubscriber chatSubscriber,
+        RedisGameSubscriber gameSubscriber,
+        RedisRoomSubscriber roomSubscriber
     ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
 
         container.addMessageListener(chatSubscriber, new PatternTopic("chat"));
-        container.addMessageListener(gameInfoSubscriber, new PatternTopic("game-info"));
-        container.addMessageListener(gameQuizSubscriber, new PatternTopic("game-quiz"));
-        container.addMessageListener(gameQuizResultSubscriber, new PatternTopic("game-quizResult"));
-        container.addMessageListener(gameQuizHintSubscriber, new PatternTopic("game-quizHint"));
-        container.addMessageListener(gameUserStatusSubscriber, new PatternTopic("game-userStatus"));
+        container.addMessageListener(gameSubscriber, new PatternTopic("game:*"));
+        container.addMessageListener(roomSubscriber, new PatternTopic("room:*"));
 
         return container;
     }

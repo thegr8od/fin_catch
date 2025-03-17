@@ -1,4 +1,4 @@
-package com.finbattle.domain.room.model;
+package com.finbattle.domain.room.dto;
 
 public enum QuizType {
     FIN_KNOWLEDGE,  //금융 지식
