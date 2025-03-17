@@ -67,7 +67,7 @@ public class Member extends BaseEntity {
             .providerId(providerId)
             .nickname(nickname)
             .email(email)
-            .mainCat("default")
+            .mainCat("classic")
             .build();
     }
 
