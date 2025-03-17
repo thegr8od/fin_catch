@@ -2,41 +2,38 @@ import { ChatMessage } from "./chatType"
 import PlayerSection from "./PlayerSection"
 import BattleStatus from "./BattleStatus"
 import ChatSection from "./ChatSection"
-import EffectAnimation from "./EffectAnimation"
-import { getMotionImages } from "../../utils/motionLoader"
+// import EffectAnimation from "./EffectAnimation"
+// import { getMotionImages } from "../../utils/motionLoader"
+import { PlayerStatus, CharacterState } from "./types/character"
 
 interface BattleScreenProps {
   resourcesLoaded: boolean
-  playerHealth: number
-  opponentHealth: number
+  playerStatus: PlayerStatus
+  opponentStatus: PlayerStatus
   playerBubble: ChatMessage | null
   timer: number
   questionText: string
   chatMessages: ChatMessage[]
   chatInput: string
-  showAnimation: boolean
   onChatSubmit: (e: React.FormEvent) => void
   onChatInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onAnimationComplete: () => void
-  onHitLeft: () => void
-  onHitRight: () => void
+  onPlayerAnimationComplete: (state: CharacterState) => void
+  onOpponentAnimationComplete: (state: CharacterState) => void
 }
 
 const BattleScreen: React.FC<BattleScreenProps> = ({
   resourcesLoaded,
-  playerHealth,
-  opponentHealth,
+  playerStatus,
+  opponentStatus,
   playerBubble,
   timer,
   questionText,
   chatMessages,
   chatInput,
-  showAnimation,
   onChatSubmit,
   onChatInputChange,
-  onAnimationComplete,
-  onHitLeft,
-  onHitRight,
+  onPlayerAnimationComplete,
+  onOpponentAnimationComplete,
 }) => {
   if (!resourcesLoaded) {
     return <div className="h-full w-full"></div>
@@ -56,35 +53,45 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
         {/* 왼쪽 플레이어 */}
         <div className="w-1/4 flex flex-col items-center relative">
           <div className="w-[185px] h-48 flex items-center justify-center relative">
-            <PlayerSection name="공격적인 투자자 김병년" health={playerHealth} bubble={playerBubble} resourcesLoaded={resourcesLoaded} direction={true} />
+            <PlayerSection
+              name={playerStatus.name}
+              health={playerStatus.health}
+              state={playerStatus.state}
+              bubble={playerBubble}
+              resourcesLoaded={resourcesLoaded}
+              direction={true}
+              onAnimationComplete={onPlayerAnimationComplete}
+            />
           </div>
         </div>
 
         {/* 중앙 이펙트 영역 */}
         <div className="w-1/2 relative">
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[400px] h-[300px]">
-            {showAnimation && playerHealth > 0 && opponentHealth > 0 && (
-              <EffectAnimation
-                isPlaying={showAnimation}
-                imagePaths={getMotionImages("fire", 5)}
-                width={400}
-                height={300}
-                animationSpeed={0.1}
-                moving={true}
-                direction={Math.random() > 0.5}
-                loop={false}
-                onAnimationComplete={onAnimationComplete}
-                onHitLeft={onHitLeft}
-                onHitRight={onHitRight}
-              />
-            )}
+            <PlayerSection
+              name={opponentStatus.name}
+              health={opponentStatus.health}
+              state={opponentStatus.state}
+              bubble={null}
+              resourcesLoaded={resourcesLoaded}
+              direction={false}
+              onAnimationComplete={onOpponentAnimationComplete}
+            />
           </div>
         </div>
 
         {/* 오른쪽 플레이어 */}
         <div className="w-1/4 flex flex-col items-center relative">
           <div className="w-[185px] h-48 flex items-center justify-center relative">
-            <PlayerSection name="악의 세력 김세현" health={opponentHealth} bubble={null} resourcesLoaded={resourcesLoaded} direction={false} />
+          <PlayerSection
+            name={opponentStatus.name}
+            health={opponentStatus.health}
+            state={opponentStatus.state}
+            bubble={null}
+            resourcesLoaded={resourcesLoaded}
+            direction={false}
+            onAnimationComplete={onOpponentAnimationComplete}
+          />
           </div>
         </div>
       </div>

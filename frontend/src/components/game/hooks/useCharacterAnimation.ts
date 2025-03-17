@@ -28,8 +28,8 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     if (appRef.current) return appRef.current;
 
     const newApp = new PIXI.Application({
-      width: 96,
-      height: 32,
+      width: 192,
+      height: 64,
       backgroundAlpha: 0,
       antialias: false,
     });
