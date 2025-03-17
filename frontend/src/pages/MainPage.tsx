@@ -7,7 +7,6 @@ import LoadingScreen from "../components/common/LoadingScreen";
 import { useNavigate } from "react-router-dom";
 import { AccountInfo } from "../components/mypage/AccountLinkModal";
 import { CharacterType } from "../components/game/constants/animations";
-
 // 컴포넌트 임포트
 // import ProfileSection from "../components/mypage/ProfileSection";
 // import CharacterDisplaySection from "../components/mypage/CharacterDisplaySection";
@@ -15,6 +14,7 @@ import AccountLinkModal from "../components/mypage/AccountLinkModal";
 // import AccountAnalysisModal from "../components/mypage/AccountAnalysisModal";
 import NicknameChangeModal from "../components/mypage/NicknameChangeModal";
 import CharacterAnimation from "../components/game/CharacterAnimation";
+import axiosInstance from "../api/axios";
 
 // 캐릭터 타입 정의
 interface Character {
@@ -34,12 +34,46 @@ const convertCatToCharacter = (cat: any): Character => {
   };
 };
 
+// 캐릭터 정보 모달 컴포넌트
+const CharacterInfoModal = ({ character, onClose }: { character: Character | null; onClose: () => void }) => {
+  if (!character) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-2xl p-8 max-w-2xl w-full m-4">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold font-korean-pixel">{character.catName}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <span className="text-2xl">×</span>
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-6">
+            <div className="space-y-4">
+              <div className="bg-white/50 rounded-lg p-4">
+                <h5 className="font-korean-pixel text-lg font-bold text-amber-900 mb-2">캐릭터 설명</h5>
+                <p className="font-korean-pixel text-amber-800">{character.description}</p>
+              </div>
+              <div className="bg-white/50 rounded-lg p-4">
+                <h5 className="font-korean-pixel text-lg font-bold text-amber-900 mb-2">등급</h5>
+                <p className="font-korean-pixel text-amber-800">{character.grade}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MainPage = () => {
   const { user, loading, fetchUserInfo } = useUserInfo();
   const navigate = useNavigate();
   const [showFeatureModal, setShowFeatureModal] = useState(false);
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [showAccountLinkModal, setShowAccountLinkModal] = useState(false);
+  const [showCharacterInfoModal, setShowCharacterInfoModal] = useState(false);
   const [featureMessage, setFeatureMessage] = useState("");
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [currentAnimationState, setCurrentAnimationState] = useState<"idle" | "attack" | "damage" | "dead" | "victory">("attack");
@@ -57,8 +91,17 @@ const MainPage = () => {
         console.log("사용자가 보유한 캐릭터 목록:", user.cats);
         const convertedCats = user.cats.map(convertCatToCharacter);
         await setCharacters(convertedCats);
-        if (!selectedCharacter && convertedCats.length > 0) {
-          await setSelectedCharacter(convertedCats[0]);
+
+        // 대표 캐릭터를 찾아서 선택
+        const mainCatName = user.mainCat as unknown as CharacterType;
+        const mainCharacter = convertedCats.find((cat) => cat.catName === mainCatName);
+        if (mainCharacter) {
+          console.log("대표 캐릭터 찾음:", mainCharacter);
+          setSelectedCharacter(mainCharacter);
+          setCurrentAnimationState("idle");
+        } else if (convertedCats.length > 0) {
+          console.log("대표 캐릭터 없음, 첫 번째 캐릭터 선택:", convertedCats[0]);
+          setSelectedCharacter(convertedCats[0]);
         }
       }
     };
@@ -116,6 +159,25 @@ const MainPage = () => {
     });
   };
 
+  const changeMyCat = async () => {
+    if (!selectedCharacter) {
+      console.log("선택된 캐릭터가 없습니다.");
+      return;
+    }
+
+    try {
+      console.log("대표 캐릭터 변경 시도:", selectedCharacter);
+      const response = await axiosInstance.patch(`/api/member/maincat?catId=${selectedCharacter.catId}`);
+
+      if (response.status === 200) {
+        console.log("대표 캐릭터 변경 성공:", response.data);
+        await fetchUserInfo(); // 사용자 정보 갱신
+      }
+    } catch (error) {
+      console.error("대표 캐릭터 변경 실패:", error);
+    }
+  };
+
   // 캐릭터 페이지네이션 계산
   const totalPages = Math.ceil(characters.length / charactersPerPage);
   const currentCharacters = useMemo(() => {
@@ -152,8 +214,8 @@ const MainPage = () => {
         <div
           style={{
             position: "relative",
-            width: "96px",
-            height: "32px",
+            width: "150px",
+            height: "60px",
             transform: `scale(${scale})`,
             display: "flex",
             alignItems: "center",
@@ -185,51 +247,64 @@ const MainPage = () => {
     (prevProps, nextProps) => prevProps.character.catName === nextProps.character.catName && prevProps.state === nextProps.state && prevProps.scale === nextProps.scale
   );
 
-  // 캐릭터 목록 메모이제이션
+  // 캐릭터 목록 컴포넌트 수정
   const CharacterList = React.memo(
-    ({ characters }: { characters: Character[] }) => (
-      <div className="grid grid-cols-2 gap-4">
-        {characters.map((character) => (
-          <div
-            key={character.catId}
-            onClick={() => handleCharacterSelect(character)}
-            className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-              selectedCharacter?.catId === character.catId ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100"
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className="w-[96px] h-[32px] scale-150 relative">
-                <img
-                  src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`}
-                  alt={character.catName}
-                  className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                  style={{ imageRendering: "pixelated" }}
-                />
-              </div>
-              <div className="flex flex-col items-center gap-1 mt-4">
-                <span className="font-korean-pixel text-sm text-center">{character.catName}</span>
-                <span
-                  className={`font-korean-pixel text-xs px-2 py-1 rounded-full ${
-                    character.grade === "RARE"
-                      ? "bg-blue-100 text-blue-800"
-                      : character.grade === "EPIC"
-                      ? "bg-purple-100 text-purple-800"
-                      : character.grade === "LEGENDARY"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {character.grade}
-                </span>
+    ({ characters }: { characters: Character[] }) => {
+      // 대표 캐릭터를 최상단으로 정렬
+      const sortedCharacters = [...characters].sort((a, b) => {
+        const mainCatName = user?.mainCat as unknown as CharacterType;
+        if (a.catName === mainCatName) return -1;
+        if (b.catName === mainCatName) return 1;
+        return 0;
+      });
+
+      return (
+        <div className="grid grid-cols-4 gap-4 overflow-y-auto max-h-[320px] pr-2 hover:overflow-auto">
+          {sortedCharacters.map((character) => (
+            <div
+              key={character.catId}
+              onClick={() => handleCharacterSelect(character)}
+              className={`p-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                selectedCharacter?.catId === character.catId ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 flex items-center justify-center relative overflow-hidden">
+                  <img
+                    src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`}
+                    alt={character.catName}
+                    className="object-contain max-w-full max-h-full"
+                    style={{ imageRendering: "pixelated", position: "relative", zIndex: 10 }}
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-1 mt-1 w-full">
+                  <span className="font-korean-pixel text-xs text-center truncate w-full">{character.catName}</span>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    <span
+                      className={`font-korean-pixel text-[10px] px-1 py-0.5 rounded-full ${
+                        character.grade === "RARE"
+                          ? "bg-blue-100 text-blue-800"
+                          : character.grade === "EPIC"
+                          ? "bg-purple-100 text-purple-800"
+                          : character.grade === "LEGENDARY"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {character.grade}
+                    </span>
+                    {character.catName === (user?.mainCat as unknown as CharacterType) && (
+                      <span className="font-korean-pixel text-[10px] px-1 py-0.5 rounded-full bg-green-100 text-green-800">주인공</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    ),
-    (prevProps, nextProps) => {
-      return prevProps.characters.length === nextProps.characters.length && prevProps.characters.every((char, idx) => char.catId === nextProps.characters[idx].catId);
-    }
+          ))}
+        </div>
+      );
+    },
+    (prevProps, nextProps) => prevProps.characters.length === nextProps.characters.length && prevProps.characters.every((char, idx) => char.catId === nextProps.characters[idx].catId)
   );
 
   // 페이지네이션 버튼 핸들러
@@ -322,6 +397,23 @@ const MainPage = () => {
     navigate("/lobby");
   };
 
+  // 페이지 포커스 시 사용자 정보 갱신
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log("페이지 포커스 감지: 사용자 정보 갱신");
+      fetchUserInfo();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    // 컴포넌트가 처음 마운트될 때도 정보 갱신
+    handleFocus();
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [fetchUserInfo]);
+
   if (loading || !user) {
     return <LoadingScreen />;
   }
@@ -332,10 +424,80 @@ const MainPage = () => {
     exp: user.exp,
     maxExp: 1000,
     coins: user.point,
-    profileImage: catProfile,
+    cats: user.cats,
+    mainCat: user.mainCat,
   };
 
   console.log("프로필 데이터:", profileData);
+
+  // 캐릭터 디스플레이 섹션 수정
+  const renderCharacterDisplay = () => (
+    <div className="bg-white/95 rounded-2xl shadow-2xl p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">🎭 나의 캐릭터</h3>
+          {selectedCharacter && (
+            <button onClick={() => setShowCharacterInfoModal(true)} className="px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-korean-pixel transition-colors">
+              ℹ️ 정보
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 mb-6 relative min-h-[300px]">
+        <div className="relative w-[192px] h-[96px] mb-6" style={{ zIndex: 5 }}>
+          {isCharacterLoading ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : selectedCharacter ? (
+            <div className="flex items-center justify-center">
+              <AnimatedCharacterDisplay character={selectedCharacter} state={currentAnimationState} scale={3} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <p className="text-gray-500 font-korean-pixel">선택된 캐릭터가 없습니다</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => setCurrentAnimationState("attack")}
+            className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${currentAnimationState === "attack" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+          >
+            공격
+          </button>
+          <button
+            onClick={() => setCurrentAnimationState("damage")}
+            className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${currentAnimationState === "damage" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+          >
+            피격
+          </button>
+          <button
+            onClick={() => setCurrentAnimationState("victory")}
+            className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${currentAnimationState === "victory" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+          >
+            승리
+          </button>
+        </div>
+
+        {selectedCharacter && (
+          <div className="mt-4">
+            {selectedCharacter.catName === (user?.mainCat as unknown as CharacterType) ? (
+              <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-korean-pixel">현재 주인공 고양이입니다</div>
+            ) : (
+              <button onClick={changeMyCat} className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300">
+                대표 캐릭터로 설정
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <CharacterList characters={characters} />
+    </div>
+  );
 
   return (
     <Background backgroundImage={myPageBg}>
@@ -346,7 +508,12 @@ const MainPage = () => {
             <div className="bg-white/95 rounded-2xl shadow-2xl p-6 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                  <img src={catProfile} alt="프로필" className="w-24 h-24 rounded-full border-4 border-yellow-400" />
+                  <img
+                    src={`/cats_assets/${user.mainCat}/${user.mainCat}_cat_static.png`}
+                    alt="프로필"
+                    className="w-24 h-24 rounded-full border-4 border-yellow-400"
+                    style={{ imageRendering: "pixelated" }}
+                  />
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <h2 className="text-2xl font-bold font-korean-pixel">{user.nickname}님, 환영합니다!</h2>
@@ -369,138 +536,28 @@ const MainPage = () => {
               </div>
             </div>
 
-            {/* 메인 콘텐츠 그리드 */}
-            <div className="grid grid-cols-1 gap-6 mb-8">
-              {/* 캐릭터 섹션 */}
-              <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">🎭 나의 캐릭터</h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handlePrevPage}
-                      disabled={characterPage === 0}
-                      className={`px-3 py-1 rounded-lg font-korean-pixel ${
-                        characterPage === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                      } transition-colors`}
-                    >
-                      ◀
-                    </button>
-                    <span className="font-korean-pixel px-2">
-                      {characterPage + 1} / {totalPages}
-                    </span>
-                    <button
-                      onClick={handleNextPage}
-                      disabled={characterPage === totalPages - 1}
-                      className={`px-3 py-1 rounded-lg font-korean-pixel ${
-                        characterPage === totalPages - 1 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                      } transition-colors`}
-                    >
-                      ▶
-                    </button>
-                  </div>
-                </div>
+            {/* 캐릭터 디스플레이 섹션 */}
+            {renderCharacterDisplay()}
 
-                <div className="grid grid-cols-2 gap-8">
-                  {/* 캐릭터 설명 */}
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-6 flex flex-col">
-                    <h4 className="text-xl font-bold text-amber-800 font-korean-pixel mb-4">{selectedCharacter?.catName}</h4>
-                    <div className="space-y-4 flex-grow">
-                      <div className="bg-white/50 rounded-lg p-4">
-                        <h5 className="font-korean-pixel text-lg font-bold text-amber-900 mb-2">캐릭터 설명</h5>
-                        <p className="font-korean-pixel text-amber-800">{selectedCharacter?.description}</p>
-                      </div>
-                      <div className="bg-white/50 rounded-lg p-4">
-                        <h5 className="font-korean-pixel text-lg font-bold text-amber-900 mb-2">등급</h5>
-                        <p className="font-korean-pixel text-amber-800">{selectedCharacter?.grade}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 캐릭터 디스플레이 및 목록 */}
-                  <div className="space-y-6">
-                    {/* 선택된 캐릭터 디스플레이 */}
-                    <div className="flex flex-col items-center justify-center bg-gray-50 rounded-xl p-6 relative min-h-[200px]">
-                      <div className="relative w-[96px] h-[32px] scale-[2] mb-12">
-                        {isCharacterLoading ? (
-                          <div className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                          </div>
-                        ) : selectedCharacter ? (
-                          <AnimatedCharacterDisplay character={selectedCharacter} state={currentAnimationState} scale={2} />
-                        ) : (
-                          <div className="flex items-center justify-center">
-                            <p className="text-gray-500 font-korean-pixel">선택된 캐릭터가 없습니다</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2 mt-4 relative z-10">
-                        <button
-                          onClick={() => {
-                            console.log("공격 버튼 클릭");
-                            setCurrentAnimationState("attack");
-                          }}
-                          className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${
-                            currentAnimationState === "attack" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          공격
-                        </button>
-                        <button
-                          onClick={() => {
-                            console.log("피격 버튼 클릭");
-                            setCurrentAnimationState("damage");
-                          }}
-                          className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${
-                            currentAnimationState === "damage" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          피격
-                        </button>
-                        <button
-                          onClick={() => {
-                            console.log("승리 버튼 클릭");
-                            setCurrentAnimationState("victory");
-                          }}
-                          className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${
-                            currentAnimationState === "victory" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          승리
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 캐릭터 목록 */}
-                    <div className="bg-gray-50 rounded-xl p-6">
-                      <CharacterList characters={currentCharacters} />
-                    </div>
-                  </div>
-                </div>
+            {/* 계좌 연동 카드 */}
+            <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300 mt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💳 계좌 연동</h3>
+                <button
+                  onClick={() => setShowAccountLinkModal(true)}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
+                >
+                  연동하기
+                </button>
               </div>
-
-              {/* 계좌 연동 카드 */}
-              <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.02] transition-transform duration-300">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💳 계좌 연동</h3>
-                  <button
-                    onClick={() => setShowAccountLinkModal(true)}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
-                  >
-                    연동하기
-                  </button>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-xl text-center">
-                  <p className="text-gray-600 font-korean-pixel text-lg mb-2">계좌를 연동하고</p>
-                  <p className="text-gray-800 font-korean-pixel text-xl font-bold">더 많은 기능을 사용해보세요!</p>
-                </div>
+              <div className="bg-gray-50 p-6 rounded-xl text-center">
+                <p className="text-gray-600 font-korean-pixel text-lg mb-2">계좌를 연동하고</p>
+                <p className="text-gray-800 font-korean-pixel text-xl font-bold">더 많은 기능을 사용해보세요!</p>
               </div>
             </div>
 
             {/* 소비패턴 분석 및 문제 풀이 결과 섹션 */}
-            <div className="mb-24">
-              {" "}
-              {/* 푸터와의 여백 */}
+            <div className="mt-6 mb-24">
               <div className="grid grid-cols-2 gap-8">
                 {/* 소비패턴 분석 */}
                 <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-transform duration-300">
@@ -623,6 +680,8 @@ const MainPage = () => {
 
       {showNicknameModal && <NicknameChangeModal onClose={() => setShowNicknameModal(false)} currentNickname={user.nickname} onUpdateNickname={handleUpdateNickname} />}
       {showAccountLinkModal && <AccountLinkModal onClose={() => setShowAccountLinkModal(false)} onLinkAccount={handleAccountLink} />}
+
+      {showCharacterInfoModal && <CharacterInfoModal character={selectedCharacter} onClose={() => setShowCharacterInfoModal(false)} />}
     </Background>
   );
 };
