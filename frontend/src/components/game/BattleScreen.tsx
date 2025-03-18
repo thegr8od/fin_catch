@@ -52,7 +52,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
       <div className="w-full flex justify-between items-center px-8 h-full pt-15">
         {/* 왼쪽 플레이어 */}
         <div className="w-1/4 flex flex-col items-center relative">
-          <div className="w-[185px] h-48 flex items-center justify-center relative">
+          <div className="w-full flex items-center justify-center relative">
             <PlayerSection
               name={playerStatus.name}
               health={playerStatus.health}
@@ -66,7 +66,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
         </div>
 
         {/* 중앙 이펙트 영역 */}
-        <div className="w-1/2 relative">
+        {/* <div className="w-1/2 relative">
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[400px] h-[300px]">
             <PlayerSection
               name={opponentStatus.name}
@@ -78,11 +78,11 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
               onAnimationComplete={onOpponentAnimationComplete}
             />
           </div>
-        </div>
+        </div> */}
 
         {/* 오른쪽 플레이어 */}
         <div className="w-1/4 flex flex-col items-center relative">
-          <div className="w-[185px] h-48 flex items-center justify-center relative">
+          <div className="w-full flex items-center justify-center relative">
           <PlayerSection
             name={opponentStatus.name}
             health={opponentStatus.health}
