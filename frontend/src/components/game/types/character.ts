@@ -1,3 +1,5 @@
+import { CharacterType } from "../constants/animations"
+
 export type CharacterState = "idle" | "attack" | "damage" | "dead" | "victory";
 
 export interface CharacterSpriteConfig {
@@ -11,6 +13,7 @@ export interface CharacterSpriteConfig {
 
 export type CharacterStateConfig = Record<CharacterState, CharacterSpriteConfig>;
 
+
 export interface CharacterAnimationProps {
   state: CharacterState;
   isPlaying?: boolean;
@@ -19,4 +22,13 @@ export interface CharacterAnimationProps {
   className?: string;
   onAnimationComplete?: () => void;
   loop?: boolean;
+}
+
+export interface PlayerStatus {
+  id: number;
+  name: string;
+  characterType: CharacterType;
+  health: number;
+  state: CharacterState;
+  score: number;
 }
