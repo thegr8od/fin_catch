@@ -1,0 +1,148 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+    }
+
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                script {
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Load Credentials') {
+            steps {
+                // 1) Secret file을 Jenkins에 등록한 ID로 가져오기
+                withCredentials([file(credentialsId: 'BACKEND-APPLICATION', variable: 'SECRET_FILE')]) {
+                    // 2) Secret file을 현재 workspace에 복사
+                    sh 'cp "$SECRET_FILE" ./backend/finbattle/scr/resources/'
+                    // 필요하면 파일명 변경 가능 (예: secrets.env)
+
+                    // - 필요하면 로그로 찍지 않도록 주의!
+                    // - cat ./my-secrets.env 처럼 민감정보 노출하지 않도록 주의!
+                }
+            }
+        }
+
+        stage('Build with Gradle') {
+            steps {
+                dir('backend/finbattle') {
+                    sh 'chmod +x gradlew'
+                    sh './gradlew clean build -x test'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dir('backend/finbattle') {
+                      withCredentials([string(credentialsId: 'BACKEND_IMAGE_NAME', variable: 'BACKEND_IMAGE_NAME')]) {
+                        // 이 때 DOCKER_IMAGE_NAME은 "myaccount/myrepo:tag" 형태라고 가정
+                        sh 'docker build -t ${BACKEND_IMAGE_NAME} .'
+                      }
+                    }
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    // 1) Docker Hub에 로그인
+                    withCredentials([
+                      usernamePassword(
+                          credentialsId: 'DOCKERHUB_CREDS',
+                          usernameVariable: 'DOCKER_HUB_USERNAME',
+                          passwordVariable: 'DOCKER_HUB_PASSWORD'
+                      ),
+                      string(credentialsId: 'BACKEND_IMAGE_NAME', variable: 'BACKEND_IMAGE_NAME')
+                    ]) {
+                        sh """
+                            docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}
+                            docker push ${BACKEND_IMAGE_NAME}
+                            docker logout
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
+            steps {
+                script {
+
+                  withCredentials([
+                      string(credentialsId: 'BACKEND_IMAGE_NAME', variable: 'BACKEND_IMAGE_NAME'),
+                      string(credentialsId: 'BACKEND_CONTAINER_NAME', variable: 'BACKEND_CONTAINER_NAME'),
+                  ]){
+                      sh """
+                          # 우선 컨테이너 중지/삭제
+                          docker stop ${BACKEND_CONTAINER_NAME} || true
+                          docker rm ${BACKEND_CONTAINER_NAME} || true
+
+                          # 최신 이미지를 Docker Hub에서 Pull
+                          docker pull ${BACKEND_IMAGE_NAME}
+
+                          # 컨테이너 실행
+                          docker run -d --name ${BACKEND_CONTAINER_NAME} --network finbattle \
+                              -p 9097:9091 \
+                              -e TZ=Asia/Seoul \
+                              -e JAVA_TOOL_OPTIONS="-Duser.timezone=Asia/Seoul" \
+                              ${BACKEND_IMAGE_NAME}
+                      """
+
+                  }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -f ./backend/finbattle/scr/resources/'
+        }
+        success {
+            script {
+                withCredentials([string(credentialsId: 'BACKEND_MM_WEBHOOK_URL', variable: 'BACKEND_MM_WEBHOOK_URL')]) {
+                    def jsonMessage = """{
+                        "attachments": [{
+                            "text": "**✅ Backend Build 성공**\\\\n- 상태: SUCCESS\\\\n- [🔗 상세 정보](${env.BUILD_URL})",
+                            "color": "#00FF00"
+                        }]
+                    }"""
+
+                    sh """
+                    echo '${jsonMessage}' > mattermost_payload.json
+                    cat mattermost_payload.json
+                    curl -X POST -H "Content-Type: application/json" --data @mattermost_payload.json '${BACKEND_MM_WEBHOOK_URL}'
+                    rm -f mattermost_payload.json
+                    """
+                }
+            }
+        }
+        failure {
+            script {
+                withCredentials([string(credentialsId: 'BACKEND_MM_WEBHOOK_URL', variable: 'BACKEND_MM_WEBHOOK_URL')]) {
+                    def jsonMessage = """{
+                        "attachments": [{
+                            "text": "**❌ Backend Build 실패**\\\\n- 상태: FAILURE\\\\n- [🔗 상세 정보](${env.BUILD_URL}/console) ",
+                            "color": "#FF0000"
+                        }]
+                    }"""
+
+                    sh """
+                    echo '${jsonMessage}' > mattermost_payload.json
+                    cat mattermost_payload.json
+                    curl -X POST -H "Content-Type: application/json" --data @mattermost_payload.json '${BACKEND_MM_WEBHOOK_URL}'
+                    rm -f mattermost_payload.json
+                    """
+                }
+            }
+        }
+    }
+}
