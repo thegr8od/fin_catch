@@ -54,14 +54,17 @@ pipeline {
             steps {
                 script {
                     // 1) Docker Hub에 로그인
-                    withCredentials([usernamePassword(
-                        credentialsId: 'DOCKERHUB_CREDS',
-                        usernameVariable: 'DOCKER_HUB_USERNAME',
-                        passwordVariable: 'DOCKER_HUB_PASSWORD'
-                    )]) {
+                    withCredentials([
+                      usernamePassword(
+                          credentialsId: 'DOCKERHUB_CREDS',
+                          usernameVariable: 'DOCKER_HUB_USERNAME',
+                          passwordVariable: 'DOCKER_HUB_PASSWORD'
+                      ),
+                      string(credentialsId: 'BACKEND_IMAGE_NAME', variable: 'BACKEND_IMAGE_NAME')
+                    ]) {
                         sh """
                             docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}
-                            docker push ${DOCKER_IMAGE_NAME}
+                            docker push ${BACKEND_IMAGE_NAME}
                             docker logout
                         """
                     }
@@ -90,7 +93,7 @@ pipeline {
                               -p 9097:9091 \
                               -e TZ=Asia/Seoul \
                               -e JAVA_TOOL_OPTIONS="-Duser.timezone=Asia/Seoul" \
-                              ${DOCKER_IMAGE_NAME}
+                              ${BACKEND_IMAGE_NAME}
                       """
 
                   }
@@ -100,6 +103,9 @@ pipeline {
     }
 
     post {
+        always {
+            sh 'rm -f ./backend/finbattle/scr/resources/'
+        }
         success {
             script {
                 withCredentials([string(credentialsId: 'BACKEND_MM_WEBHOOK_URL', variable: 'BACKEND_MM_WEBHOOK_URL')]) {
