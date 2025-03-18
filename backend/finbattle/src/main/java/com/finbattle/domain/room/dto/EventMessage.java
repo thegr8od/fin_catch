@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EventMessage {
 
-    private String event;
+    private MessageType event;
     private Long roomId;
     private Long userId;
     private String reason; // JOIN_FAIL, KICK_FAIL 등 실패 이유 저장용

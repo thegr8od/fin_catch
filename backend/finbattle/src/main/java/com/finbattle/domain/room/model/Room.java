@@ -1,6 +1,9 @@
 package com.finbattle.domain.room.model;
 
 import com.finbattle.domain.member.model.Member;
+import com.finbattle.domain.room.dto.QuizType;
+import com.finbattle.domain.room.dto.RoomStatus;
+import com.finbattle.domain.room.dto.RoomType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

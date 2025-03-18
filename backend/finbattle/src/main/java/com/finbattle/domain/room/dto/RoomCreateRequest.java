@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class RoomCreateRequest {
 
-    private Long userId; // 방을 생성하는 사용자 ID
+    private Long memberId; // 방을 생성하는 사용자 ID
     private String roomTitle;
     private String password;
     private int maxPlayer;

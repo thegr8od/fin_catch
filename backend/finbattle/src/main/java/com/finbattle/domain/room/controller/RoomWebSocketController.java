@@ -33,8 +33,10 @@ public class RoomWebSocketController {
     @MessageMapping("/room/{roomId}/info")
     public void getRoomInfo(@DestinationVariable Long roomId) {
         log.info("Requesting info for room {}", roomId);
+        System.out.println("info 작성");
         roomSubscriptionService.getRoomInfo(roomId);
     }
+    
 
     /**
      * 방 참가 요청 처리 (RDB에 저장하지 않고 Redis에서만 관리)

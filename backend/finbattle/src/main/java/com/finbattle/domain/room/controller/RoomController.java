@@ -2,7 +2,7 @@ package com.finbattle.domain.room.controller;
 
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
-import com.finbattle.domain.room.model.RoomType;
+import com.finbattle.domain.room.dto.RoomType;
 import com.finbattle.domain.room.service.RoomService;
 import com.finbattle.domain.room.service.RoomSubscriptionService;
 import java.util.List;
@@ -68,4 +68,11 @@ public class RoomController {
         return ResponseEntity.ok(roomService.getRoomById(roomId));
     }
 
+    /**
+     * OPEN 상태의 방 목록 조회
+     */
+    @GetMapping("/open")
+    public ResponseEntity<List<RoomResponse>> getOpenRooms() {
+        return ResponseEntity.ok(roomService.getOpenRooms());
+    }
 }

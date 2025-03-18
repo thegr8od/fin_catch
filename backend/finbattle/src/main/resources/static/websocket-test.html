@@ -182,12 +182,20 @@
   <div id="userStatus" class="statusBox"></div>
 </div>
 
-<!-- [추가] 방 정보 조회 영역 -->
+<!-- 방 목록 출력 영역 -->
+<div class="section">
+  <h2>방 목록 (OPEN 상태만)</h2>
+  <button onclick="loadOpenRooms()">방 목록 새로고침</button>
+  <div id="roomList" class="logBox"></div>
+</div>
+
+<!-- 방 정보 영역 -->
 <div class="section">
   <h2>Room Info</h2>
   <button onclick="requestRoomInfo()">Get Room Info</button>
   <div id="roomInfo" class="logBox"></div>
 </div>
+
 
 <!-- [추가] 강퇴, 준비 버튼 영역 -->
 <div class="section">
@@ -227,6 +235,7 @@
 <div class="game-buttons">
   <button onclick="requestGameInfo()">Get Game Info</button>
   <button onclick="requestGameHint()">Request Game Hint</button>
+  <button onclick="startGame()">🔥 Start Game</button>
 </div>
 
 <!-- 로그 표시용 (숨김) -->
@@ -265,7 +274,7 @@
 
     // RoomCreateRequest에 맞춰 JSON 데이터를 구성
     const payload = {
-      userId: parseInt(creatorId, 10),
+      memberId: parseInt(creatorId, 10),
       roomTitle: title,
       password: password,
       maxPlayer: parseInt(maxPlayer, 10),
@@ -312,23 +321,70 @@
     });
   }
 
+  function loadOpenRooms() {
+    fetch('/api/room/open')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`서버 오류: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(rooms => {
+      const roomListDiv = document.getElementById('roomList');
+      roomListDiv.innerHTML = ''; // 기존 목록 초기화
+
+      if (rooms.length === 0) {
+        roomListDiv.innerHTML = '<p>현재 생성된 OPEN 방이 없습니다.</p>';
+        return;
+      }
+
+      rooms.forEach(room => {
+        const roomElement = document.createElement('div');
+        roomElement.classList.add('userItem'); // 스타일 적용
+        roomElement.innerHTML = `
+                <strong>방 제목:</strong> ${room.roomTitle} <br/>
+                <strong>방 ID:</strong> ${room.roomId} <br/>
+                <strong>인원:</strong> ${room.members ? room.members.length : 0} / ${room.maxPeople} <br/>
+                <strong>상태:</strong> ${room.status} <br/>
+                <button onclick="joinRoom(${room.roomId})">입장</button>
+            `;
+        roomListDiv.appendChild(roomElement);
+      });
+    })
+    .catch(error => {
+      console.error("방 목록 불러오기 실패:", error);
+      alert("방 목록을 불러오는 중 오류가 발생했습니다.");
+    });
+  }
+
   // ========== (B) 방 접속 함수 ==========
   function connect() {
     const socket = new SockJS('/ws/firechat');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
-      console.log('Connected: ' + frame);
+      console.log('✅ WebSocket Connected:', frame);
 
       const roomId = document.getElementById('roomId').value;
       currentUserId = document.getElementById('userId').value || 'Anonymous';
 
       // --- 새 백엔드: 방에 들어가기 ---
-      stompClient.send(`/app/room/${roomId}/join/${currentUserId}`, {}, {});
+
+      console.log(`🟢 구독 요청: /topic/room/${roomId}`);
+
+      // --- 채팅 구독 (/topic/chat/{roomId}) ---
+      stompClient.subscribe(`/topic/chat/${roomId}`, function (msg) {
+        const chatMessage = JSON.parse(msg.body);
+        appendLog('chatLog', `${chatMessage.sender}: ${chatMessage.content}`);
+      });
 
       // --- 새 백엔드: 방 이벤트 구독 ---
       stompClient.subscribe(`/topic/room/${roomId}`, function (message) {
+        console.log("🟢 Room Info Received:", message.body);
+
         const eventData = JSON.parse(message.body);
+        console.log(1111);
         console.log("Room Event Received:", eventData);
+        console.log(2222);
 
         // 이벤트 유형별 처리 (JOIN, LEAVE, KICK, READY 등)
         if (eventData.event === "KICK") {
@@ -350,46 +406,36 @@
           appendLog('controlLog', `Room ${eventData.roomId} has been deleted`);
         } else if (eventData.event === "COUNT") {
           appendLog('controlLog', `User Count: ${eventData.userCount}`);
+        } else if (eventData.event === "INFO") {
+          console.log("Room Info Received:", eventData)
+          displayRoomInfo(eventData.roomData);
         }
       });
 
-      // --- 새 백엔드: 방 정보 전용 구독 (/topic/room/{roomId}/info) ---
-      stompClient.subscribe(`/topic/room/${roomId}/info`, function (message) {
-        const roomData = JSON.parse(message.body);
-        // (1) 에러 처리
-        if (roomData.error) {
-          document.getElementById('roomInfo').innerHTML =
-              `<strong>Error:</strong> ${roomData.error}`;
-          return;
-        }
-        // (2) 방 정보 표시
-        displayRoomInfo(roomData);
-      });
+      //topic/game
+      // stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
+      //   const gameData = JSON.parse(message.body);
+      //   console.log("🟢 Game Event Received:", gameData);
+      //
+      //   switch (gameData.event) {
+      //     case "quiz":
+      //       document.getElementById('quizQuestion').textContent = "Question: "
+      //           + gameData.data.question;
+      //       break;
+      //     case "quizResult":
+      //       document.getElementById(
+      //           'quizResult').textContent = `Result: ${gameData.data.result} (User: ${gameData.data.userId})`;
+      //       break;
+      //     default:
+      //       console.warn("Unknown Game Event:", gameData);
+      //   }
+      // });
 
-      // --- 채팅 구독 (/topic/chat/{roomId}) ---
-      stompClient.subscribe(`/topic/chat/${roomId}`, function (msg) {
-        const chatMessage = JSON.parse(msg.body);
-        appendLog('chatLog', `${chatMessage.sender}: ${chatMessage.content}`);
-      });
+      stompClient.onclose = function () {
+        console.log("🔴 WebSocket 연결 끊어짐");
+      };
 
-      // --- 퀴즈, 게임 쪽은 기존 경로 그대로 사용 (예시) ---
-      stompClient.subscribe(`/topic/game/${roomId}-quiz`, function (msg) {
-        const quizData = JSON.parse(msg.body);
-        document.getElementById('quizQuestion').textContent =
-            "Question: " + quizData.question;
-      });
-
-      stompClient.subscribe(`/topic/game/${roomId}-quizResult`, function (msg) {
-        const resultData = JSON.parse(msg.body);
-        document.getElementById('quizResult').textContent =
-            `Result: ${resultData.result} (User: ${resultData.userId})`;
-      });
-
-      stompClient.subscribe(`/topic/game/${roomId}-quizHint`, function (msg) {
-        const hintData = JSON.parse(msg.body);
-        document.getElementById('quizQuestion').textContent +=
-            "\nHint 1: " + hintData.hint1 + "\nHint 2: " + hintData.hint2;
-      });
+      stompClient.send(`/app/room/${roomId}/join/${currentUserId}`, {}, {});
     });
   }
 
@@ -413,7 +459,7 @@
     if (!roomId) {
       return;
     }
-    stompClient.send(`/app/game/${roomId}-getInfo`, {}, {});
+    stompClient.send(`/app/game/${roomId}/getInfo`, {}, {});
     alert("게임 정보 요청이 전송되었습니다.");
   }
 
@@ -423,7 +469,7 @@
     if (!roomId) {
       return;
     }
-    stompClient.send(`/app/game/${roomId}-hint`, {}, {});
+    stompClient.send(`/app/game/${roomId}/hint`, {}, {});
     alert("게임 힌트 요청이 전송되었습니다.");
   }
 
@@ -432,7 +478,7 @@
     if (!roomId) {
       return;
     }
-    stompClient.send(`/app/game/${roomId}-getQuiz`, {}, {});
+    stompClient.send(`/app/game/${roomId}/getQuiz`, {}, {});
   }
 
   function requestQuizHint() {
@@ -440,7 +486,7 @@
     if (!roomId) {
       return;
     }
-    stompClient.send(`/app/game/${roomId}-quizHint`, {}, {});
+    stompClient.send(`/app/game/${roomId}/quizHint`, {}, {});
   }
 
   function submitQuizAnswer() {
@@ -449,8 +495,8 @@
     if (!roomId || !answer || !currentUserId) {
       return;
     }
-    const payload = {userAnswer: answer, userId: currentUserId};
-    stompClient.send(`/app/game/${roomId}-checkAnswer`, {}, JSON.stringify(payload));
+    const payload = {userAnswer: answer, memberId: currentUserId};
+    stompClient.send(`/app/game/${roomId}/checkAnswer`, {}, JSON.stringify(payload));
     document.getElementById('quizAnswer').value = '';
   }
 
@@ -467,34 +513,40 @@
   function requestRoomInfo() {
     const roomId = document.getElementById('roomId').value;
     if (!roomId) {
+      alert("Room ID를 입력하세요!");
       return;
     }
-    // 새 백엔드: 방 정보 요청
+
+    console.log(`Requesting room info for Room ID: ${roomId}`);
     stompClient.send(`/app/room/${roomId}/info`, {}, {});
   }
 
   // [추가] 방 정보 표시
   function displayRoomInfo(roomData) {
     const infoBox = document.getElementById('roomInfo');
-    // 에러 존재 시 (이미 처리했지만 중복 처리 가능)
-    if (roomData.error) {
-      infoBox.innerHTML = `<strong>Error:</strong> ${roomData.error}`;
+
+    console.log(roomData.roomId);
+    if (!roomData) {
+      infoBox.innerHTML = "<strong>방 정보를 불러올 수 없습니다.</strong>";
       return;
     }
-    infoBox.innerHTML = `
-      <div>Room ID: ${roomData.roomId}</div>
-      <div>Max People: ${roomData.maxPeople}</div>
-      <div>Status: ${roomData.status}</div>
-      <div>Host: ${roomData.host ? roomData.host.memberId : 'None'}</div>
-      <div>Members:</div>
-    `;
-    if (roomData.members && Array.isArray(roomData.members)) {
+
+    let membersHTML = "";
+    if (roomData.members && roomData.members.length > 0) {
       roomData.members.forEach(m => {
-        infoBox.innerHTML += `<div> - User: ${m.memberId}, State: ${m.status}</div>`;
+        membersHTML += `<div> - User: ${m.memberId}, State: ${m.status}</div>`;
       });
     } else {
-      infoBox.innerHTML += "<div>(No members found)</div>";
+      membersHTML = "<div>(No members found)</div>";
     }
+
+    infoBox.innerHTML = `
+        <div><strong>Room ID:</strong> ${roomData.roomId}</div>
+        <div><strong>Max People:</strong> ${roomData.maxPeople}</div>
+        <div><strong>Status:</strong> ${roomData.status}</div>
+        <div><strong>Host:</strong> ${roomData.host ? roomData.host.memberId : 'None'}</div>
+        <div><strong>Members:</strong> ${membersHTML}</div>
+    `;
   }
 
   // [추가] 강퇴(kick)
@@ -516,6 +568,71 @@
     }
     stompClient.send(`/app/room/${roomId}/ready/${currentUserId}`, {}, {});
   }
+
+  function startGame() {
+    const roomId = document.getElementById('roomId').value;
+    if (!roomId) {
+      alert("Room ID를 입력하세요!");
+      return;
+    }
+
+    console.log(`🔥 Sending start game request for Room ID: ${roomId}`);
+
+    // 게임 관련 WebSocket 구독 설정 (한 번만 실행되도록 확인)
+    if (!stompClient.subscribedToGame) {
+      stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
+        const gameData = JSON.parse(message.body);
+        console.log("🟢 Game Event Received:", gameData);
+
+        switch (gameData.event) {
+          case "USER_STATUS":  // ✅ 게임 시작 후 사용자 상태를 받음
+            displayUserStatus(gameData.data);
+            break;
+          case "GAME_START":
+            alert("게임이 시작되었습니다!");
+            break;
+          case "QUIZ":
+            document.getElementById('quizQuestion').textContent = "Question: "
+                + gameData.data.data.question;
+            break;
+          case "QUIZ_RESULT":
+            document.getElementById(
+                'quizResult').textContent = `Result: ${gameData.data.data.result} (User: ${gameData.data.data.userId})`;
+            break;
+          case "QUIZ_HINT":
+            document.getElementById('quizQuestion').textContent +=
+                `HINT1: ${gameData.data.data.hint1} HINT2: ${gameData.data.data.hint2}`;
+            break;
+          default:
+            console.warn("⚠️ Unknown Game Event:", gameData);
+        }
+      });
+
+      stompClient.subscribedToGame = true;
+    }
+
+    // WebSocket 메시지 전송 -> 게임 시작 요청
+    stompClient.send(`/app/game/${roomId}/start`, {}, {});
+
+    alert("게임 시작 요청이 전송되었습니다!");
+  }
+
+  function displayUserStatus(userStatusList) {
+    const userStatusBox = document.getElementById('userStatus');
+
+    if (!userStatusList || userStatusList.length === 0) {
+      userStatusBox.innerHTML = "<strong>현재 유저 정보 없음</strong>";
+      return;
+    }
+
+    let statusHTML = "<h3>🔥 Current Player Status</h3>";
+    userStatusList.forEach(user => {
+      statusHTML += `<div>🔹 User ID: ${user.userId}, Life: ${user.life}</div>`;
+    });
+
+    userStatusBox.innerHTML = statusHTML;
+  }
+
 </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-package com.finbattle.domain.room.model;
+package com.finbattle.domain.room.dto;
 
 public enum RoomStatus {
     OPEN,          // 대기중

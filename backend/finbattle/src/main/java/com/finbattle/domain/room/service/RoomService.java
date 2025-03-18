@@ -1,13 +1,15 @@
 package com.finbattle.domain.room.service;
 
+import static com.finbattle.domain.room.dto.RoomStatus.OPEN;
+
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
+import com.finbattle.domain.room.dto.QuizType;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
-import com.finbattle.domain.room.model.QuizType;
+import com.finbattle.domain.room.dto.RoomStatus;
+import com.finbattle.domain.room.dto.RoomType;
 import com.finbattle.domain.room.model.Room;
-import com.finbattle.domain.room.model.RoomStatus;
-import com.finbattle.domain.room.model.RoomType;
 import com.finbattle.domain.room.repository.RoomRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +26,7 @@ public class RoomService {
     // 방 생성
     public RoomResponse createRoom(RoomCreateRequest request) {
         // (1) Member 조회
-        Member member = memberRepository.findById(request.getUserId())
+        Member member = memberRepository.findById(request.getMemberId())
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         // (2) Room 엔티티 생성
@@ -33,7 +35,7 @@ public class RoomService {
         room.setPassword(request.getPassword());
         room.setMaxPlayer(request.getMaxPlayer());
         room.setRoomType(RoomType.valueOf(request.getRoomType().toUpperCase()));
-        room.setStatus(RoomStatus.OPEN); // 기본 상태
+        room.setStatus(OPEN); // 기본 상태
         room.setQuizType(QuizType.valueOf(request.getQuizType().toUpperCase()));
 
         // --- 1:N 핵심 ---
@@ -91,6 +93,14 @@ public class RoomService {
             .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
     }
 
+    // OPEN 상태의 방만 가져오기
+    public List<RoomResponse> getOpenRooms() {
+        RoomStatus roomStatus = OPEN;
+        return roomRepository.findByStatus(roomStatus).stream()
+            .map(RoomResponse::fromEntity) // Room -> RoomResponse 변환
+            .collect(Collectors.toList());
+    }
+
     // 예시: 방장이 방을 나갈 시 새 방장을 지정하는 로직이 필요하다면
     // Room 엔티티 안에 "hostMember"만 존재하므로, 새 호스트를 어떻게 정할지 별도 설계가 필요함.
 
@@ -103,6 +113,7 @@ public class RoomService {
         response.setMaxPlayer(room.getMaxPlayer());
         response.setCreatedAt(room.getCreatedAt());
         response.setQuizType(room.getQuizType());
+        response.setMemberId(room.getHostMember().getMemberId());
         return response;
     }
 }
