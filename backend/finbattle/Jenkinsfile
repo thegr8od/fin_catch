@@ -19,7 +19,7 @@ pipeline {
                 // 1) Secret file을 Jenkins에 등록한 ID로 가져오기
                 withCredentials([file(credentialsId: 'BACKEND-APPLICATION', variable: 'SECRET_FILE')]) {
                     // 2) Secret file을 현재 workspace에 복사
-                    sh 'cp "$SECRET_FILE" ./backend/finbattle/scr/resources/'
+                    sh 'cp "$SECRET_FILE" ./backend/finbattle/scr/main/resources/'
                     // 필요하면 파일명 변경 가능 (예: secrets.env)
 
                     // - 필요하면 로그로 찍지 않도록 주의!
