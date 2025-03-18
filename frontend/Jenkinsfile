@@ -38,7 +38,7 @@ pipeline {
                       string(credentialsId: 'FRONTEND_IMAGE_NAME', variable: 'FRONTEND_IMAGE_NAME')
                     ]) {
                         sh """
-                            docker login -u ${DOCKER_HUB_USERNAME} --password-stdin
+                            docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}
                             docker push ${FRONTEND_IMAGE_NAME}
                             docker logout
                         """
@@ -58,7 +58,9 @@ pipeline {
                         sh """
                             docker stop ${FRONTEND_CONTIANER_NAME} | true
                             docker rm ${FRONTEND_CONTIANER_NAME} | true
-                            docker run -d --name ${FRONTEND_CONTIANER_NAME} --network fincatch -p 3002:3001 ${FRONTEND_IMAGE_NAME}
+                            docker run -d --name ${FRONTEND_CONTIANER_NAME} \
+                                --network fincatch -p 3210:3209 \
+                            ${FRONTEND_IMAGE_NAME}
                         """
                     }
                 }
