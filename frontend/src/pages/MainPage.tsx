@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Background from "../components/layout/Background";
 import myPageBg from "../assets/mypage_bg.png";
-import catProfile from "../assets/characters/smoke_cat.png";
+// import catProfile from "../assets/characters/smoke_cat.png";
 import { useUserInfo } from "../hooks/useUserInfo";
 import LoadingScreen from "../components/common/LoadingScreen";
 import { useNavigate } from "react-router-dom";
