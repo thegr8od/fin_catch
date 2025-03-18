@@ -216,7 +216,6 @@ const MainPage = () => {
             position: "relative",
             width: "150px",
             height: "60px",
-            overflow: 'visible', //있어야되는지 모르는 코드
             transform: `scale(${scale})`,
             display: "flex",
             alignItems: "center",
@@ -224,13 +223,12 @@ const MainPage = () => {
           }}
         >
           <div
-            // style={{
-            //   position: "absolute",
-            //   left: "50%",
-            //   top: "50%",
-            //   transform: "translate(-50%, -50%)",
-            // }}
-            className="w-full h-full" // 변경된 부분
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
           >
             <CharacterAnimation
               key={`${character.catName}_${state}`}
@@ -240,14 +238,7 @@ const MainPage = () => {
               className="w-full h-full"
               characterType={character.catName}
               resourcesLoaded={resourcesLoaded[`${character.catName}_${state}`] || false}
-              // 아래가 변경된 부분
-              loop={state === 'idle'}  // idle 상태에서만 loop 활성화
-              onAnimationComplete={() => {
-                // attack, damage 등의 애니메이션이 끝나면 idle로 돌아가기
-                if (state !== 'idle') {
-                  setCurrentAnimationState('idle');
-                }
-              }}
+              loop={true}
             />
           </div>
         </div>
