@@ -44,6 +44,7 @@ public class Cat {
 
     @OneToMany(mappedBy = "cat")
     @JsonIgnore
+    @Builder.Default // ✅ 기본값 추가
     private List<MemberCat> memberCats = new ArrayList<>();
 
     public Cat(String catName, CatGrade grade) {
