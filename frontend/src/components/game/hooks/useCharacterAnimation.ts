@@ -15,26 +15,29 @@ interface UseCharacterAnimationProps {
 // 전역 텍스처 캐시
 const textureCache: Record<string, PIXI.Texture[]> = {}
 
-export const useCharacterAnimation = ({ state, characterType = "classic", direction = true, scale = 3, loop = false }: UseCharacterAnimationProps) => {
+export const useCharacterAnimation = ({ state, characterType = "classic", direction = true, scale = 3, onAnimationComplete, loop = false }: UseCharacterAnimationProps) => {
   const animations = useCharacter(characterType)
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<PIXI.Application | null>(null)
   const animationRef = useRef<PIXI.AnimatedSprite | null>(null)
   const mountedRef = useRef<boolean>(false)
+  const nextAnimationRef = useRef<PIXI.AnimatedSprite | null>(null)
 
   // PIXI 애플리케이션 메모이제이션
   const app = useMemo(() => {
     if (appRef.current) return appRef.current
 
-    // 컨테이너의 크기를 가져옴
-    const containerWidth = containerRef.current?.clientWidth
-    const containerHeight = containerRef.current?.clientHeight
+    // 컨테이너의 실제 크기를 사용
+    const containerWidth = containerRef.current?.offsetWidth || 300
+    const containerHeight = containerRef.current?.offsetHeight || 300
 
     const newApp = new PIXI.Application({
       width: containerWidth,
       height: containerHeight,
       backgroundAlpha: 0,
       antialias: false,
+      resolution: window.devicePixelRatio || 1, // 이 부분이 canvas 실제 크기에 영향
+      autoDensity: true, // 이 부분이 CSS 크기 조정
     })
 
     PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
@@ -42,29 +45,28 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     return newApp
   }, [])
 
-  // 리사이즈 감지 및 처리
+  // ResizeObserver 추가
   useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (appRef.current) {
-          // 컨테이너 크기에 맞춰 캔버스 크기 조정
-          appRef.current.renderer.resize(entry.contentRect.width, entry.contentRect.height)
+    if (!containerRef.current || !app) return;
 
-          // 스프라이트가 있다면 위치 재조정
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (app) {
+          app.renderer.resize(width, height);
+          
+          // 애니메이션이 있다면 위치도 업데이트
           if (animationRef.current) {
-            animationRef.current.x = entry.contentRect.width / 2
-            animationRef.current.y = entry.contentRect.height / 2
+            animationRef.current.x = width / 2;
+            animationRef.current.y = height / 2;
           }
         }
       }
-    })
+    });
 
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
-    }
-
-    return () => resizeObserver.disconnect()
-  }, [])
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, [app]);
 
   // 텍스처 로드 및 캐싱
   const getOrCreateTextures = async (config: CharacterSpriteConfig): Promise<PIXI.Texture[]> => {
@@ -104,39 +106,22 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
 
   // 애니메이션 생성 함수
   const createAnimation = (textures: PIXI.Texture[], config: CharacterSpriteConfig) => {
-    const animation = new PIXI.AnimatedSprite(textures);
-    animation.animationSpeed = config.animationSpeed;
-    animation.anchor.set(0.5);  // 중앙 기준점 유지
-    
-    // 캔버스 크기 가져오기
-    const canvasWidth = app.screen.width;
-    const canvasHeight = app.screen.height;
-    
-    // 스프라이트 크기 계산
-    const spriteWidth = config.frameWidth;
-    const spriteHeight = config.frameHeight;
-    
-    // 캔버스에 맞는 적절한 스케일 계산
-    const scaleX = (canvasWidth * 0.8) / spriteWidth;  // 캔버스 너비의 80% 정도로 조정
-    const scaleY = (canvasHeight * 0.8) / spriteHeight; // 캔버스 높이의 80% 정도로 조정
-    const finalScale = Math.min(scaleX, scaleY) * (direction ? 1 : -1);
-    
-    // 스케일 적용
-    animation.scale.set(Math.abs(finalScale), Math.abs(finalScale));
-    if (!direction) {
-      animation.scale.x *= -1;  // 방향이 반대일 경우 x축 반전
-    }
-    
-    // 캔버스 중앙에 위치시키기
-    animation.x = canvasWidth / 2;
-    animation.y = canvasHeight / 2;
-    
-    animation.alpha = 1;
-    animation.loop = true;
-    animation.play();
-    
-    return animation;
-  };
+    const animation = new PIXI.AnimatedSprite(textures)
+    animation.animationSpeed = config.animationSpeed
+    animation.anchor.set(0.5)
+    animation.scale.set(scale * (direction ? 1 : -1), scale)
+    // canvas 크기의 중앙으로 위치 설정
+    // 캐릭터 크기를 고려한 위치 조정 
+    const characterHeight = config.frameHeight * scale;
+    animation.x = app.screen.width / 2;
+    // 바닥에서부터 약간 위로 올린 위치에 배치
+    animation.y = app.screen.height - (characterHeight / 2) - 10; // 10은 바닥과의 여백
+    animation.alpha = 1
+    animation.loop = true
+
+    animation.play()
+    return animation
+  }
 
   // 애니메이션 업데이트
   const updateAnimation = async () => {

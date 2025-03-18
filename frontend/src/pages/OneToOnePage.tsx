@@ -346,30 +346,6 @@ const OneToOnePage: React.FC = () => {
         {/* 메인 게임 영역 - 수직/수평 중앙 정렬 */}
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full h-full py-8">
-            {/* 테스트용 컨트롤 패널 */}
-            <div className="absolute top-4 right-4 z-50 bg-white/80 p-4 rounded-lg">
-              <div className="flex flex-col gap-2">
-                <button onClick={() => gameEventHandlers.onGameStart()} className="px-4 py-2 bg-green-500 text-white rounded">
-                  게임 시작
-                </button>
-                <button onClick={() => gameEventHandlers.onQuestionReceived("새로운 문제입니다!")} className="px-4 py-2 bg-yellow-500 text-white rounded">
-                  새 문제
-                </button>
-                {/* 테스트용 피격 버튼 */}
-                <button onClick={() => gameEventHandlers.onDamage(playerStatus.id)} className="px-4 py-2 bg-red-500 text-white rounded" disabled={playerStatus.state !== "idle"}>
-                  플레이어 피격
-                </button>
-                <button onClick={() => gameEventHandlers.onDamage(opponentStatus.id)} className="px-4 py-2 bg-red-500 text-white rounded" disabled={opponentStatus.state !== "idle"}>
-                  상대방 피격
-                </button>
-                <div className="text-sm">
-                  플레이어 상태: {playerStatus.state} (HP: {playerStatus.health})
-                </div>
-                <div className="text-sm">
-                  상대방 상태: {opponentStatus.state} (HP: {opponentStatus.health})
-                </div>
-              </div>
-            </div>
 
             <BattleScreen
               resourcesLoaded={resourcesLoaded}
