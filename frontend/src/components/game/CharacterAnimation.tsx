@@ -4,39 +4,40 @@ import { useCharacterAnimation } from "./hooks/useCharacterAnimation";
 import { CharacterType } from "./constants/animations";
 
 interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
-  resourcesLoaded?: boolean;
   characterType?: CharacterType;
   isPlaying?: boolean;
+  size?: "small" | "large";
 }
 
 const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
   state,
   isPlaying = true,
   direction = true,
-  scale = 3,
+  scale = 2,
   className = "",
   onAnimationComplete,
-  resourcesLoaded = false,
   characterType = "classic",
+  size = "small",
 }) => {
-  const { containerRef } = useCharacterAnimation({
+  const { containerRef, isReady } = useCharacterAnimation({
     state,
     direction,
     scale,
     onAnimationComplete,
     characterType,
+    size,
   });
-
-  // 리소스가 로드되지 않았으면 아무것도 렌더링하지 않음
-  if (!resourcesLoaded) {
-    return null;
-  }
 
   return (
     <div className={`relative w-full h-full ${className}`}>
       <div ref={containerRef} className="w-full h-full" />
+      {!isReady && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default CharacterAnimation;
+export default React.memo(CharacterAnimation);
