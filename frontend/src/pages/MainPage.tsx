@@ -10,18 +10,18 @@ import { CharacterType } from "../components/game/constants/animations";
 // 컴포넌트 임포트
 // import ProfileSection from "../components/mypage/ProfileSection";
 // import CharacterDisplaySection from "../components/mypage/CharacterDisplaySection";
-import AccountLinkModal from "../components/mypage/AccountLinkModal";
+import AccountLinkModal from "../components/mypage/AccountLinkModal"
 // import AccountAnalysisModal from "../components/mypage/AccountAnalysisModal";
-import NicknameChangeModal from "../components/mypage/NicknameChangeModal";
-import CharacterAnimation from "../components/game/CharacterAnimation";
-import axiosInstance from "../api/axios";
+import NicknameChangeModal from "../components/mypage/NicknameChangeModal"
+import CharacterAnimation from "../components/game/CharacterAnimation"
+import axiosInstance from "../api/axios"
 
 // 캐릭터 타입 정의
 interface Character {
-  catId: number;
-  catName: CharacterType;
-  description: string;
-  grade: string;
+  catId: number
+  catName: CharacterType
+  description: string
+  grade: string
 }
 
 // API 응답의 Cat 타입을 Character 타입으로 변환하는 함수
@@ -31,12 +31,12 @@ const convertCatToCharacter = (cat: any): Character => {
     catName: cat.catName as CharacterType,
     description: cat.description,
     grade: cat.grade || "DEFAULT",
-  };
-};
+  }
+}
 
 // 캐릭터 정보 모달 컴포넌트
 const CharacterInfoModal = ({ character, onClose }: { character: Character | null; onClose: () => void }) => {
-  if (!character) return null;
+  if (!character) return null
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -64,152 +64,193 @@ const CharacterInfoModal = ({ character, onClose }: { character: Character | nul
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const MainPage = () => {
-  const { user, loading, fetchUserInfo } = useUserInfo();
-  const navigate = useNavigate();
-  const [showFeatureModal, setShowFeatureModal] = useState(false);
-  const [showNicknameModal, setShowNicknameModal] = useState(false);
-  const [showAccountLinkModal, setShowAccountLinkModal] = useState(false);
-  const [showCharacterInfoModal, setShowCharacterInfoModal] = useState(false);
-  const [featureMessage, setFeatureMessage] = useState("");
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [currentAnimationState, setCurrentAnimationState] = useState<"idle" | "attack" | "damage" | "dead" | "victory">("attack");
-  const [characterPage, setCharacterPage] = useState(0);
-  const charactersPerPage = 4;
-  const [isCharacterLoading, setIsCharacterLoading] = useState(false);
-  const [resourcesLoaded, setResourcesLoaded] = useState<Record<string, boolean>>({});
-  const [characters, setCharacters] = useState<Character[]>([]);
+  const { user, loading, fetchUserInfo } = useUserInfo()
+  const navigate = useNavigate()
+  const [showFeatureModal, setShowFeatureModal] = useState(false)
+  const [showNicknameModal, setShowNicknameModal] = useState(false)
+  const [showAccountLinkModal, setShowAccountLinkModal] = useState(false)
+  const [showCharacterInfoModal, setShowCharacterInfoModal] = useState(false)
+  const [featureMessage, setFeatureMessage] = useState("")
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
+  const [currentAnimationState, setCurrentAnimationState] = useState<"idle" | "attack" | "damage" | "dead" | "victory">("attack")
+  const [characterPage, setCharacterPage] = useState(0)
+  const charactersPerPage = 4
+  const [isCharacterLoading, setIsCharacterLoading] = useState(false)
+  const [resourcesLoaded, setResourcesLoaded] = useState<Record<string, boolean>>({})
+  const [characters, setCharacters] = useState<Character[]>([])
 
   // 사용자 정보 로깅 및 캐릭터 초기화
   useEffect(() => {
     const initializeCharacters = async () => {
-      console.log("현재 사용자 정보:", user);
+      console.log("현재 사용자 정보:", user)
       if (user?.cats) {
-        console.log("사용자가 보유한 캐릭터 목록:", user.cats);
-        const convertedCats = user.cats.map(convertCatToCharacter);
-        await setCharacters(convertedCats);
+        console.log("사용자가 보유한 캐릭터 목록:", user.cats)
+        const convertedCats = user.cats.map(convertCatToCharacter)
+        await setCharacters(convertedCats)
 
         // 대표 캐릭터를 찾아서 선택
-        const mainCatName = user.mainCat as unknown as CharacterType;
-        const mainCharacter = convertedCats.find((cat) => cat.catName === mainCatName);
+        const mainCatName = user.mainCat as unknown as CharacterType
+        const mainCharacter = convertedCats.find((cat) => cat.catName === mainCatName)
         if (mainCharacter) {
-          console.log("대표 캐릭터 찾음:", mainCharacter);
-          setSelectedCharacter(mainCharacter);
-          setCurrentAnimationState("idle");
+          console.log("대표 캐릭터 찾음:", mainCharacter)
+          setSelectedCharacter(mainCharacter)
+          setCurrentAnimationState("idle")
         } else if (convertedCats.length > 0) {
-          console.log("대표 캐릭터 없음, 첫 번째 캐릭터 선택:", convertedCats[0]);
-          setSelectedCharacter(convertedCats[0]);
+          console.log("대표 캐릭터 없음, 첫 번째 캐릭터 선택:", convertedCats[0])
+          setSelectedCharacter(convertedCats[0])
         }
       }
-    };
+    }
 
-    initializeCharacters();
-  }, [user]);
+    initializeCharacters()
+  }, [user])
 
   // 캐릭터 리소스 프리로딩
   useEffect(() => {
     const loadResources = async () => {
-      setIsCharacterLoading(true);
-      const states = ["idle", "attack", "damage", "dead", "victory"];
-      const loadedResources: Record<string, boolean> = {};
+      setIsCharacterLoading(true)
+      const states = ["idle", "attack", "damage", "dead", "victory"]
+      const loadedResources: Record<string, boolean> = {}
 
-      for (const character of characters) {
-        for (const state of states) {
-          const path = `/cats_assets/${character.catName}/${character.catName}_cat_${state}.png`;
-          try {
-            await new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = resolve;
-              img.onerror = reject;
-              img.src = path;
-            });
-            loadedResources[`${character.catName}_${state}`] = true;
-          } catch (error) {
-            console.error(`리소스 로딩 실패: ${path}`, error);
-            loadedResources[`${character.catName}_${state}`] = false;
-          }
-        }
+      // [수정 필요] Promise.all을 사용하여 병렬로 로딩하도록 변경
+      // for (const character of characters) {
+      //   for (const state of states) {
+      //     const path = `/cats_assets/${character.catName}/${character.catName}_cat_${state}.png`;
+      //     try {
+      //       await new Promise((resolve, reject) => {
+      //         const img = new Image();
+      //         img.onload = resolve;
+      //         img.onerror = reject;
+      //         img.src = path;
+      //       });
+      //       loadedResources[`${character.catName}_${state}`] = true;
+      //     } catch (error) {
+      //       console.error(`리소스 로딩 실패: ${path}`, error);
+      //       loadedResources[`${character.catName}_${state}`] = false;
+      //     }
+      //   }
+      // }
+
+      try {
+        // [새로운 코드] 모든 리소스를 병렬로 로딩
+        await Promise.all(
+          characters.flatMap((character) =>
+            states.map((state) => {
+              const path = `/cats_assets/${character.catName}/${character.catName}_cat_${state}.png`
+              return new Promise((resolve) => {
+                const img = new Image()
+                img.onload = () => {
+                  loadedResources[`${character.catName}_${state}`] = true
+                  resolve(true)
+                }
+                img.onerror = () => {
+                  loadedResources[`${character.catName}_${state}`] = false
+                  resolve(false)
+                }
+                img.src = path
+              })
+            })
+          )
+        )
+      } catch (error) {
+        console.error("리소스 로딩 실패:", error)
       }
 
-      setResourcesLoaded(loadedResources);
-      setIsCharacterLoading(false);
-    };
+      setResourcesLoaded(loadedResources)
+      setIsCharacterLoading(false)
+    }
 
-    loadResources();
-  }, [characters]);
+    if (characters.length > 0) {
+      // [추가] 캐릭터가 있을 때만 로딩 시작
+      loadResources()
+    }
+  }, [characters])
 
   // 애니메이션 상태 배열 정의
-  const animationStates: (typeof currentAnimationState)[] = ["attack", "damage", "victory"];
+  const animationStates: (typeof currentAnimationState)[] = ["attack", "damage", "victory"]
 
   // 애니메이션 상태 변경 핸들러
   const handlePrevAnimation = () => {
     setCurrentAnimationState((prev) => {
-      const currentIndex = animationStates.indexOf(prev);
-      return animationStates[currentIndex === 0 ? animationStates.length - 1 : currentIndex - 1];
-    });
-  };
+      const currentIndex = animationStates.indexOf(prev)
+      return animationStates[currentIndex === 0 ? animationStates.length - 1 : currentIndex - 1]
+    })
+  }
 
   const handleNextAnimation = () => {
     setCurrentAnimationState((prev) => {
-      const currentIndex = animationStates.indexOf(prev);
-      return animationStates[currentIndex === animationStates.length - 1 ? 0 : currentIndex + 1];
-    });
-  };
+      const currentIndex = animationStates.indexOf(prev)
+      return animationStates[currentIndex === animationStates.length - 1 ? 0 : currentIndex + 1]
+    })
+  }
 
   const changeMyCat = async () => {
     if (!selectedCharacter) {
-      console.log("선택된 캐릭터가 없습니다.");
-      return;
+      console.log("선택된 캐릭터가 없습니다.")
+      return
     }
 
     try {
-      console.log("대표 캐릭터 변경 시도:", selectedCharacter);
-      const response = await axiosInstance.patch(`/api/member/maincat?catId=${selectedCharacter.catId}`);
+      console.log("대표 캐릭터 변경 시도:", selectedCharacter)
+      const response = await axiosInstance.patch(`/api/member/maincat?catId=${selectedCharacter.catId}`)
 
       if (response.status === 200) {
-        console.log("대표 캐릭터 변경 성공:", response.data);
-        await fetchUserInfo(); // 사용자 정보 갱신
+        console.log("대표 캐릭터 변경 성공:", response.data)
+        await fetchUserInfo() // 사용자 정보 갱신
       }
     } catch (error) {
-      console.error("대표 캐릭터 변경 실패:", error);
+      console.error("대표 캐릭터 변경 실패:", error)
     }
-  };
+  }
 
   // 캐릭터 페이지네이션 계산
-  const totalPages = Math.ceil(characters.length / charactersPerPage);
+  const totalPages = Math.ceil(characters.length / charactersPerPage)
   const currentCharacters = useMemo(() => {
     console.log("현재 캐릭터 목록 계산:", {
       characters: characters,
       page: characterPage,
       start: characterPage * charactersPerPage,
       end: (characterPage + 1) * charactersPerPage,
-    });
-    return characters.slice(characterPage * charactersPerPage, (characterPage + 1) * charactersPerPage);
-  }, [characters, characterPage, charactersPerPage]);
+    })
+    return characters.slice(characterPage * charactersPerPage, (characterPage + 1) * charactersPerPage)
+  }, [characters, characterPage, charactersPerPage])
 
   // 캐릭터 페이지네이션 변경 시 로깅
   useEffect(() => {
-    console.log("현재 페이지의 캐릭터 목록:", currentCharacters);
-    console.log("전체 캐릭터 목록:", characters);
-  }, [currentCharacters]);
+    console.log("현재 페이지의 캐릭터 목록:", currentCharacters)
+    console.log("전체 캐릭터 목록:", characters)
+  }, [currentCharacters])
 
   // 캐릭터 변경 핸들러 최적화
   const handleCharacterSelect = useCallback(
     (character: Character) => {
-      console.log("선택된 캐릭터 정보:", character);
-      if (selectedCharacter?.catId === character.catId) return;
-      setSelectedCharacter(character);
-      setCurrentAnimationState("idle");
+      console.log("선택된 캐릭터 정보:", character)
+      if (selectedCharacter?.catId === character.catId) return
+      setSelectedCharacter(character)
+      setCurrentAnimationState("idle")
     },
     [selectedCharacter?.catId]
-  );
+  )
 
   // 캐릭터 컴포넌트 메모이제이션 최적화 (애니메이션용)
   const AnimatedCharacterDisplay = React.memo(
     ({ character, state, scale = 2 }: { character: Character; state: typeof currentAnimationState; scale?: number }) => {
+      // [추가] 리소스 로딩 상태 확인
+      const isResourceLoaded = resourcesLoaded[`${character.catName}_${state}`]
+
+      // [추가] 로딩 중일 때 표시할 컴포넌트
+      if (!isResourceLoaded) {
+        return (
+          <div className="flex items-center justify-center w-full h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        )
+      }
+
       return (
         <div
           style={{
@@ -229,34 +270,37 @@ const MainPage = () => {
               top: "50%",
               transform: "translate(-50%, -50%)",
             }}
+            // className="mb-2"
           >
             <CharacterAnimation
-              key={`${character.catName}_${state}`}
+              // key={`${character.catName}_${state}`}
+              key={character.catName}
               state={state}
               direction={true}
-              scale={1}
+              scale={1.3}
               className="w-full h-full"
               characterType={character.catName}
-              resourcesLoaded={resourcesLoaded[`${character.catName}_${state}`] || false}
+              // resourcesLoaded={resourcesLoaded[`${character.catName}_${state}`] || false}
+              resourcesLoaded={true}
               loop={true}
             />
           </div>
         </div>
-      );
+      )
     },
     (prevProps, nextProps) => prevProps.character.catName === nextProps.character.catName && prevProps.state === nextProps.state && prevProps.scale === nextProps.scale
-  );
+  )
 
   // 캐릭터 목록 컴포넌트 수정
   const CharacterList = React.memo(
     ({ characters }: { characters: Character[] }) => {
       // 대표 캐릭터를 최상단으로 정렬
       const sortedCharacters = [...characters].sort((a, b) => {
-        const mainCatName = user?.mainCat as unknown as CharacterType;
-        if (a.catName === mainCatName) return -1;
-        if (b.catName === mainCatName) return 1;
-        return 0;
-      });
+        const mainCatName = user?.mainCat as unknown as CharacterType
+        if (a.catName === mainCatName) return -1
+        if (b.catName === mainCatName) return 1
+        return 0
+      })
 
       return (
         <div className="grid grid-cols-4 gap-4 overflow-y-auto max-h-[320px] pr-2 hover:overflow-auto">
@@ -302,27 +346,27 @@ const MainPage = () => {
             </div>
           ))}
         </div>
-      );
+      )
     },
     (prevProps, nextProps) => prevProps.characters.length === nextProps.characters.length && prevProps.characters.every((char, idx) => char.catId === nextProps.characters[idx].catId)
-  );
+  )
 
   // 페이지네이션 버튼 핸들러
   const handlePrevPage = useCallback(() => {
     setCharacterPage((prev) => {
-      const newPage = Math.max(0, prev - 1);
-      console.log("이전 페이지로 이동:", newPage);
-      return newPage;
-    });
-  }, []);
+      const newPage = Math.max(0, prev - 1)
+      console.log("이전 페이지로 이동:", newPage)
+      return newPage
+    })
+  }, [])
 
   const handleNextPage = useCallback(() => {
     setCharacterPage((prev) => {
-      const newPage = Math.min(totalPages - 1, prev + 1);
-      console.log("다음 페이지로 이동:", newPage);
-      return newPage;
-    });
-  }, [totalPages]);
+      const newPage = Math.min(totalPages - 1, prev + 1)
+      console.log("다음 페이지로 이동:", newPage)
+      return newPage
+    })
+  }, [totalPages])
 
   // 캐릭터 목록 섹션 렌더링
   const renderCharacterList = useMemo(
@@ -358,22 +402,22 @@ const MainPage = () => {
       </div>
     ),
     [characterPage, totalPages, currentCharacters, handlePrevPage, handleNextPage]
-  );
+  )
 
   useEffect(() => {
     // 로컬 스토리지에서 계좌 연동 여부 확인
-    const hasShownAccountModal = localStorage.getItem("hasShownAccountModal");
+    const hasShownAccountModal = localStorage.getItem("hasShownAccountModal")
     if (!hasShownAccountModal && user) {
-      setShowAccountLinkModal(true);
-      localStorage.setItem("hasShownAccountModal", "true");
+      setShowAccountLinkModal(true)
+      localStorage.setItem("hasShownAccountModal", "true")
     }
-  }, [user]);
+  }, [user])
 
   // 계좌 연동 처리
   const handleAccountLink = (accountInfo: AccountInfo) => {
-    console.log("계좌 연동 완료:", accountInfo);
-    setShowAccountLinkModal(false);
-  };
+    console.log("계좌 연동 완료:", accountInfo)
+    setShowAccountLinkModal(false)
+  }
 
   // 미구현 기능 접근 시 모달 표시 함수
   // const handleFeatureClick = (message: string) => {
@@ -383,39 +427,39 @@ const MainPage = () => {
 
   // 닉네임 변경 처리
   const handleUpdateNickname = async (newNickname: string) => {
-    console.log("닉네임 변경 시작:", newNickname);
+    console.log("닉네임 변경 시작:", newNickname)
     try {
-      await fetchUserInfo();
-      console.log("사용자 정보 갱신 완료");
-      setShowNicknameModal(false);
+      await fetchUserInfo()
+      console.log("사용자 정보 갱신 완료")
+      setShowNicknameModal(false)
     } catch (error) {
-      console.error("닉네임 변경 후 사용자 정보 갱신 실패:", error);
+      console.error("닉네임 변경 후 사용자 정보 갱신 실패:", error)
     }
-  };
+  }
 
   const handleLobbyClick = () => {
-    navigate("/lobby");
-  };
+    navigate("/lobby")
+  }
 
   // 페이지 포커스 시 사용자 정보 갱신
   useEffect(() => {
     const handleFocus = () => {
-      console.log("페이지 포커스 감지: 사용자 정보 갱신");
-      fetchUserInfo();
-    };
+      console.log("페이지 포커스 감지: 사용자 정보 갱신")
+      fetchUserInfo()
+    }
 
-    window.addEventListener("focus", handleFocus);
+    window.addEventListener("focus", handleFocus)
 
     // 컴포넌트가 처음 마운트될 때도 정보 갱신
-    handleFocus();
+    handleFocus()
 
     return () => {
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [fetchUserInfo]);
+      window.removeEventListener("focus", handleFocus)
+    }
+  }, [fetchUserInfo])
 
   if (loading || !user) {
-    return <LoadingScreen />;
+    return <LoadingScreen />
   }
 
   const profileData = {
@@ -426,9 +470,9 @@ const MainPage = () => {
     coins: user.point,
     cats: user.cats,
     mainCat: user.mainCat,
-  };
+  }
 
-  console.log("프로필 데이터:", profileData);
+  console.log("프로필 데이터:", profileData)
 
   // 캐릭터 디스플레이 섹션 수정
   const renderCharacterDisplay = () => (
@@ -461,7 +505,7 @@ const MainPage = () => {
           )}
         </div>
 
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 z-50">
           <button
             onClick={() => setCurrentAnimationState("attack")}
             className={`px-3 py-2 rounded-lg font-korean-pixel transition-colors ${currentAnimationState === "attack" ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
@@ -483,7 +527,7 @@ const MainPage = () => {
         </div>
 
         {selectedCharacter && (
-          <div className="mt-4">
+          <div className="mt-4 z-50">
             {selectedCharacter.catName === (user?.mainCat as unknown as CharacterType) ? (
               <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-korean-pixel">현재 주인공 고양이입니다</div>
             ) : (
@@ -497,7 +541,7 @@ const MainPage = () => {
 
       <CharacterList characters={characters} />
     </div>
-  );
+  )
 
   return (
     <Background backgroundImage={myPageBg}>
@@ -683,7 +727,7 @@ const MainPage = () => {
 
       {showCharacterInfoModal && <CharacterInfoModal character={selectedCharacter} onClose={() => setShowCharacterInfoModal(false)} />}
     </Background>
-  );
-};
+  )
+}
 
-export default MainPage;
+export default MainPage

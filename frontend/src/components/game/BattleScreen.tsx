@@ -83,21 +83,21 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
         {/* 오른쪽 플레이어 */}
         <div className="w-1/4 flex flex-col items-center relative">
           <div className="w-full flex items-center justify-center relative">
-          <PlayerSection
-            name={opponentStatus.name}
-            health={opponentStatus.health}
-            state={opponentStatus.state}
-            bubble={null}
-            resourcesLoaded={resourcesLoaded}
-            direction={false}
-            onAnimationComplete={onOpponentAnimationComplete}
-          />
+            <PlayerSection
+              name={opponentStatus.name}
+              health={opponentStatus.health}
+              state={opponentStatus.state}
+              bubble={null}
+              resourcesLoaded={resourcesLoaded}
+              direction={false}
+              onAnimationComplete={onOpponentAnimationComplete}
+            />
           </div>
         </div>
       </div>
 
       {/* 하단 채팅 영역 - 좌하단에 배치, 고정 크기 */}
-      <div className="absolute bottom-16 left-4 w-1/4 h-40 z-20">
+      <div className="absolute bottom-16 left-4 w-1/4 h-[6rem] z-20">
         <ChatSection chatMessages={chatMessages} showInput={false} />
       </div>
 
