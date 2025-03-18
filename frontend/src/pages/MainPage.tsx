@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react"
-import Background from "../components/layout/Background"
-import myPageBg from "../assets/mypage_bg.png"
-import catProfile from "../assets/characters/smoke_cat.png"
-import { useUserInfo } from "../hooks/useUserInfo"
-import LoadingScreen from "../components/common/LoadingScreen"
-import { useNavigate } from "react-router-dom"
-import { AccountInfo } from "../components/mypage/AccountLinkModal"
-import { CharacterType } from "../components/game/constants/animations"
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Background from "../components/layout/Background";
+import myPageBg from "../assets/mypage_bg.png";
+// import catProfile from "../assets/characters/smoke_cat.png";
+import { useUserInfo } from "../hooks/useUserInfo";
+import LoadingScreen from "../components/common/LoadingScreen";
+import { useNavigate } from "react-router-dom";
+import { AccountInfo } from "../components/mypage/AccountLinkModal";
+import { CharacterType } from "../components/game/constants/animations";
 // 컴포넌트 임포트
 // import ProfileSection from "../components/mypage/ProfileSection";
 // import CharacterDisplaySection from "../components/mypage/CharacterDisplaySection";

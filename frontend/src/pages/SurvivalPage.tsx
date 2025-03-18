@@ -9,10 +9,7 @@ import SadCat from "../assets/sadcat.png";
 import styles from "./SurvivalPage.module.css";
 
 // 게임 상태를 관리하는 타입
-type GameState = "quiz" | "result";
-
-// 게임 결과 타입
-type GameResult = "victory" | "defeat";
+type GameState = "quiz" | "goodResult" | "badResult";
 
 const SurvivalPage = () => {
   const { mode } = useParams<{ mode: string }>();
@@ -20,8 +17,7 @@ const SurvivalPage = () => {
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [gameState, setGameState] = useState<GameState>("quiz");
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
-  const [score, setScore] = useState<number>(0);
-  const [gameResult, setGameResult] = useState<GameResult>("defeat");
+  const [score] = useState<number>(50); // 코인 갯수 항상 50으로 고정
   
   // 객관식 문제 선택지
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -46,23 +42,16 @@ const SurvivalPage = () => {
     setSelectedOption(index);
   };
 
-  // 결과 화면으로 이동
-  const showResults = () => {
-    // 랜덤하게 승리/패배 결정
-    const randomResult = Math.random() < 0.5 ? "victory" : "defeat";
-    
-    // 랜덤 결과에 따라 점수 설정
-    if (randomResult === "victory") {
-      setScore(100);
-    } else {
-      setScore(30);
-    }
-    
-    // 게임 결과 설정
-    setGameResult(randomResult);
-    
-    // 결과 화면으로 전환
-    setGameState("result");
+  // 좋은 점 결과 화면으로 이동
+  const showGoodResults = () => {
+    // 좋은 점 결과 화면으로 전환
+    setGameState("goodResult");
+  };
+  
+  // 나쁜 점 결과 화면으로 이동
+  const showBadResults = () => {
+    // 나쁜 점 결과 화면으로 전환
+    setGameState("badResult");
   };
 
   // 메인 페이지로 이동
@@ -70,7 +59,7 @@ const SurvivalPage = () => {
     navigate("/main");
   };
 
-  // 객관식 문제 화면 - 수정된 레이아웃
+  // 객관식 문제 화면 - 디자인 개선
   const renderQuizScreen = () => (
     <div className={styles.container}>
       <div className={styles.timerTitle}>
@@ -79,22 +68,22 @@ const SurvivalPage = () => {
 
       {/* 퀴즈 게임 UI */}
       <div className={styles.quizContainer}>
-        {/* 고양이 대결 이미지 영역 - 변경된 부분 */}
+        {/* 고양이 대결 이미지 영역 */}
         <div className={styles.catBattleArea}>
           <img src={SsrCat1} alt="Player Cat" className={styles.playerCat} />
           <img src={Cat3} alt="Boss Cat" className={styles.bossCat} />
         </div>
 
-        {/* 문제와 선지를 포함하는 새로운 컨테이너 */}
+        {/* 문제와 선지를 포함하는 개선된 컨테이너 */}
         <div className={styles.quizContentContainer}>
-          {/* 문제 영역 - 하단 좌측 */}
+          {/* 문제 영역 - 디자인 개선 */}
           <div className={styles.questionBox}>
             <p className={styles.questionText}>
-              철수는 200만 원을 연 4%의 복리로 은행에 예금했습니다. 3년 후 철수가 받을 수 있는 예상 금액은 얼마일까요? (소수점 이하 반올림)
+              지난달, 당신은 얼마나 저축했을까요? 당신의 재정 건강 상태를 확인할 시간입니다. 아래의 선택지 중에서 지난달 당신이 저축한 금액과 가장 가까운 답을 골라보세요
             </p>
           </div>
 
-          {/* 객관식 선택지 영역 - 하단 우측 */}
+          {/* 객관식 선택지 영역 - 디자인 개선 */}
           <div className={styles.optionsArea}>
             <div className={styles.optionsRow}>
               <button
@@ -102,14 +91,14 @@ const SurvivalPage = () => {
                 onClick={() => handleOptionSelect(0)}
                 className={`${styles.optionButton} ${selectedOption === 0 ? styles.selectedOption : ""}`}
               >
-                1번
+                1. 1000원
               </button>
               <button
                 type="button"
                 onClick={() => handleOptionSelect(1)}
                 className={`${styles.optionButton} ${selectedOption === 1 ? styles.selectedOption : ""}`}
               >
-                2번
+                2. 1만원
               </button>
             </div>
             <div className={styles.optionsRow}>
@@ -118,23 +107,26 @@ const SurvivalPage = () => {
                 onClick={() => handleOptionSelect(2)}
                 className={`${styles.optionButton} ${selectedOption === 2 ? styles.selectedOption : ""}`}
               >
-                3번
+                3. 10만원
               </button>
               <button
                 type="button"
                 onClick={() => handleOptionSelect(3)}
                 className={`${styles.optionButton} ${selectedOption === 3 ? styles.selectedOption : ""}`}
               >
-                4번
+                4. 1000만원
               </button>
             </div>
           </div>
         </div>
         
-        {/* 시간이 다 되었을 때 결과 화면으로 이동 버튼 표시 - 선택지 아래로 이동 */}
+        {/* 시간이 다 되었을 때 결과 화면으로 이동 버튼 표시 */}
         {isTimeUp && (
           <div className={styles.timeUpButtonContainer}>
-            <button onClick={showResults} className={styles.nextButton}>
+            <button 
+              onClick={showGoodResults} 
+              className={styles.nextButton}
+            >
               결과 확인하기
             </button>
           </div>
@@ -143,40 +135,74 @@ const SurvivalPage = () => {
     </div>
   );
 
-  // 간단한 결과 화면
-  const renderResultScreen = () => (
+  // 좋은 점 결과 화면
+  const renderGoodResultScreen = () => (
     <div className={styles.container}>
       <div className={styles.timerTitle}>
-        <h1 className={styles.timerText}>결과</h1>
+        <h1 className={styles.timerText}>분석 결과</h1>
       </div>
 
       <div className={styles.resultBox}>
         <div className={styles.resultContent}>
-          {/* 플레이어 캐릭터 - 승리/패배에 따라 다른 이미지 표시 */}
+          {/* 좋은 점 결과 보여주기 */}
           <img 
-            src={gameResult === "victory" ? WinCat : SadCat} 
-            alt={gameResult === "victory" ? "승리 캐릭터" : "패배 캐릭터"} 
+            src={WinCat} 
+            alt="좋은 결과 캐릭터" 
             className={styles.resultImage} 
           />
 
-          {/* 승패 메시지 */}
           <div className={styles.resultMessage}>
-            {gameResult === "victory" ? (
-              <h2 className={styles.victoryText}>승리했습니다!</h2>
-            ) : (
-              <h2 className={styles.defeatText}>패배했습니다...</h2>
-            )}
-          </div>
-
-          {/* 점수 정보 */}
-          <div className={styles.scoreInfo}>
-            <h2 className={styles.scoreTitle}>오늘의 점수</h2>
-            <p className={styles.scoreValue}>{score}점</p>
+            <h2 className={styles.victoryText}>이런 점은 좋아요!!</h2>
+            <p className={styles.goodHabitText}>- 꾸준히 저축을 하고 있군요</p>
+            <p className={styles.goodHabitText}>- 대중교통을 열심히 이용 하고 있어요</p>
           </div>
 
           {/* 보상 정보 */}
           <div className={styles.rewardBox}>
-            <p className={styles.expText}>EXP + {gameResult === "victory" ? 100 : 50}</p>
+            <p className={styles.expText}>EXP + 100</p>
+            <div className={styles.coinContainer}>
+              <img src={CoinImage} alt="코인" className={styles.coinImage} />
+              <span className={styles.coinText}>× {score}</span>
+            </div>
+          </div>
+
+          {/* 계속하기 버튼 */}
+          <button 
+            onClick={showBadResults} 
+            className={styles.mainButton}
+          >
+            계속하기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+  
+  // 나쁜 점 결과 화면
+  const renderBadResultScreen = () => (
+    <div className={styles.container}>
+      <div className={styles.timerTitle}>
+        <h1 className={styles.timerText}>분석 결과</h1>
+      </div>
+
+      <div className={styles.resultBox}>
+        <div className={styles.resultContent}>
+          {/* 나쁜 점 결과 보여주기 */}
+          <img 
+            src={SadCat} 
+            alt="나쁜 결과 캐릭터" 
+            className={styles.resultImage} 
+          />
+
+          <div className={styles.resultMessage}>
+            <h2 className={styles.defeatText}>이런 점은 아쉬워요</h2>
+            <p className={styles.badHabitText}>- 편의점을 자주 이용하는군요</p>
+            <p className={styles.badHabitText}>- 신용카드 사용한도에 도달 직전이에요</p>
+          </div>
+
+          {/* 보상 정보 */}
+          <div className={styles.rewardBox}>
+            <p className={styles.expText}>EXP + 100</p>
             <div className={styles.coinContainer}>
               <img src={CoinImage} alt="코인" className={styles.coinImage} />
               <span className={styles.coinText}>× {score}</span>
@@ -184,7 +210,10 @@ const SurvivalPage = () => {
           </div>
 
           {/* 메인으로 버튼 */}
-          <button onClick={goToMainPage} className={styles.mainButton}>
+          <button 
+            onClick={goToMainPage} 
+            className={styles.mainButton}
+          >
             메인으로
           </button>
         </div>
@@ -197,10 +226,17 @@ const SurvivalPage = () => {
       className={styles.background}
       style={{
         backgroundImage: `url(${Background})`,
+        height: "100vh",
+        overflowY: "auto"
       }}
     >
       <div className={styles.overlay}></div>
-      {gameState === "quiz" ? renderQuizScreen() : renderResultScreen()}
+      {gameState === "quiz" 
+        ? renderQuizScreen() 
+        : gameState === "goodResult" 
+          ? renderGoodResultScreen() 
+          : renderBadResultScreen()
+      }
     </div>
   );
 };
