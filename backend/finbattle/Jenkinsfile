@@ -104,7 +104,7 @@ pipeline {
 
     post {
         always {
-            sh 'rm -f ./backend/finbattle/scr/resources/'
+            sh 'rm -f ./backend/finbattle/src/main/resources/'
         }
         success {
             script {
