@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([
-                        string(credentialsId: 'FRONTEND_IMAGE_NAME', variable: 'FRONTEND_IMAGE_NAME')
+                        string(credentialsId: 'FRONTEND_IMAGE_NAME', variable: 'FRONTEND_IMAGE_NAME'),
                         string(credentialsId: 'FRONTEND_CONTIANER_NAME', variable: 'FRONTEND_CONTIANER_NAME')    
                     ]) {
                         sh """
@@ -74,7 +74,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'FRONTEND_MM_WEBHOOK_URL', variable: 'FRONTEND_MM_WEBHOOK_URL')]) {
                     def jsonMessage = """{
                         "attachments": [{
-                            "text": "**✅ Frontend Build 성공**\\n- 상태: SUCCESS\\n- [🔗 상세 정보](${env.BUILD_URL})",
+                            "text": "**✅ Frontend Build 성공**\\\\n- 상태: SUCCESS\\\\n- [🔗 상세 정보](${env.BUILD_URL})",
                             "color": "#00FF00"
                         }]
                     }"""
@@ -93,7 +93,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'FRONTEND_MM_WEBHOOK_URL', variable: 'FRONTEND_MM_WEBHOOK_URL')]) {
                     def jsonMessage = """{
                         "attachments": [{
-                            "text": "**❌ Frontend Build 실패**\\n- 상태: FAILURE\\n- [🔗 상세 정보](${env.BUILD_URL}/console) ",
+                            "text": "**❌ Frontend Build 실패**\\\\n- 상태: FAILURE\\\\n- [🔗 상세 정보](${env.BUILD_URL}/console) ",
                             "color": "#FF0000"
                         }]
                     }"""
