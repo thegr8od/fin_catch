@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { CharacterStateConfig } from "../types/character";
 
-export type CharacterType = "classic" | "batman" | "christmas" | "demonic" | "egypt" | "simase" | "tiger" | "yankee" | "nigger" | "unique_rabbit";
+export type CharacterType = "classic" | "batman" | "christmas" | "demonic" | "egypt" | "simase" | "tiger" | "master" | "slave" | "unique_rabbit";
 
 interface CharacterFrameConfig {
   frameWidth: number;
@@ -46,12 +46,12 @@ const CHARACTER_DEFAULTS = {
     frameHeight: 32,
     animationSpeed: 0.1,
   },
-  yankee: {
+  master: {
     frameWidth: 32,
     frameHeight: 32,
     animationSpeed: 0.1,
   },
-  nigger: {
+  slave: {
     frameWidth: 32,
     frameHeight: 32,
     animationSpeed: 0.1,
@@ -60,7 +60,7 @@ const CHARACTER_DEFAULTS = {
     frameWidth: 32,
     frameHeight: 32,
     animationSpeed: 0.1,
-  }
+  },
 } as const;
 
 const CHARACTER_STATE_CONFIGS = {
@@ -113,14 +113,14 @@ const CHARACTER_STATE_CONFIGS = {
     damage: { frames: 7 },
     victory: { frames: 13 },
   },
-  nigger: {
+  slave: {
     idle: { frames: 7 },
     dead: { frames: 14 },
     attack: { frames: 9 },
     damage: { frames: 7 },
     victory: { frames: 13 },
   },
-  yankee: {
+  master: {
     idle: { frames: 7 },
     dead: { frames: 14 },
     attack: { frames: 9 },
