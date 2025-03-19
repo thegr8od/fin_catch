@@ -13,5 +13,5 @@ server:
   port: 9091
 
 app:
-  clientUrl: https://j12d108.p.ssafy.io
-  baseUrl: https://j12d108.p.ssafy.io
+  clientUrl: http://j12d108.p.ssafy.io
+  baseUrl: http://j12d108.p.ssafy.io
