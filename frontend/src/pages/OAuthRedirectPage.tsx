@@ -20,15 +20,9 @@ const OAuthRedirectPage = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        // URL 파라미터 확인 및 로깅
-        const urlParams = new URLSearchParams(location.search);
-        const code = urlParams.get("code");
-        console.log("인증 코드:", code);
-
         // API 요청 설정 로깅
         const requestConfig = {
           withCredentials: true,
-          params: code ? { code } : undefined,
         };
         console.log("API 요청 설정:", requestConfig);
 
