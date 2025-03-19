@@ -5,6 +5,7 @@ import axiosInstance from "../api/axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../store/slices/userSlice";
+import axios from "axios";
 
 /**
  * 소셜 로그인 리다이렉트 처리 페이지
@@ -28,7 +29,7 @@ const OAuthRedirectPage = () => {
 
         // 토큰 요청
         console.log("토큰 요청 시작 - /api/member/public/reissue");
-        const response = await axiosInstance.get("/api/member/public/reissue", requestConfig);
+        const response = await axios.get(`https://j12d108.p.ssafy.io/api/member/public/reissue`, requestConfig);
         console.log("토큰 응답 전체:", response);
 
         const data = response.data;
