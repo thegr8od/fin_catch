@@ -52,11 +52,22 @@ const LoginPage = () => {
         try {
           console.log("토큰 요청 시작");
 
-          // success=true인 경우의 토큰 요청
-          // const response = await axiosInstance.get("/api/member/public/reissue");
           const response = await axios.get("https://j12d108.p.ssafy.io/api/member/public/reissue", {
             withCredentials: true,
+            maxRedirects: 0, // 리다이렉트를 따라가지 않음
+            validateStatus: (status) => {
+              return (status >= 200 && status < 300) || status === 302;
+            },
           });
+
+          // 302 리다이렉트 응답인 경우
+          if (response.status === 302) {
+            console.error("리다이렉트 응답을 받았습니다. 다시 로그인해주세요.");
+            setError("인증이 만료되었습니다. 다시 로그인해주세요.");
+            navigate("/signin", { replace: true });
+            return;
+          }
+
           const data = response?.data;
           console.log("API 응답 받음:", data);
 
@@ -80,10 +91,12 @@ const LoginPage = () => {
           } else {
             console.error("토큰을 찾을 수 없습니다:", data);
             setError("토큰을 찾을 수 없습니다. 다시 로그인해주세요.");
+            navigate("/signin", { replace: true });
           }
         } catch (error) {
           console.error("토큰 요청 중 오류 발생:", error);
-          setError("토큰 요청 중 오류가 발생했습니다. 다시 시도해주세요.");
+          setError("토큰 요청 중 오류가 발생했습니다. 다시 로그인해주세요.");
+          navigate("/signin", { replace: true });
         } finally {
           setLoginProcessing(false);
         }
