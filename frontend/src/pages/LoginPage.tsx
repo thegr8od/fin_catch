@@ -4,6 +4,7 @@ import mainBg from "../assets/main.gif";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import axiosInstance from "../api/axios";
+import axios from "axios";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -52,7 +53,10 @@ const LoginPage = () => {
           console.log("토큰 요청 시작");
 
           // success=true인 경우의 토큰 요청
-          const response = await axiosInstance.get("/api/member/public/reissue");
+          // const response = await axiosInstance.get("/api/member/public/reissue");
+          const response = await axios.get("https://j12d108.p.ssafy.io/api/member/public/reissue", {
+            withCredentials: true,
+          });
           const data = response?.data;
           console.log("API 응답 받음:", data);
 
