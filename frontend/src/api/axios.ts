@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
 
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "https://j12d108.p.ssafy.io/api", // 백엔드 서버 URL
+  baseURL: "https://j12d108.p.ssafy.io", // 백엔드 서버 URL
   timeout: 30000, // 요청 타임아웃 (30초)
   withCredentials: true, // 쿠키를 포함한 요청을 위해 필요
   headers: {
