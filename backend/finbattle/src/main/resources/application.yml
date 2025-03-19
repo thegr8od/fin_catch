@@ -2,7 +2,7 @@ spring:
   application:
     name: finbattle
   profiles:
-    active: local
+    active: prod
     group:
       local: local, secret
       prod: prod, secret
