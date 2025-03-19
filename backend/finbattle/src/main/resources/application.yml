@@ -36,12 +36,18 @@ management:
       prometheus:
         enabled: true
 
+#springdoc:
+#  api-docs:
+#    enabled: true
+#  swagger-ui:
+#    enabled: true
+#    path: /swagger-ui.html
+
 springdoc:
-  api-docs:
-    enabled: true
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
+    urls:
+      - name: "FinBattle API"
+        url: "https://j12d108.p.ssafy.io/v3/api-docs"
 
 application:
   version: 1.0.0
