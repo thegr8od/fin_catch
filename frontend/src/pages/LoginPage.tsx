@@ -16,18 +16,11 @@ const LoginPage = () => {
 
   // URL 확인 및 토큰 요청 처리
   useEffect(() => {
-    // 현재 URL 확인
-    console.log("현재 URL:", window.location.href);
-    console.log("현재 경로:", location.pathname);
-    console.log("현재 검색 파라미터:", location.search);
-
     // URL 파라미터 확인
     const urlParams = new URLSearchParams(location.search);
     const success = urlParams.get("success") === "true";
     const code = urlParams.get("code");
     const accessToken = urlParams.get("accessToken");
-
-    console.log("URL 파라미터:", { success, code, accessToken });
 
     // 소셜 로그인 리다이렉트 감지 시 OAuthRedirectPage로 이동
     // 현재 경로가 /signin인 경우에만 리다이렉트 처리

@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
 
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "http://localhost:8080", // 백엔드 서버 URL
+  baseURL: "https://j12d108.p.ssafy.io/api", // 백엔드 서버 URL
   timeout: 30000, // 요청 타임아웃 (30초)
   withCredentials: true, // 쿠키를 포함한 요청을 위해 필요
   headers: {
@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       try {
         // 토큰 갱신 요청
-        const response = await axios.get(`http://localhost:8080/api/member/public/reissue`);
+        const response = await axios.get(`https://j12d108.p.ssafy.io/api/member/public/reissue`);
 
         if (response.data && response.data.isSuccess && response.data.result && response.data.result.accessToken) {
           // 새 액세스 토큰 저장

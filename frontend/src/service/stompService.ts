@@ -5,7 +5,7 @@ import SockJS from "sockjs-client";
  * WebSocket 서버 연결 URL
  * 개발 환경에서는 로컬 서버 주소를 사용
  */
-const SOCKET_URL = "http://localhost:8080/ws";
+const SOCKET_URL = "wss://j12d108.p.ssafy.io/app";
 
 /**
  * 재연결 시도 간격 (밀리초)

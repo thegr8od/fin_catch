@@ -47,10 +47,9 @@ export const useAuth = () => {
 
     try {
       // 카카오 로그인 페이지로 리다이렉트 (백엔드 서버 직접 호출)
-      // 백엔드에서 설정한 기본 리다이렉트 URL 사용
       const redirectUri = encodeURIComponent(window.location.origin + "/login");
       console.log("카카오 로그인 리다이렉트 URL:", redirectUri);
-      window.location.href = `http://localhost:8080/oauth2/authorization/kakao`;
+      window.location.href = "https://j12d108.p.ssafy.io/oauth2/authorization/kakao";
       return { success: true };
     } catch (err) {
       setError("카카오 로그인을 시작하는 중 오류가 발생했습니다.");
@@ -67,7 +66,7 @@ export const useAuth = () => {
     try {
       // 구글 로그인 페이지로 리다이렉트 (백엔드 서버 직접 호출)
       // 백엔드에서 설정한 기본 리다이렉트 URL 사용
-      window.location.href = `http://localhost:8080/oauth2/authorization/google`;
+      window.location.href = `https://j12d108.p.ssafy.io/oauth2/authorization/google`;
       return { success: true };
     } catch (err) {
       setError("구글 로그인을 시작하는 중 오류가 발생했습니다.");
