@@ -93,6 +93,7 @@ pipeline {
                               -p 9097:9091 \
                               -e TZ=Asia/Seoul \
                               -e JAVA_TOOL_OPTIONS="-Duser.timezone=Asia/Seoul" \
+                              -e SPRING_PROFILES_ACTIVE=prod \
                               ${BACKEND_IMAGE_NAME}
                       """
 

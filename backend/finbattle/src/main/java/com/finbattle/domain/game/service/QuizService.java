@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.EventMessage;
 import com.finbattle.domain.game.dto.EventType;
 import com.finbattle.domain.game.dto.MemberStatus;
+import com.finbattle.domain.game.dto.QuizMode;
 import com.finbattle.domain.game.model.ShortAnswerQuiz;
 import com.finbattle.domain.game.repository.ShortAnswerQuizRepository;
 import com.finbattle.global.common.redis.RedisPublisher;
@@ -29,6 +30,7 @@ public class QuizService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RedisTemplate<String, Object> redisTemplate;
     private final GameService gameService;
+    private final QuizTimerService quizTimerService; // 타이머 서비스 주입
 
     private final ConcurrentMap<String, ShortAnswerQuiz> activeQuizMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Long> firstCorrectAnswerMap = new ConcurrentHashMap<>();
@@ -48,12 +50,15 @@ public class QuizService {
         firstCorrectAnswerMap.remove(roomId);
 
         EventMessage<Map<String, Object>> message = new EventMessage<>(
-            EventType.QUIZ,
-            roomId,
-            Map.of("quizId", quiz.getQuizId(), "question", quiz.getShortQuestion())
+                EventType.QUIZ,
+                roomId,
+                Map.of("quizId", quiz.getQuizId(), "question", quiz.getShortQuestion())
         );
 
         publishToRoom(roomId, message);
+
+        // 단답형 퀴즈의 경우 QuizMode.SHORT_ANSWER 로 타이머 시작 (타임 제한 20초)
+        quizTimerService.startQuizTimer(roomId, quiz.getQuizId(), QuizMode.SHORT_ANSWER);
     }
 
     /**
@@ -66,9 +71,9 @@ public class QuizService {
         }
 
         EventMessage<Map<String, Object>> message = new EventMessage<>(
-            EventType.QUIZ_HINT,
-            roomId,
-            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
+                EventType.QUIZ_HINT,
+                roomId,
+                Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
         );
 
         publishToRoom(roomId, message);
@@ -86,10 +91,9 @@ public class QuizService {
         boolean isCorrect = quiz.getShortAnswer().equalsIgnoreCase(userAnswer.trim());
 
         EventMessage<Map<String, Object>> resultMessage = new EventMessage<>(
-            EventType.QUIZ_RESULT,
-            roomId,
-            Map.of("quizId", quiz.getQuizId(), "result", isCorrect ? "정답입니다" : "오답입니다", "memberId",
-                memberId)
+                EventType.QUIZ_RESULT,
+                roomId,
+                Map.of("quizId", quiz.getQuizId(), "result", isCorrect ? "정답입니다" : "오답입니다", "memberId", memberId)
         );
 
         publishToRoom(roomId, resultMessage);
@@ -119,22 +123,23 @@ public class QuizService {
         }
 
         try {
-            List<MemberStatus> userStatusList = objectMapper.readValue(jsonArray,
-                objectMapper.getTypeFactory()
-                    .constructCollectionType(List.class, MemberStatus.class));
+            List<MemberStatus> userStatusList = objectMapper.readValue(
+                    jsonArray,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, MemberStatus.class)
+            );
 
-            // 정답자를 제외한 모든 유저 life -1
+            // 정답자를 제외한 모든 유저의 life를 -1 처리
             for (MemberStatus ms : userStatusList) {
                 if (ms.getMemberId() != correctMemberId) {
                     ms.setLife(ms.getLife() - 1);
                 }
             }
 
-            redisTemplate.opsForValue()
-                .set(usersKey, objectMapper.writeValueAsString(userStatusList));
+            redisTemplate.opsForValue().set(usersKey, objectMapper.writeValueAsString(userStatusList));
 
             EventMessage<List<MemberStatus>> userStatusMessage = new EventMessage<>(
-                EventType.USER_STATUS, roomId, userStatusList);
+                    EventType.USER_STATUS, roomId, userStatusList
+            );
             publishToRoom(roomId, userStatusMessage);
 
         } catch (JsonProcessingException e) {
