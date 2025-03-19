@@ -6,6 +6,8 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +17,12 @@ public class SpringdocConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        Server httpsServer = new Server();
+        httpsServer.setUrl("https://j12d108.p.ssafy.io");
+        httpsServer.setDescription("HTTPS Server");
+
         return new OpenAPI()
+            .servers(List.of(httpsServer))
             .info(new Info()
                 .title("FinBattle API")
                 .version("1.0")
