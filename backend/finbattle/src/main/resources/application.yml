@@ -49,5 +49,12 @@ springdoc:
       - name: "FinBattle API"
         url: "https://j12d108.p.ssafy.io/v3/api-docs"
 
+logging:
+  level:
+    org.springframework.security: DEBUG  # Spring Security 인증 과정 로그 출력
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG  # 요청 로깅
+    com.finbattle.global.common.filter.JWTFilter: DEBUG  # JWT 필터 로깅
+
+
 application:
   version: 1.0.0
