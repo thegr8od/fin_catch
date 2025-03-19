@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .successHandler(customSuccessHandler)
             )
             .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/", "/login", "/api/member/public/**", "/api/cat/public**",
+                .requestMatchers("/", "/login", "/api/member/public/**", "/api/cat/public/**",
                     "/oauth2/**").permitAll()
                 .requestMatchers("/error", "/swagger-ui/**", "/v3/api-docs/**",
                     "/swagger-resources/**", "/webjars/**", "/swagger-ui.html").permitAll()
