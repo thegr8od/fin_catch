@@ -31,7 +31,10 @@ public class JWTFilter extends OncePerRequestFilter {
         String accessToken = getTokenFromHeader(request);
 
         try {
-            if (accessToken != null) {
+            if (accessToken == null) {
+                log.warn("JWT가 없습니다.");
+                request.setAttribute("exception", "JWT_MISSING");  // JWT 자체가 없는 경우 추가
+            } else {
                 if (jwtUtil.validateAccessToken(accessToken)) {
                     authenticateUser(accessToken);
                 }
