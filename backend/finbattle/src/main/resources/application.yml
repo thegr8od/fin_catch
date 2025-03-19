@@ -36,5 +36,12 @@ management:
       prometheus:
         enabled: true
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
 application:
   version: 1.0.0
