@@ -19,16 +19,7 @@ const LoginPage = () => {
     // URL 파라미터 확인
     const urlParams = new URLSearchParams(location.search);
     const success = urlParams.get("success") === "true";
-    const code = urlParams.get("code");
     const accessToken = urlParams.get("accessToken");
-
-    // 소셜 로그인 리다이렉트 감지 시 OAuthRedirectPage로 이동
-    // 현재 경로가 /signin인 경우에만 리다이렉트 처리
-    if ((success || code) && location.pathname === "/signin") {
-      console.log("소셜 로그인 리다이렉트 감지, OAuthRedirectPage로 이동");
-      navigate("/oauth/redirect" + location.search, { replace: true });
-      return;
-    }
 
     // 액세스 토큰이 URL에 있는 경우 처리
     if (accessToken && !isAuthenticated) {
@@ -51,7 +42,7 @@ const LoginPage = () => {
     }
 
     // 소셜 로그인 성공 후 토큰 요청
-    if ((success || code) && !isAuthenticated && !loginProcessing) {
+    if (success && !isAuthenticated && !loginProcessing) {
       setLoginProcessing(true);
       console.log("소셜 로그인 성공 감지, 토큰 요청 시작");
 
@@ -60,27 +51,28 @@ const LoginPage = () => {
         try {
           console.log("토큰 요청 시작");
 
-          // API 호출하여 토큰 받아오기
-          const response = code ? await axiosInstance.get("/api/member/public/reissue", { params: { code } }) : await axiosInstance.get("/api/member/public/reissue");
-
-          const data = response.data;
+          // success=true인 경우의 토큰 요청
+          const response = await axiosInstance.get("/api/member/public/reissue");
+          const data = response?.data;
           console.log("API 응답 받음:", data);
 
-          if (data && data.isSuccess && data.result && data.result.accessToken) {
+          if (data?.isSuccess && data?.result?.accessToken) {
             const accessToken = data.result.accessToken;
             console.log("토큰 추출 성공");
 
             // 액세스 토큰을 로컬 스토리지에 저장
             localStorage.setItem("accessToken", accessToken);
+            console.log("토큰 저장 완료");
 
             // tokenChange 이벤트 발생
             window.dispatchEvent(new Event("tokenChange"));
 
             // 인증 상태 설정
             setAuthState(accessToken);
+            console.log("인증 상태 설정 완료");
 
             // URL 파라미터 제거 (보안상 이유로)
-            navigate("/login", { replace: true });
+            navigate("/main", { replace: true });
           } else {
             console.error("토큰을 찾을 수 없습니다:", data);
             setError("토큰을 찾을 수 없습니다. 다시 로그인해주세요.");

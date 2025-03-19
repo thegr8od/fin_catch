@@ -16,7 +16,6 @@ import AiQuizPage from "./pages/AiQuizPage";
 import RoomPreparePage from "./pages/RoomPreparePage";
 import { LoadingProvider, useLoading } from "./contexts/LoadingContext";
 import LoadingScreen from "./components/common/LoadingScreen";
-import OAuthRedirectPage from "./pages/OAuthRedirectPage";
 import PrivateRoute from "./components/auth/PrivateRoute";
 
 /**
@@ -81,7 +80,6 @@ function AppContent() {
               <Route path="/" element={<SplashPage />} />
               <Route path="/signin" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/oauth/redirect" element={<OAuthRedirectPage />} />
 
               {/* 보호된 라우트 */}
               <Route
