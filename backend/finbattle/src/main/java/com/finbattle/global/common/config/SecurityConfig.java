@@ -46,6 +46,9 @@ public class SecurityConfig {
                     "/oauth2/**").permitAll()
                 .requestMatchers("/error", "/swagger-ui/**", "/v3/api-docs/**",
                     "/swagger-resources/**", "/webjars/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/prometheus", "/grafana**")
+                .permitAll() // 헬스체크, Grafana는 모두 허용
+                .requestMatchers("/actuator/**").permitAll() // 나머지 Actuator API는 관리자만 허용
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -62,7 +65,6 @@ public class SecurityConfig {
             )
             .formLogin(form -> form.disable())
             .httpBasic(httpBasic -> httpBasic.disable());
-
 
         return http.build();
     }
