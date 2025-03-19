@@ -3,9 +3,9 @@ package com.finbattle.global.common.config;
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.cat.entity.CatGrade;
 import com.finbattle.domain.cat.repository.CatRepository;
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Arrays;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +23,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private final CatRepository catRepository;
 
-    private static final String CAT_ASSET_PATH = "cat_asset";
+    private static final String CAT_ASSET_FILE = "cat_asset/cat_asset.txt";
 
     // 📌 등급별 고양이 폴더 이름 정의
     private static final Set<String> EPIC_CATS = Set.of("demonic", "christmas", "batman");
@@ -32,19 +32,19 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         try {
-            // 📂 resources/cat_asset 경로 가져오기
-            File catAssetFolder = new ClassPathResource(CAT_ASSET_PATH).getFile();
-
-            if (!catAssetFolder.exists() || !catAssetFolder.isDirectory()) {
-                log.error("📂 cat_asset 폴더를 찾을 수 없습니다!");
+            // 📂 cat_asset.txt 파일을 읽기
+            ClassPathResource resource = new ClassPathResource(CAT_ASSET_FILE);
+            if (!resource.exists()) {
+                log.error("📂 cat_asset.txt 파일을 찾을 수 없습니다!");
                 return;
             }
 
-            // 📂 폴더 내의 디렉토리(고양이 이름) 목록 가져오기
-            List<String> folderNames = Arrays.stream(catAssetFolder.listFiles())
-                .filter(File::isDirectory) // 디렉토리만 필터링
-                .map(File::getName) // 폴더 이름만 가져오기
-                .collect(Collectors.toList());
+            // 📂 파일에서 고양이 이름 목록 가져오기
+            List<String> folderNames;
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(resource.getInputStream()))) {
+                folderNames = reader.lines().collect(Collectors.toList());
+            }
 
             // 📂 이미 저장된 고양이 이름 조회
             List<String> existingCats = catRepository.findAll().stream()
@@ -59,14 +59,13 @@ public class DataInitializer implements ApplicationRunner {
 
             if (!newCats.isEmpty()) {
                 catRepository.saveAll(newCats); // 🚀 한 번의 쿼리로 저장
-                log.info(newCats.size() + "마리의 고양이가 추가되었습니다!");
+                log.info("{}마리의 고양이가 추가되었습니다!", newCats.size());
             } else {
                 log.info("새로운 고양이가 없습니다.");
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-            log.error("고양이 폴더를 읽는 중 오류가 발생했습니다.");
+            log.error("고양이 폴더를 읽는 중 오류가 발생했습니다.", e);
         }
     }
 
