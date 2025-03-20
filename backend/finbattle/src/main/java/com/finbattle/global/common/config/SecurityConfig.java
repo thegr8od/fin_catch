@@ -34,35 +34,33 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
-                    .userService(customOAuth2UserService))
-                .successHandler(customSuccessHandler)
-            )
-            .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/", "/login", "/api/member/public/**", "/api/cat/public**",
-                    "/oauth2/**").permitAll()
-                .requestMatchers("/error", "/swagger-ui/**", "/v3/api-docs/**",
-                    "/swagger-resources/**", "/webjars/**", "/swagger-ui.html").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .sessionManagement((session) -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .exceptionHandling(exception ->
-                exception
-                    .defaultAuthenticationEntryPointFor(
-                        authenticationEntryPoint,
-                        new AntPathRequestMatcher("/api/**")
-                    ) // 401 예외 핸들러 적용
-                    .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
-            )
-            .formLogin(form -> form.disable())
-            .httpBasic(httpBasic -> httpBasic.disable());
-
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf((auth) -> auth.disable())
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOAuth2UserService))
+                        .successHandler(customSuccessHandler)
+                )
+                .authorizeHttpRequests((auth) -> auth
+                        .requestMatchers("/**", "/login", "/api/member/public/**", "/oauth2/**",
+                                "/websocket-test.html", "/api/**", "/ws/**").permitAll()
+                        .requestMatchers("/error", "/swagger-ui/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exception ->
+                        exception
+                                .defaultAuthenticationEntryPointFor(
+                                        authenticationEntryPoint,
+                                        new AntPathRequestMatcher("/api/**")
+                                ) // 401 예외 핸들러 적용
+                                .accessDeniedHandler(accessDeniedHandler) // 403 예외 핸들러 적용
+                )
+                .formLogin((auth) -> auth.disable())
+                .httpBasic((auth) -> auth.disable());
 
         return http.build();
     }
@@ -71,9 +69,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOriginPattern("*");
-        //config.setAllowedOrigins(
-        //    Arrays.asList("http://localhost:3000", "http://localhost:8080")); // 프론트엔드 주소
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedOrigins(
+            Arrays.asList("http://localhost:3000", "http://localhost:8080")); // 프론트엔드 주소
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
 

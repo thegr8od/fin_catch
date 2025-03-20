@@ -31,8 +31,8 @@ public class GameQuizController {
     @MessageMapping("/game/{roomId}/checkAnswer")
     public void checkAnswer(@DestinationVariable String roomId, @Payload AnswerRequest request) {
         log.info("Received quiz answer for roomId: {} with answer: {} from memberId: {}",
-            roomId, request.getUserAnswer(), request.getMemberId());
+                roomId, request.getUserAnswer(), request.getMemberId());
         quizService.checkQuizAnswer(roomId, request.getUserAnswer(),
-            Long.parseLong(request.getMemberId()));
+                Long.parseLong(request.getMemberId()));
     }
 }
