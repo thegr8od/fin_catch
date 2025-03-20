@@ -82,12 +82,28 @@ export const useAuth = () => {
   // 로그아웃
   const logout = useCallback(async () => {
     try {
-      await persistor.purge(); // Redux persist 상태 초기화
-      dispatch(setAccessToken(null));
+      // API 호출
       await axiosInstance.post("/api/member/logout");
+
+      // Redux 상태 초기화
+      dispatch(setAccessToken(null));
+
+      // Redux persist 상태 초기화
+      await persistor.purge();
+
+      // localStorage 완전 정리
+      localStorage.clear();
+
+      // axios 헤더 초기화
+      delete axiosInstance.defaults.headers.common["Authorization"];
+      setIsAuthenticated(false);
+
+      // 모든 정리가 끝난 후 리다이렉트
+      window.location.href = "/signin";
     } catch (err) {
       console.error("로그아웃 처리 중 오류 발생:", err);
-    } finally {
+      // 에러가 발생하더라도 로컬 상태는 정리
+      localStorage.clear();
       delete axiosInstance.defaults.headers.common["Authorization"];
       setIsAuthenticated(false);
       window.location.href = "/signin";
