@@ -1,8 +1,9 @@
-import React from "react"
-import Background from "../components/layout/Background"
-import myPageBg from "../assets/mypage_bg.png"
-
+import React from "react";
+import Background from "../components/layout/Background";
+import myPageBg from "../assets/mypage_bg.png";
+import { useNavigate } from "react-router-dom";
 const AiQuizLobbyPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <Background backgroundImage={myPageBg}>
       <div className="w-full min-h-screen py-8 px-4">
@@ -21,7 +22,10 @@ const AiQuizLobbyPage: React.FC = () => {
               <div className="bg-gray-50 p-8 rounded-xl text-center">
                 <h3 className="text-2xl font-bold text-gray-800 font-korean-pixel mb-4">준비되셨나요?</h3>
                 <p className="text-gray-600 font-korean-pixel mb-8">총 10문제가 출제되며, 약 15분이 소요됩니다.</p>
-                <button className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-xl font-korean-pixel text-xl hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <button
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-xl font-korean-pixel text-xl hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  onClick={() => navigate("/ai-quiz")}
+                >
                   퀴즈 시작하기
                 </button>
               </div>
@@ -46,7 +50,7 @@ const AiQuizLobbyPage: React.FC = () => {
         </div>
       </div>
     </Background>
-  )
-}
+  );
+};
 
-export default AiQuizLobbyPage
+export default AiQuizLobbyPage;

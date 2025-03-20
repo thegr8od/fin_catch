@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SsrCat1 from "../../assets/ssrcat1.gif";
 import Cat3 from "../../assets/cat3.gif";
-import styles from "../../pages/SurvivalPage.module.css";
+import styles from "../../pages/AiQuizPage.module.css";
 
 interface GameQuizProps {
   timeLeft: number;
@@ -37,46 +37,27 @@ const GameQuiz = ({ timeLeft, isTimeUp, onShowResults }: GameQuizProps) => {
 
           <div className={styles.optionsArea}>
             <div className={styles.optionsRow}>
-              <button
-                type="button"
-                onClick={() => handleOptionSelect(0)}
-                className={`${styles.optionButton} ${selectedOption === 0 ? styles.selectedOption : ""}`}
-              >
+              <button type="button" onClick={() => handleOptionSelect(0)} className={`${styles.optionButton} ${selectedOption === 0 ? styles.selectedOption : ""}`}>
                 1. 1000원
               </button>
-              <button
-                type="button"
-                onClick={() => handleOptionSelect(1)}
-                className={`${styles.optionButton} ${selectedOption === 1 ? styles.selectedOption : ""}`}
-              >
+              <button type="button" onClick={() => handleOptionSelect(1)} className={`${styles.optionButton} ${selectedOption === 1 ? styles.selectedOption : ""}`}>
                 2. 1만원
               </button>
             </div>
             <div className={styles.optionsRow}>
-              <button
-                type="button"
-                onClick={() => handleOptionSelect(2)}
-                className={`${styles.optionButton} ${selectedOption === 2 ? styles.selectedOption : ""}`}
-              >
+              <button type="button" onClick={() => handleOptionSelect(2)} className={`${styles.optionButton} ${selectedOption === 2 ? styles.selectedOption : ""}`}>
                 3. 10만원
               </button>
-              <button
-                type="button"
-                onClick={() => handleOptionSelect(3)}
-                className={`${styles.optionButton} ${selectedOption === 3 ? styles.selectedOption : ""}`}
-              >
+              <button type="button" onClick={() => handleOptionSelect(3)} className={`${styles.optionButton} ${selectedOption === 3 ? styles.selectedOption : ""}`}>
                 4. 1000만원
               </button>
             </div>
           </div>
         </div>
-        
+
         {isTimeUp && (
           <div className={styles.timeUpButtonContainer}>
-            <button 
-              onClick={onShowResults} 
-              className={styles.nextButton}
-            >
+            <button onClick={onShowResults} className={styles.nextButton}>
               결과 확인하기
             </button>
           </div>

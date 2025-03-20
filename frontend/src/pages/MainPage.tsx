@@ -658,7 +658,7 @@ const MainPage = () => {
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-2xl font-bold text-gray-800 font-korean-pixel">📝 AI 문제 풀이 결과</h3>
                     <button
-                      onClick={() => navigate("/ai-quiz")}
+                      onClick={() => navigate("/ai-quiz-lobby")}
                       className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-xl font-korean-pixel hover:opacity-90 transition-all duration-300"
                     >
                       다시 풀기
