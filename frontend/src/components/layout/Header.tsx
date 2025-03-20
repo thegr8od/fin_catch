@@ -1,14 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useUserInfo } from "../../hooks/useUserInfo";
-
+import { useAuth } from "../../hooks/useAuth";
 const Header: React.FC = () => {
   const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
   const isLoggedIn = !!user;
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
     clearUserInfo();
+    logout();
 
     window.dispatchEvent(new CustomEvent("beforePageChange"));
 
