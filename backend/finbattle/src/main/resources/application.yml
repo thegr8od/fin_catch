@@ -2,7 +2,7 @@ spring:
   application:
     name: finbattle
   profiles:
-    active: prod
+    active: local
     group:
       local: local, secret
       prod: prod, secret
@@ -10,7 +10,7 @@ spring:
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
