@@ -127,7 +127,7 @@ function AppContent() {
                 }
               />
               <Route
-                path="/game/ai-quiz"
+                path="/ai-quiz"
                 element={
                   <PrivateRoute>
                     <AiQuizPage />

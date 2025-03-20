@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import Background from "../assets/survival.gif";
 import GameQuiz from "../components/game/GameQuiz";
 import GameResult from "../components/game/GameResult";
-import styles from "./SurvivalPage.module.css";
+import styles from "./AiQuizPage.module.css";
 
 type GameState = "quiz" | "goodResult" | "badResult";
 
-const SurvivalPage = () => {
+const AiQuizPage = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState<number>(10);
   const [gameState, setGameState] = useState<GameState>("quiz");
@@ -60,4 +60,4 @@ const SurvivalPage = () => {
   );
 };
 
-export default SurvivalPage;
+export default AiQuizPage;

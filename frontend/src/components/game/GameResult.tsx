@@ -1,7 +1,7 @@
 import CoinImage from "../../assets/coin.png";
 import WinCat from "../../assets/Wincat.gif";
 import SadCat from "../../assets/sadcat.png";
-import styles from "../../pages/SurvivalPage.module.css";
+import styles from "../../pages/AiQuizPage.module.css"
 
 interface GameResultProps {
   type: "good" | "bad";

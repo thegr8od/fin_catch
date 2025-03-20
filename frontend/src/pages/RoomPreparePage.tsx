@@ -139,7 +139,7 @@ const RoomPreparePage: React.FC = () => {
     } else if (room.mode === "oneVsOne" && room.category) {
       navigate(`/one-to-one/${room.category}`);
     } else if (room.mode === "Survival") {
-      navigate("/game/survival");
+      navigate("/ai-quiz");
     } else {
       console.error("게임 모드 또는 카테고리가 올바르게 설정되지 않았습니다.");
       console.log("현재 방 정보:", room);

@@ -1,0 +1,259 @@
+/* 배경 스타일 */
+.background {
+  @apply w-full flex flex-col items-center bg-cover;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.overlay {
+  @apply absolute inset-0 bg-black bg-opacity-10;
+}
+
+.container {
+  @apply w-[95%] relative z-10 md:w-[85%] lg:w-[80%];
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+/* 타이머 및 제목 스타일 */
+.timerTitle {
+  @apply w-full py-4 text-center;
+}
+
+.timerText {
+  @apply text-[1.75rem] font-bold text-white shadow-md bg-black bg-opacity-30 inline-block px-6 py-1 rounded-2xl;
+}
+
+/* 퀴즈 컨테이너 스타일 */
+.quizContainer {
+  @apply w-full flex flex-col items-center;
+}
+
+/* 고양이 대결 영역 */
+.catBattleArea {
+  @apply w-full flex justify-between items-center my-4 bg-white rounded-lg shadow-lg;
+  padding: 15px;
+  height: 252px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 고양이 이미지 */
+.playerCat, .bossCat {
+  height: 300px;
+  width: auto;
+  object-fit: contain;
+  object-position: center 40%;
+  position: relative;
+  top: -95px;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+/* 문제/선지 컨테이너 영역 */
+.quizContentContainer {
+  @apply w-full flex mt-4 overflow-hidden shadow-md;
+  background-color: #3B3243;
+  border: 2px solid #ef4444;
+  border-radius: 1rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  /* 고정 높이 대신 자동 높이 설정 */
+  height: auto;
+  min-height: 200px;
+}
+
+/* 문제 박스 */
+.questionBox {
+  @apply w-3/5 flex items-center;
+  border-right: 2px solid #ef4444;
+  padding: 1.8rem;
+  background-color: #2b2534;
+}
+
+.questionText {
+  @apply text-xl;
+  color: #f8f8f8;
+  line-height: 1.6;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 객관식 선택지 영역 */
+.optionsArea {
+  @apply w-2/5;
+  display: flex;
+  flex-direction: column;
+  background-color: #352d49;
+}
+
+/* 선택지 행 */
+.optionsRow {
+  @apply flex;
+  flex: 1;
+  border-bottom: 1px solid rgba(252, 165, 165, 0.3);
+}
+
+.optionsRow:last-child {
+  border-bottom: 0;
+}
+
+/* 선택지 버튼 */
+.optionButton {
+  @apply w-1/2 h-full flex items-center font-medium;
+  font-size: 1.3rem;
+  color: white;
+  border-right: 1px solid rgba(252, 165, 165, 0.3);
+  padding-left: 20px;
+  text-align: left;
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.optionButton:last-child {
+  border-right: 0;
+}
+
+.optionButton:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.selectedOption {
+  background-color: rgba(96, 165, 250, 0.3) !important;
+  font-weight: 600;
+}
+
+/* 결과 버튼 컨테이너 */
+.timeUpButtonContainer {
+  @apply w-full flex justify-end mt-5 mb-5;
+}
+
+.nextButton {
+  @apply bg-blue-500 text-white px-8 py-3 rounded-lg flex items-center cursor-pointer hover:bg-blue-600 shadow-lg;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.nextButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.6);
+}
+
+/* 결과 박스 스타일 */
+.resultBox {
+  @apply w-1/3 mx-auto bg-white p-6 mt-4 border-2 border-blue-400;
+  border-radius: 1rem;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 2px solid rgba(59, 130, 246, 0.4);
+}
+
+/* 화면 크기에 따른 결과 박스 너비 조정 */
+@media (max-width: 1024px) {
+  .resultBox {
+    @apply w-1/2;
+  }
+}
+
+@media (max-width: 768px) {
+  .resultBox {
+    @apply w-2/3;
+  }
+}
+
+@media (max-width: 475px) {
+  .resultBox {
+    @apply w-5/6;
+  }
+}
+
+.resultContent {
+  @apply flex flex-col items-center;
+}
+
+/* 결과 이미지 스타일 */
+.resultImage {
+  @apply w-40 h-40 mb-4 object-contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* 결과 메시지 스타일 */
+.resultMessage {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.victoryText {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1e40af;
+  animation: pulse 2s infinite;
+  margin-bottom: 1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.defeatText {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #991b1b;
+  margin-bottom: 1rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.goodHabitText, .badHabitText {
+  font-size: 1.1rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  padding-left: 1rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.rewardBox {
+  @apply text-center bg-blue-50 p-4 w-full mb-4;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.expText {
+  @apply text-xl font-bold text-blue-600 mb-2;
+}
+
+.coinContainer {
+  @apply flex items-center justify-center;
+}
+
+.coinImage {
+  @apply w-8 h-8 mr-2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.coinText {
+  @apply text-xl font-bold text-amber-500;
+}
+
+.mainButton {
+  @apply bg-blue-500 text-white px-8 py-3 font-medium cursor-pointer transition-all duration-200 hover:bg-blue-600 rounded-lg;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.mainButton:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.5);
+}
