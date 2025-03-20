@@ -1,6 +1,5 @@
 package com.finbattle.domain.game.model;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,28 +20,18 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "short_answer_quiz")
-public class ShortAnswerQuiz {
+@Table(name = "essay_quiz")
+public class EssayQuiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "quiz_id")
     private Long quizId;
 
-    @Column(name = "short_question", nullable = false)
-    private String shortQuestion;
-
-    @Column(name = "short_answer", nullable = false)
-    private String shortAnswer;
-
-    @Column(name = "short_first_hint", nullable = false)
-    private String shortFirstHint;
-
-    @Column(name = "short_second_hint", nullable = false)
-    private String shortSecondHint;
+    @Column(name = "essay_question", nullable = false)
+    private String essayQuestion;
 
     @OneToOne
     @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id", insertable = false, updatable = false)
     private Quiz quiz;
 }
-
