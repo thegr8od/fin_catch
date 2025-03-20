@@ -3,12 +3,14 @@ import { User } from "../../types/Auth/User";
 
 interface UserState {
   user: User | null;
+  accessToken: string | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: UserState = {
   user: null,
+  accessToken: null,
   loading: false,
   error: null,
 };
@@ -22,6 +24,9 @@ const userSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    setAccessToken: (state, action: PayloadAction<string | null>) => {
+      state.accessToken = action.payload;
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
       if (action.payload) {
@@ -34,11 +39,12 @@ const userSlice = createSlice({
     },
     clearUser: (state) => {
       state.user = null;
+      state.accessToken = null;
       state.loading = false;
       state.error = null;
     },
   },
 });
 
-export const { setUser, setLoading, setError, clearUser } = userSlice.actions;
+export const { setUser, setAccessToken, setLoading, setError, clearUser } = userSlice.actions;
 export default userSlice.reducer;

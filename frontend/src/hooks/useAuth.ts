@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axios";
-import { useDispatch } from "react-redux";
-import { setUser } from "../store/slices/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser, setAccessToken } from "../store/slices/userSlice";
+import { RootState } from "../store";
 
 // 모든 쿠키 출력 (디버깅용)
 export const useAuth = () => {
@@ -9,37 +10,41 @@ export const useAuth = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
+  const { accessToken } = useSelector((state: RootState) => state.user);
 
-  // 초기화 및 토큰 확인
+  const setAuthState = useCallback(
+    (token: string) => {
+      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      dispatch(setAccessToken(token));
+      setIsAuthenticated(true);
+    },
+    [dispatch]
+  );
+
   useEffect(() => {
     console.log("인증 상태 초기화");
 
     const initializeAuth = async () => {
-      // 로컬 스토리지에서 토큰 확인
-      const accessToken = localStorage.getItem("accessToken");
-
       if (accessToken) {
         try {
-          // 토큰으로 사용자 정보 가져오기
           const response = await axiosInstance.get("/api/member/info");
           if (response.data && response.data.isSuccess) {
             dispatch(setUser(response.data.result));
             setAuthState(accessToken);
           } else {
-            // 사용자 정보 가져오기 실패시 토큰 제거
-            localStorage.removeItem("accessToken");
+            dispatch(setAccessToken(null));
             setIsAuthenticated(false);
           }
         } catch (error) {
           console.error("사용자 정보 가져오기 실패:", error);
-          localStorage.removeItem("accessToken");
+          dispatch(setAccessToken(null));
           setIsAuthenticated(false);
         }
       }
     };
 
     initializeAuth();
-  }, [dispatch]);
+  }, [dispatch, accessToken, setAuthState]);
 
   // 카카오 로그인 함수
   const loginWithKakao = useCallback(() => {
@@ -74,32 +79,21 @@ export const useAuth = () => {
     }
   }, []);
 
-  // 인증 상태 설정 함수
-  const setAuthState = (token: string) => {
-    // Axios 인스턴스의 헤더에 토큰 설정
-    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    setIsAuthenticated(true);
-  };
-
   // 로그아웃
   const logout = useCallback(() => {
-    // 로컬 스토리지에서 액세스 토큰 삭제
-    localStorage.removeItem("accessToken");
+    dispatch(setAccessToken(null));
 
     try {
-      // 로그아웃 API 호출
       axiosInstance.post("/api/member/logout");
     } catch (err) {
       console.error("로그아웃 API 호출 오류:", err);
     }
 
-    // 헤더에서 인증 정보 제거
     delete axiosInstance.defaults.headers.common["Authorization"];
     setIsAuthenticated(false);
 
-    // 로그인 페이지로 리다이렉트
     window.location.href = "/signin";
-  }, []);
+  }, [dispatch]);
 
   // 디버깅 로그 가져오기
   const getAuthLogs = useCallback(() => {
