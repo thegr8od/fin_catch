@@ -1,8 +1,8 @@
-import React from "react";
-import Background from "../components/layout/Background";
-import myPageBg from "../assets/mypage_bg.png";
+import React from "react"
+import Background from "../components/layout/Background"
+import myPageBg from "../assets/mypage_bg.png"
 
-const AiQuizPage: React.FC = () => {
+const AiQuizLobbyPage: React.FC = () => {
   return (
     <Background backgroundImage={myPageBg}>
       <div className="w-full min-h-screen py-8 px-4">
@@ -46,8 +46,7 @@ const AiQuizPage: React.FC = () => {
         </div>
       </div>
     </Background>
-  );
-};
+  )
+}
 
-export default AiQuizPage;
-
+export default AiQuizLobbyPage
