@@ -9,20 +9,25 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SpringdocConfig {
 
+    @Value("${app.baseUrl}")
+    private String baseUrl;
+
     @Bean
     public OpenAPI customOpenAPI() {
         Server httpsServer = new Server();
-        httpsServer.setUrl("https://j12d108.p.ssafy.io");
+        httpsServer.setUrl(baseUrl);
         httpsServer.setDescription("HTTPS Server");
 
         return new OpenAPI()
             .servers(List.of(httpsServer))
+            .components(new Components())
             .info(new Info()
                 .title("FinBattle API")
                 .version("1.0")
@@ -34,16 +39,16 @@ public class SpringdocConfig {
                     .bearerFormat("JWT")
                     .in(SecurityScheme.In.HEADER)
                     .name("Authorization")
-                    .description("JWT 토큰을 입력하세요. 예: Bearer eyJhbGciOiJ...")
+                    .description("JWT Access 토큰을 입력하세요. 예: eyJhbGciOiJ...")
                 )
             );
     }
 
-    @Bean
-    public OpenApiCustomizer customOpenApi() {
-        return openApi -> openApi.getComponents().getSchemas().keySet()
-            .removeIf(name -> name.startsWith("BaseResponse"));
-    }
+//    @Bean
+//    public OpenApiCustomizer customOpenApi() {
+//        return openApi -> openApi.getComponents().getSchemas().keySet()
+//            .removeIf(name -> name.startsWith("BaseResponse"));
+//    }
 
     // OpenApiCustomiser를 이용해, "/api/member/public" 경로를 제외한 엔드포인트에 자동으로 보안 요구사항 추가
     @Bean

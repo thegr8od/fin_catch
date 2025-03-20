@@ -14,7 +14,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
 
   data:
     redis:
@@ -36,25 +36,11 @@ management:
       prometheus:
         enabled: true
 
-#springdoc:
-#  api-docs:
-#    enabled: true
-#  swagger-ui:
-#    enabled: true
-#    path: /swagger-ui.html
-
 springdoc:
   swagger-ui:
     urls:
       - name: "FinBattle API"
-        url: "https://j12d108.p.ssafy.io/v3/api-docs"
-
-logging:
-  level:
-    org.springframework.security: DEBUG  # Spring Security 인증 과정 로그 출력
-    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG  # 요청 로깅
-    com.finbattle.global.common.filter.JWTFilter: DEBUG  # JWT 필터 로깅
-
+        url: ${app.baseUrl}/v3/api-docs
 
 application:
   version: 1.0.0
