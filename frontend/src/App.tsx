@@ -9,7 +9,7 @@ import Header from "./components/layout/Header"
 import LobbyPage from "./pages/LobbyPage"
 import ShopPage from "./pages/ShopPage"
 import OneToOnePage from "./pages/OneToOnePage"
-import SurvivalPage from "./pages/SurvivalPage"
+import AiQuizPage from "./pages/AiQuizPage"
 import BotPage from "./pages/BotPage"
 import MainPage from "./pages/MainPage"
 import AiQuizLobbyPage from "./pages/AiQuizLobbyPage"
@@ -131,10 +131,10 @@ function AppContent() {
                 }
               />
               <Route
-                path="/game/survival"
+                path="/game/ai-quiz"
                 element={
                   <PrivateRoute>
-                    <SurvivalPage />
+                    <AiQuizPage />
                   </PrivateRoute>
                 }
               />
