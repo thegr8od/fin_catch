@@ -32,8 +32,7 @@ public class MultipleChoiceQuiz {
     @Column(name = "quiz_id")
     private Long quizId;
 
-    // ERD상 컬럼 이름이 "mutiple_question" 인지 "multiple_question" 인지 확인 필요
-    @Column(name = "mutiple_question")
+    @Column(name = "multiple_question")
     private String multipleQuestion;
 
     @OneToOne
