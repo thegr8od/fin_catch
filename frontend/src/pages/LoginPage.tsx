@@ -52,7 +52,7 @@ const LoginPage = () => {
         try {
           console.log("토큰 요청 시작");
 
-          const response = await axios.get("https://j12d108.p.ssafy.io/api/member/public/reissue", {
+          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/member/public/reissue`, {
             withCredentials: true,
             maxRedirects: 0, // 리다이렉트를 따라가지 않음
             validateStatus: (status) => {
