@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SsrCat1 from "../../assets/ssrcat1.gif";
 import Cat3 from "../../assets/cat3.gif";
-import styles from "./AiQuizPage.module.css";
+import styles from "../../pages/SurvivalPage.module.css";
 
 interface GameQuizProps {
   timeLeft: number;
