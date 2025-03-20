@@ -1,16 +1,14 @@
 import "./App.css"
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom"
 import { useEffect } from "react"
 import SplashPage from "./pages/SplashPage"
 import LoginPage from "./pages/LoginPage"
-import SignUpPage from "./pages/SignUpPage"
 import Footer from "./components/layout/Footer"
 import Header from "./components/layout/Header"
 import LobbyPage from "./pages/LobbyPage"
 import ShopPage from "./pages/ShopPage"
 import OneToOnePage from "./pages/OneToOnePage"
 import SurvivalPage from "./pages/SurvivalPage"
-import BotPage from "./pages/BotPage"
 import MainPage from "./pages/MainPage"
 import AiQuizLobbyPage from "./pages/AiQuizLobbyPage"
 import RoomPreparePage from "./pages/RoomPreparePage"
@@ -26,7 +24,6 @@ import PrivateRoute from "./components/auth/PrivateRoute"
  */
 const RouteChangeHandler = () => {
   const location = useLocation() // 현재 라우트 위치 정보
-  const navigate = useNavigate() // 라우트 네비게이션 함수
   const { setLoading, completeLoading } = useLoading() // 로딩 상태 관리 훅
 
   useEffect(() => {
@@ -79,7 +76,6 @@ function AppContent() {
               {/* 공개 라우트 */}
               <Route path="/" element={<SplashPage />} />
               <Route path="/signin" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
 
               {/* 보호된 라우트 */}
               <Route
@@ -139,14 +135,6 @@ function AppContent() {
                 }
               />
               <Route
-                path="/game/bot"
-                element={
-                  <PrivateRoute>
-                    <BotPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
                 path="/ai-quiz-lobby"
                 element={
                   <PrivateRoute>
@@ -154,15 +142,7 @@ function AppContent() {
                   </PrivateRoute>
                 }
               />
-              {/* <Route
-                path="/ai-quiz"
-                element={
-                  <PrivateRoute>
-                    <AiQuizLobbyPage />
-                  </PrivateRoute>
-                }
-              />
-            </Routes> */}
+            </Routes>
           </div>
 
           {/* 푸터 컴포넌트 */}
