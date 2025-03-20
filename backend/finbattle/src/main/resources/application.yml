@@ -2,7 +2,7 @@ spring:
   application:
     name: finbattle
   profiles:
-    active: prod
+    active: local
     group:
       local: local, secret
       prod: prod, secret
@@ -14,7 +14,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
 
   data:
     redis:
@@ -37,11 +37,10 @@ management:
         enabled: true
 
 springdoc:
-  api-docs:
-    enabled: true
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
+    urls:
+      - name: "FinBattle API"
+        url: ${app.baseUrl}/v3/api-docs
 
 application:
   version: 1.0.0
