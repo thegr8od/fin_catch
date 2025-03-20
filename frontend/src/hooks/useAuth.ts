@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../api/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setAccessToken } from "../store/slices/userSlice";
-import { RootState } from "../store";
+import { RootState, persistor } from "../store";
 
 // 모든 쿠키 출력 (디버깅용)
 export const useAuth = () => {
@@ -80,19 +80,18 @@ export const useAuth = () => {
   }, []);
 
   // 로그아웃
-  const logout = useCallback(() => {
-    dispatch(setAccessToken(null));
-
+  const logout = useCallback(async () => {
     try {
-      axiosInstance.post("/api/member/logout");
+      await persistor.purge(); // Redux persist 상태 초기화
+      dispatch(setAccessToken(null));
+      await axiosInstance.post("/api/member/logout");
     } catch (err) {
-      console.error("로그아웃 API 호출 오류:", err);
+      console.error("로그아웃 처리 중 오류 발생:", err);
+    } finally {
+      delete axiosInstance.defaults.headers.common["Authorization"];
+      setIsAuthenticated(false);
+      window.location.href = "/signin";
     }
-
-    delete axiosInstance.defaults.headers.common["Authorization"];
-    setIsAuthenticated(false);
-
-    window.location.href = "/signin";
   }, [dispatch]);
 
   // 디버깅 로그 가져오기
