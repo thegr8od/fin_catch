@@ -1,59 +1,59 @@
-import React, { useState } from "react";
+import React, { useState } from "react"
 
 interface AccountLinkModalProps {
-  onClose: () => void;
-  onLinkAccount: (accountInfo: AccountInfo) => void;
+  onClose: () => void
+  onLinkAccount: (accountInfo: AccountInfo) => void
 }
 
 export interface AccountInfo {
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
-  balance: number;
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+  balance: number
 }
 
 const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAccount }) => {
-  const [step, setStep] = useState<number>(1);
-  const [selectedBank, setSelectedBank] = useState<string>("");
-  const [accountNumber, setAccountNumber] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<number>(1)
+  const [selectedBank, setSelectedBank] = useState<string>("")
+  const [accountNumber, setAccountNumber] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
   const banks = [
-    { id: "shinhan", name: "신한은행", logo: "assets/bank-logos/shinhan.png" },
-    { id: "kb", name: "국민은행", logo: "assets/bank-logos/kb.png" },
-    { id: "woori", name: "우리은행", logo: "assets/bank-logos/woori.png" },
-    { id: "hana", name: "하나은행", logo: "assets/bank-logos/hana.png" },
-    { id: "nh", name: "농협은행", logo: "assets/bank-logos/nh.png" },
-    { id: "ibk", name: "기업은행", logo: "assets/bank-logos/ibk.png" },
-  ];
+    { id: "shinhan", name: "신한은행", logo: "/bank-logos/shinhan.png" },
+    { id: "kb", name: "국민은행", logo: "/bank-logos/kb.png" },
+    { id: "woori", name: "우리은행", logo: "/bank-logos/woori.png" },
+    { id: "hana", name: "하나은행", logo: "/bank-logos/hana.png" },
+    { id: "nh", name: "농협은행", logo: "/bank-logos/nh.png" },
+    { id: "ibk", name: "기업은행", logo: "/bank-logos/ibk.png" },
+  ]
 
   const handleBankSelect = (bankId: string) => {
-    setSelectedBank(bankId);
-    setStep(2);
-  };
+    setSelectedBank(bankId)
+    setStep(2)
+  }
 
   const handleAccountSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!accountNumber.trim()) {
-      setError("계좌번호를 입력해주세요.");
-      return;
+      setError("계좌번호를 입력해주세요.")
+      return
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     // 실제로는 API 호출을 통해 계좌 인증을 진행합니다.
     // 여기서는 시뮬레이션을 위해 setTimeout을 사용합니다.
     setTimeout(() => {
-      setLoading(false);
+      setLoading(false)
 
       // 임시 계좌 정보 생성
-      const bankInfo = banks.find((bank) => bank.id === selectedBank);
+      const bankInfo = banks.find((bank) => bank.id === selectedBank)
       if (!bankInfo) {
-        setError("은행 정보를 찾을 수 없습니다.");
-        return;
+        setError("은행 정보를 찾을 수 없습니다.")
+        return
       }
 
       const mockAccountInfo: AccountInfo = {
@@ -61,29 +61,29 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
         accountNumber: accountNumber,
         accountHolder: "김냥냥",
         balance: 1550000,
-      };
+      }
 
-      console.log("계좌 연동 완료:", mockAccountInfo);
+      console.log("계좌 연동 완료:", mockAccountInfo)
 
       // 계좌 연동 완료 후 부모 컴포넌트에 정보 전달하고 즉시 모달 닫기
-      onLinkAccount(mockAccountInfo);
-      onClose();
-    }, 800); // 시뮬레이션 시간 단축
-  };
+      onLinkAccount(mockAccountInfo)
+      onClose()
+    }, 800) // 시뮬레이션 시간 단축
+  }
 
   const formatAccountNumber = (value: string) => {
     // 숫자만 남기고 나머지 문자 제거
-    const numbers = value.replace(/[^\d]/g, "");
+    const numbers = value.replace(/[^\d]/g, "")
 
     // 은행별로 다른 포맷팅을 적용할 수 있습니다.
     // 여기서는 간단하게 4자리마다 하이픈을 추가합니다.
-    return numbers.replace(/(\d{4})(?=\d)/g, "$1-");
-  };
+    return numbers.replace(/(\d{4})(?=\d)/g, "$1-")
+  }
 
   const handleAccountNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatAccountNumber(e.target.value);
-    setAccountNumber(formatted);
-  };
+    const formatted = formatAccountNumber(e.target.value)
+    setAccountNumber(formatted)
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>
@@ -174,7 +174,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AccountLinkModal;
+export default AccountLinkModal
