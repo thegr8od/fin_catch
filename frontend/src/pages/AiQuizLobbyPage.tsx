@@ -24,7 +24,7 @@ const AiQuizLobbyPage: React.FC = () => {
                 <p className="text-gray-600 font-korean-pixel mb-8">총 10문제가 출제되며, 약 15분이 소요됩니다.</p>
                 <button
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-xl font-korean-pixel text-xl hover:opacity-90 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  onClick={() => navigate("/ai-quiz")}
+                  // onClick={() => navigate("/ai-quiz")}
                 >
                   퀴즈 시작하기
                 </button>

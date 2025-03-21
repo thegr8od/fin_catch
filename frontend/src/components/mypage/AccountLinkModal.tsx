@@ -90,7 +90,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
       <div className="bg-white/95 rounded-2xl shadow-2xl w-[700px] p-10 relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* 제목 부분 */}
         <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-form-color to-button-color py-5 rounded-t-2xl text-center shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 font-korean-pixel">계좌 연동하기</h2>
+          <h2 className="text-2xl font-bold text-gray-800 font-korean-pixel">은행 연동하기</h2>
 
           {/* 닫기 버튼 */}
           <button className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-700 hover:text-gray-900 transition-colors duration-200" onClick={onClose}>
@@ -110,7 +110,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
                   <button
                     key={bank.id}
                     className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col items-center justify-center border border-gray-200 hover:border-primary"
-                    onClick={() => handleBankSelect(bank.id)}
+                    // onClick={() => handleBankSelect(bank.id)}
                   >
                     <div className="w-20 h-20 mb-4 flex items-center justify-center">
                       <img src={bank.logo} alt={bank.name} className="max-w-full max-h-full" />
