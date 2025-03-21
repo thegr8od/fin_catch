@@ -20,12 +20,12 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
   const [error, setError] = useState<string | null>(null);
 
   const banks = [
-    { id: "shinhan", name: "신한은행", logo: "/assets/bank-logos/shinhan.png" },
-    { id: "kb", name: "국민은행", logo: "/assets/bank-logos/kb.png" },
-    { id: "woori", name: "우리은행", logo: "/assets/bank-logos/woori.png" },
-    { id: "hana", name: "하나은행", logo: "/assets/bank-logos/hana.png" },
-    { id: "nh", name: "농협은행", logo: "/assets/bank-logos/nh.png" },
-    { id: "ibk", name: "기업은행", logo: "/assets/bank-logos/ibk.png" },
+    { id: "shinhan", name: "신한은행", logo: "assets/bank-logos/shinhan.png" },
+    { id: "kb", name: "국민은행", logo: "assets/bank-logos/kb.png" },
+    { id: "woori", name: "우리은행", logo: "assets/bank-logos/woori.png" },
+    { id: "hana", name: "하나은행", logo: "assets/bank-logos/hana.png" },
+    { id: "nh", name: "농협은행", logo: "assets/bank-logos/nh.png" },
+    { id: "ibk", name: "기업은행", logo: "assets/bank-logos/ibk.png" },
   ];
 
   const handleBankSelect = (bankId: string) => {
