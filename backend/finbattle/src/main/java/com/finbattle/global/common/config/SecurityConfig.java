@@ -37,6 +37,9 @@ public class SecurityConfig {
     @Value("${app.baseUrl}")
     private String baseUrl;
 
+    @Value("${app.clientUrl}")
+    private String clientUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -75,7 +78,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         //config.addAllowedOriginPattern("*");
-        config.setAllowedOrigins(Arrays.asList(baseUrl)); // 프론트엔드 주소
+        config.setAllowedOrigins(Arrays.asList(baseUrl, clientUrl)); // 프론트엔드 주소
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
