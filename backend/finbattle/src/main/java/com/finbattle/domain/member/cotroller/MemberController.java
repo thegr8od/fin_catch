@@ -64,8 +64,8 @@ public class MemberController {
         refreshCookie.setMaxAge(0);
         response.addCookie(refreshCookie);
 
-        tokenService.deleteRefreshToken(refresh);
-        log.info("로그아웃 성공! 사용자 정보: {}", detail.toString());
+        tokenService.deleteRefreshToken(detail.getMemberId());
+        log.info("로그아웃 성공! 사용자 정보: {}", detail);
         return ResponseEntity.ok(new BaseResponse<>("Logout success!"));
     }
 

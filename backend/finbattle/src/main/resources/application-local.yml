@@ -12,7 +12,8 @@ deploy:
   env: local
 
 app:
-  baseUrl: http://localhost:3210
+  baseUrl: http://localhost:8080
+  clientUrl: http://localhost:3210
 
 logging:
   level:
