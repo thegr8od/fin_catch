@@ -11,4 +11,5 @@ public class MemberStatus {
 
     private long memberId;
     private int life; // 플레이어의 남은 라이프 (예: 3)
+
 }
