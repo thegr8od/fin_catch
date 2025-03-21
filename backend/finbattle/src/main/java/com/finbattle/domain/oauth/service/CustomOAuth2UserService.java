@@ -9,6 +9,7 @@ import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.domain.oauth.dto.GoogleResponse;
 import com.finbattle.domain.oauth.dto.KakaoResponse;
 import com.finbattle.domain.oauth.dto.OAuth2Response;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             memberRepository.save(member);
         } else {
             member = optionalMember.get();
+            member.setLastLogin(LocalDateTime.now());
+            memberRepository.save(member);
         }
 
         return new AuthenticatedUser(AuthenticUser.from(member));

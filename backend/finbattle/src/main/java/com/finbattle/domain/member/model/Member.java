@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -61,6 +62,9 @@ public class Member extends BaseEntity {
     @Schema(description = "사용자 대표 캐릭터", example = "default")
     private String mainCat;
 
+    // @Column(nullable = false)
+    private LocalDateTime lastLogin;
+
     public static Member of(String providerId, String nickname, String email) {
         // Member 생성
         return Member.builder()
@@ -68,6 +72,7 @@ public class Member extends BaseEntity {
             .nickname(nickname)
             .email(email)
             .mainCat("classic")
+            //.lastLogin(LocalDateTime.now())
             .build();
     }
 
