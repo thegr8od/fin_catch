@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Background from "../components/layout/Background";
 import myPageBg from "../assets/mypage_bg.png";
 import { useUserInfo } from "../hooks/useUserInfo";
@@ -8,7 +8,6 @@ import { CharacterType } from "../components/game/constants/animations";
 import AccountLinkModal from "../components/mypage/AccountLinkModal";
 import NicknameChangeModal from "../components/mypage/NicknameChangeModal";
 import { useCharacterManagement } from "../hooks/useCharacterManagement";
-import { useCharacterPagination } from "../hooks/useCharacterPagination";
 import { useModalManagement } from "../hooks/useModalManagement";
 import { Character } from "../types/Character";
 
@@ -34,7 +33,6 @@ const convertCatToCharacter = (cat: any): Character => {
 const MainPage = () => {
   const { user, loading, fetchUserInfo } = useUserInfo();
   const { characters, selectedCharacter, currentAnimationState, isCharacterLoading, resourcesLoaded, handleCharacterSelect, setCurrentAnimationState, changeMyCat } = useCharacterManagement();
-  const { currentPage, totalPages, currentCharacters, handlePrevPage, handleNextPage } = useCharacterPagination(characters);
   const { showFeatureModal, showNicknameModal, showAccountLinkModal, showCharacterInfoModal, featureMessage, handleModalOpen, handleModalClose, setFeatureMessage } = useModalManagement(user);
 
   const handleAccountLink = (accountInfo: AccountInfo) => {
@@ -87,6 +85,17 @@ const MainPage = () => {
     { id: 2, topic: "세금 계산", level: "medium" as const },
     { id: 3, topic: "금융 상품 이해", level: "low" as const },
   ];
+
+  // 캐릭터 리스트 정렬: 대표 캐릭터를 맨 앞으로
+  const sortedCharacters = useMemo(() => {
+    if (!characters || !profileData.mainCat) return characters;
+
+    return [...characters].sort((a, b) => {
+      if (a.catName === profileData.mainCat) return -1;
+      if (b.catName === profileData.mainCat) return 1;
+      return 0;
+    });
+  }, [characters, profileData.mainCat]);
 
   return (
     <Background backgroundImage={myPageBg}>
@@ -158,32 +167,9 @@ const MainPage = () => {
 
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">🎨 보유 캐릭터</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 0}
-                    className={`px-3 py-1 rounded-lg font-korean-pixel ${
-                      currentPage === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                    } transition-colors`}
-                  >
-                    ◀
-                  </button>
-                  <span className="font-korean-pixel px-2">
-                    {currentPage + 1} / {totalPages}
-                  </span>
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages - 1}
-                    className={`px-3 py-1 rounded-lg font-korean-pixel ${
-                      currentPage === totalPages - 1 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                    } transition-colors`}
-                  >
-                    ▶
-                  </button>
-                </div>
               </div>
 
-              <CharacterList characters={currentCharacters} selectedCharacter={selectedCharacter} onSelect={handleCharacterSelect} mainCat={profileData.mainCat} />
+              <CharacterList characters={sortedCharacters} selectedCharacter={selectedCharacter} onSelect={handleCharacterSelect} mainCat={profileData.mainCat} />
             </div>
 
             {/* 계좌 연동 섹션 */}
