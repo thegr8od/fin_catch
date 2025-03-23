@@ -2,11 +2,13 @@ import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store";
 import { setUser, setLoading, setError, clearUser } from "../store/slices/userSlice";
-import axiosInstance from "../api/axios";
+import { useApi } from "./useApi";
+import { User } from "../types/Auth/User";
 
 export const useUserInfo = (autoFetch: boolean = true) => {
   const dispatch = useDispatch();
   const { user, loading, error } = useSelector((state: RootState) => state.user);
+  const { execute: fetchUserInfoApi } = useApi<User>("/api/member/myinfo", "GET");
 
   const fetchUserInfo = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
@@ -21,29 +23,29 @@ export const useUserInfo = (autoFetch: boolean = true) => {
       dispatch(setLoading(true));
       dispatch(setError(null));
 
-      const response = await axiosInstance.get("/api/member/myinfo");
-      console.log("사용자 정보 응답:", response.data);
+      const response = await fetchUserInfoApi();
+      console.log("사용자 정보 응답:", response);
 
-      if (response.data.isSuccess) {
-        console.log("사용자 정보 설정:", response.data.result);
-        dispatch(setUser(response.data.result));
+      if (response.success && response.data) {
+        console.log("사용자 정보 설정:", response.data);
+        dispatch(setUser(response.data));
       } else {
-        console.error("사용자 정보 요청 실패:", response.data.message);
-        dispatch(setError(response.data.message));
+        console.error("사용자 정보 요청 실패:", response.error);
+        dispatch(setError(response.error));
         dispatch(clearUser());
       }
     } catch (err: any) {
       console.error("사용자 정보 요청 오류:", err);
-      dispatch(setError(err.response?.data?.message || "사용자 정보를 가져오는데 실패했습니다."));
+      dispatch(setError(err.message || "사용자 정보를 가져오는데 실패했습니다."));
       dispatch(clearUser());
-      if (err.response?.status === 401) {
+      if (err.status === 401) {
         localStorage.removeItem("accessToken");
       }
     } finally {
       console.log("사용자 정보 요청 완료");
       dispatch(setLoading(false));
     }
-  }, [dispatch]);
+  }, [dispatch, fetchUserInfoApi]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
