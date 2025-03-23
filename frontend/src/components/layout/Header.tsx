@@ -1,44 +1,50 @@
 import { useNavigate } from "react-router-dom";
 import { useUserInfo } from "../../hooks/useUserInfo";
 import { useAuth } from "../../hooks/useAuth";
+import { useGameExit, getCurrentGameState } from "../../hooks/useGameExit";
+
 const Header: React.FC = () => {
   const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
   const isLoggedIn = !!user;
   const { logout } = useAuth();
+  const { showExitWarning } = useGameExit();
 
-  const handleLogout = () => {
+  const checkAndNavigate = async (path: string) => {
+    const gameState = getCurrentGameState();
+    if (gameState.isInGame) {
+      const shouldExit = await showExitWarning();
+      if (!shouldExit) return;
+    }
+    window.dispatchEvent(new CustomEvent("beforePageChange"));
+    setTimeout(() => {
+      navigate(path, { replace: true });
+    }, 10);
+  };
+
+  const handleLogout = async () => {
+    const gameState = getCurrentGameState();
+    if (gameState.isInGame) {
+      const shouldExit = await showExitWarning();
+      if (!shouldExit) return;
+    }
     clearUserInfo();
     logout();
-
     window.dispatchEvent(new CustomEvent("beforePageChange"));
-
     navigate("/signin", { replace: true });
   };
 
   const handleShopClick = () => {
-    window.dispatchEvent(new CustomEvent("beforePageChange"));
-
-    setTimeout(() => {
-      navigate("/shop", { replace: true });
-    }, 10);
+    checkAndNavigate("/shop");
   };
 
   const handleMyPageClick = () => {
     if (!user) return;
-    window.dispatchEvent(new CustomEvent("beforePageChange"));
-
-    setTimeout(() => {
-      navigate("/main", { replace: true });
-    }, 10);
+    checkAndNavigate("/main");
   };
 
   const handleMainClick = () => {
-    window.dispatchEvent(new CustomEvent("beforePageChange"));
-
-    setTimeout(() => {
-      navigate("/main", { replace: true });
-    }, 10);
+    checkAndNavigate("/main");
   };
 
   // 로그인 상태 확인 함수

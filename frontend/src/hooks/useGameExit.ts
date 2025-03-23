@@ -2,54 +2,33 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoading } from "../contexts/LoadingContext";
 
-interface GameState {
-  gameStatus: "waiting" | "playing" | "finished";
+interface GameStateType {
+  isInGame: boolean;
+  gameType: "1vs1" | "battle-royale" | null;
+  roomId: string | null;
 }
 
-export const useGameExit = (gameState?: GameState) => {
-  const [showExitWarning, setShowExitWarning] = useState(false);
-  const [intendedPath, setIntendedPath] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { setLoading } = useLoading();
-
-  const handlePageExit = (path: string) => {
-    if (gameState?.gameStatus === "playing") {
-      setIntendedPath(path);
-      setShowExitWarning(true);
-      return false;
-    }
-    return true;
-  };
-
-  const handleExitConfirm = () => {
-    setLoading(true);
-    setTimeout(() => {
-      if (intendedPath) {
-        navigate(intendedPath);
-      } else {
-        navigate("/main");
-      }
-    }, 300);
-  };
-
-  const handleExitCancel = () => {
-    setShowExitWarning(false);
-    setIntendedPath(null);
-  };
-
-  return {
-    showExitWarning,
-    handlePageExit,
-    handleExitConfirm,
-    handleExitCancel,
-  };
+let currentGameState: GameStateType = {
+  isInGame: false,
+  gameType: null,
+  roomId: null,
 };
 
-// 전역 상태 관리
-let currentGameState: GameState | null = null;
-
-export const setCurrentGameState = (state: GameState | null) => {
+export const setCurrentGameState = (state: GameStateType) => {
   currentGameState = state;
 };
 
 export const getCurrentGameState = () => currentGameState;
+
+export const useGameExit = () => {
+  const showExitWarning = async (): Promise<boolean> => {
+    if (!currentGameState.isInGame) return true;
+
+    return new Promise((resolve) => {
+      const result = window.confirm("게임을 나가시겠습니까?\n게임을 나가면 패배 처리됩니다.");
+      resolve(result);
+    });
+  };
+
+  return { showExitWarning };
+};
