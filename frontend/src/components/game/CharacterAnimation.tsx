@@ -2,6 +2,7 @@ import React from "react";
 import { CharacterAnimationProps } from "./types/character";
 import { useCharacterAnimation } from "./hooks/useCharacterAnimation";
 import { CharacterType } from "./constants/animations";
+import { useUserInfo } from "../../hooks/useUserInfo";
 
 interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
   characterType?: CharacterType;
@@ -16,15 +17,18 @@ const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
   scale = 2,
   className = "",
   onAnimationComplete,
-  characterType = "classic",
+  characterType,
   size = "small",
 }) => {
+  const { user } = useUserInfo();
+  const finalCharacterType = characterType || (user?.mainCat as unknown as CharacterType) || "classic";
+
   const { containerRef, isReady } = useCharacterAnimation({
     state,
     direction,
     scale,
     onAnimationComplete,
-    characterType,
+    characterType: finalCharacterType,
     size,
   });
 
