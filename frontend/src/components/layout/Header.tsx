@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useUserInfo } from "../../hooks/useUserInfo";
 import { useAuth } from "../../hooks/useAuth";
 import { useGameExit, getCurrentGameState } from "../../hooks/useGameExit";
@@ -6,6 +7,7 @@ import { useGameExit, getCurrentGameState } from "../../hooks/useGameExit";
 const Header: React.FC = () => {
   const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
+  const location = useLocation();
   const isLoggedIn = !!user;
   const { logout } = useAuth();
   const { showExitWarning } = useGameExit();
@@ -50,8 +52,8 @@ const Header: React.FC = () => {
   // 로그인 상태 확인 함수
   // 컴포넌트가 마운트될 때 로그인 상태 확인
   return (
-    <header className="bg-gray-800 text-white py-2 px-4 fixed top-0 w-full z-50">
-      <div className="container mx-auto flex justify-between items-center">
+    <header className="bg-gray-800 text-white py-2 px-4 fixed top-0 w-full z-50 h-16">
+      <div className="container mx-auto flex justify-between items-center h-full">
         <div className="flex items-center">
           {isLoggedIn && (
             <div className="flex items-center bg-gray-700 px-3 py-1 rounded-md">

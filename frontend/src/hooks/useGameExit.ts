@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLoading } from "../contexts/LoadingContext";
+import React from "react";
+import { CustomConfirm } from "../components/layout/CustomConfirm";
+import { createRoot } from "react-dom/client";
 
 interface GameStateType {
   isInGame: boolean;
-  gameType: "1vs1" | "battle-royale" | null;
+  gameType: "1vs1" | null;
   roomId: string | null;
 }
 
@@ -25,8 +25,35 @@ export const useGameExit = () => {
     if (!currentGameState.isInGame) return true;
 
     return new Promise((resolve) => {
-      const result = window.confirm("게임을 나가시겠습니까?\n게임을 나가면 패배 처리됩니다.");
-      resolve(result);
+      const modalRoot = document.createElement("div");
+      modalRoot.setAttribute("id", "modal-root");
+      document.body.appendChild(modalRoot);
+
+      const root = createRoot(modalRoot);
+
+      const handleConfirm = () => {
+        root.unmount();
+        document.body.removeChild(modalRoot);
+        resolve(true);
+      };
+
+      const handleCancel = () => {
+        root.unmount();
+        document.body.removeChild(modalRoot);
+        resolve(false);
+      };
+
+      root.render(
+        React.createElement(
+          "div",
+          { className: "fixed inset-0 flex items-center justify-center bg-black/50 z-[9999]" },
+          React.createElement(CustomConfirm, {
+            message: "게임을 나가시겠습니까?\n게임을 나가면 패배 처리됩니다.",
+            onConfirm: handleConfirm,
+            onCancel: handleCancel,
+          })
+        )
+      );
     });
   };
 

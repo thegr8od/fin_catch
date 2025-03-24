@@ -1,5 +1,6 @@
 import React from "react";
 import SlotMachine from "./SlotMachine";
+import { CustomAlert } from "../layout/CustomAlert";
 
 interface SlotMachineSectionProps {
   isSpinning: boolean;
@@ -12,7 +13,7 @@ const SlotMachineSection: React.FC<SlotMachineSectionProps> = ({ isSpinning, onP
   const handlePurchase = (amount: number) => {
     const cost = amount === 1 ? 500 : 5000;
     if (userCoins < cost) {
-      alert("코인이 부족합니다!");
+      CustomAlert({ message: "코인이 부족합니다!", onClose: () => {} });
       return;
     }
     onPurchase(amount);
