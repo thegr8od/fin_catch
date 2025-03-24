@@ -6,8 +6,8 @@ import com.finbattle.domain.game.dto.EventMessage;
 import com.finbattle.domain.game.dto.EventType;
 import com.finbattle.domain.game.dto.MemberStatus;
 import com.finbattle.domain.game.dto.QuizMode;
-import com.finbattle.domain.game.model.ShortAnswerQuiz;
-import com.finbattle.domain.game.repository.ShortAnswerQuizRepository;
+import com.finbattle.domain.quiz.model.ShortAnswerQuiz;
+import com.finbattle.domain.quiz.repository.ShortAnswerQuizRepository;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +50,9 @@ public class QuizService {
         firstCorrectAnswerMap.remove(roomId);
 
         EventMessage<Map<String, Object>> message = new EventMessage<>(
-                EventType.QUIZ,
-                roomId,
-                Map.of("quizId", quiz.getQuizId(), "question", quiz.getShortQuestion())
+            EventType.QUIZ,
+            roomId,
+            Map.of("quizId", quiz.getQuizId(), "question", quiz.getShortQuestion())
         );
 
         publishToRoom(roomId, message);
@@ -71,9 +71,9 @@ public class QuizService {
         }
 
         EventMessage<Map<String, Object>> message = new EventMessage<>(
-                EventType.QUIZ_HINT,
-                roomId,
-                Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
+            EventType.QUIZ_HINT,
+            roomId,
+            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
         );
 
         publishToRoom(roomId, message);
@@ -91,9 +91,10 @@ public class QuizService {
         boolean isCorrect = quiz.getShortAnswer().equalsIgnoreCase(userAnswer.trim());
 
         EventMessage<Map<String, Object>> resultMessage = new EventMessage<>(
-                EventType.QUIZ_RESULT,
-                roomId,
-                Map.of("quizId", quiz.getQuizId(), "result", isCorrect ? "정답입니다" : "오답입니다", "memberId", memberId)
+            EventType.QUIZ_RESULT,
+            roomId,
+            Map.of("quizId", quiz.getQuizId(), "result", isCorrect ? "정답입니다" : "오답입니다", "memberId",
+                memberId)
         );
 
         publishToRoom(roomId, resultMessage);
@@ -124,8 +125,9 @@ public class QuizService {
 
         try {
             List<MemberStatus> userStatusList = objectMapper.readValue(
-                    jsonArray,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MemberStatus.class)
+                jsonArray,
+                objectMapper.getTypeFactory()
+                    .constructCollectionType(List.class, MemberStatus.class)
             );
 
             // 정답자를 제외한 모든 유저의 life를 -1 처리
@@ -135,10 +137,11 @@ public class QuizService {
                 }
             }
 
-            redisTemplate.opsForValue().set(usersKey, objectMapper.writeValueAsString(userStatusList));
+            redisTemplate.opsForValue()
+                .set(usersKey, objectMapper.writeValueAsString(userStatusList));
 
             EventMessage<List<MemberStatus>> userStatusMessage = new EventMessage<>(
-                    EventType.USER_STATUS, roomId, userStatusList
+                EventType.USER_STATUS, roomId, userStatusList
             );
             publishToRoom(roomId, userStatusMessage);
 

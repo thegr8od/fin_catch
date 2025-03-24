@@ -10,6 +10,7 @@ import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.dto.RoomType;
 import com.finbattle.domain.room.model.Room;
+import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
+    private final RedisRoomRepository redisRoomRepository;
 
     // 방 생성
     public RoomResponse createRoom(RoomCreateRequest request) {
@@ -73,6 +75,8 @@ public class RoomService {
         }
         room.setStatus(RoomStatus.CLOSED);
         roomRepository.save(room);
+
+        redisRoomRepository.deleteById(roomId);
     }
 
     public List<RoomResponse> getAllRooms() {

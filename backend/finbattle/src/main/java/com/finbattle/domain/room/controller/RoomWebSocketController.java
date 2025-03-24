@@ -36,7 +36,7 @@ public class RoomWebSocketController {
         System.out.println("info 작성");
         roomSubscriptionService.getRoomInfo(roomId);
     }
-    
+
 
     /**
      * 방 참가 요청 처리 (RDB에 저장하지 않고 Redis에서만 관리)
@@ -86,9 +86,9 @@ public class RoomWebSocketController {
     /**
      * 방 삭제 요청 처리
      */
-    @MessageMapping("/room/{roomId}/delete")
-    public void deleteRoom(@DestinationVariable Long roomId) {
-        log.info("Deleting room {}", roomId);
-        roomSubscriptionService.deleteRoom(roomId);
-    }
+//    @MessageMapping("/room/{roomId}/delete")
+//    public void deleteRoom(@DestinationVariable Long roomId) {
+//        log.info("Deleting room {}", roomId);
+//        roomSubscriptionService.deleteRoom(roomId);
+//    }
 }

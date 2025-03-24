@@ -5,15 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.room.dto.EventMessage;
 import com.finbattle.domain.room.dto.MessageType;
 import com.finbattle.domain.room.dto.RedisRoomMember;
-import com.finbattle.domain.room.dto.RoomContainer;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.model.RedisRoom;
+import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RoomSubscriptionService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisRoomRepository redisRoomRepository;
     private final RedisPublisher redisPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -31,7 +30,7 @@ public class RoomSubscriptionService {
     public void createRoomSubscription(RoomResponse response) {
         RedisRoom redisRoom = new RedisRoom();
         redisRoom.setRoomId(response.getRoomId());
-        redisRoom.setMaxPeople(10);
+        redisRoom.setMaxPeople(2);
         redisRoom.setStatus(RoomStatus.OPEN);
 
         RedisRoomMember host = new RedisRoomMember();
@@ -45,10 +44,11 @@ public class RoomSubscriptionService {
         redisRoom.setHost(host);
         redisRoom.getMembers().add(host);
 
-        RoomContainer container = new RoomContainer();
-        container.setData(redisRoom);
+//        RoomContainer container = new RoomContainer();
+//        container.setData(redisRoom);
 
-        saveRoomContainer(response.getRoomId(), container);
+        redisRoomRepository.save(redisRoom);
+//        saveRoomContainer(response.getRoomId(), container);
         publishEvent(MessageType.CREATE, response.getRoomId(), null, null, 0, null);
     }
 
@@ -65,13 +65,8 @@ public class RoomSubscriptionService {
      * 방 참가 처리 후 Redis 저장 및 이벤트 발행
      */
     public void joinRoom(Long roomId, Long userId) {
-        RoomContainer container = getRoomContainer(roomId);
-        if (container == null) {
-            publishEvent(MessageType.JOIN_FAIL, roomId, userId, "방이 존재하지 않습니다.", 0, null);
-            throw new IllegalStateException("방이 존재하지 않습니다.");
-        }
+        RedisRoom redisRoom = getRedisRoom(roomId);
 
-        RedisRoom redisRoom = container.getData();
         if (redisRoom.getStatus() != RoomStatus.OPEN) {
             publishEvent(MessageType.JOIN_FAIL, roomId, userId, "방이 닫혀있습니다.", 0, null);
             throw new IllegalStateException("방에 입장할 수 없는 상태입니다.");
@@ -94,7 +89,7 @@ public class RoomSubscriptionService {
         member.setStatus("NOT_READY");
         redisRoom.getMembers().add(member);
 
-        saveRoomContainer(roomId, container);
+        redisRoomRepository.save(redisRoom);
         publishEvent(MessageType.READY, roomId, userId, null, redisRoom.getMembers().size(), null);
     }
 
@@ -120,11 +115,12 @@ public class RoomSubscriptionService {
         }
 
         // 3) 기존 RoomContainer 가져와서 멤버 목록 갱신
-        RoomContainer container = getRoomContainer(roomId);
-        container.getData().setMembers(members);
-
-        // 4) Redis에 다시 저장
-        saveRoomContainer(roomId, container);
+//        RoomContainer container = getRoomContainer(roomId);
+//        container.getData().setMembers(members);
+//
+//        // 4) Redis에 다시 저장
+//        saveRoomContainer(roomId, container);
+        redisRoomRepository.save(redisRoom);
 
         // 5) 이벤트 발행
         // ✅ MessageType.LEAVE 사용
@@ -152,9 +148,10 @@ public class RoomSubscriptionService {
         }
 
         // 기존 RoomContainer를 가져와서 members 갱신
-        RoomContainer container = getRoomContainer(roomId);
-        container.getData().setMembers(members);
-        saveRoomContainer(roomId, container);
+//        RoomContainer container = getRoomContainer(roomId);
+//        container.getData().setMembers(members);
+//        saveRoomContainer(roomId, container);
+        redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.KICK 사용
         publishEvent(MessageType.KICK, roomId, targetUserId, null, redisRoom.getMembers().size(),
@@ -166,7 +163,7 @@ public class RoomSubscriptionService {
      * 방 삭제 및 이벤트 발행
      */
     public void deleteRoom(Long roomId) {
-        redisTemplate.delete("room:" + roomId);
+        redisRoomRepository.deleteById(roomId);
         publishEvent(MessageType.DELETE, roomId, null, null, 0, null);
         log.info("Room {} deleted from Redis", roomId);
     }
@@ -203,9 +200,10 @@ public class RoomSubscriptionService {
         member.setStatus("READY");
 
         // 변경된 멤버 목록을 다시 세팅
-        RoomContainer container = getRoomContainer(roomId);
-        container.getData().setMembers(members);
-        saveRoomContainer(roomId, container);
+//        RoomContainer container = getRoomContainer(roomId);
+//        container.getData().setMembers(members);
+//        saveRoomContainer(roomId, container);
+        redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.READY 사용
         publishEvent(MessageType.READY, roomId, userId, null, members.size(), null);
@@ -215,68 +213,58 @@ public class RoomSubscriptionService {
      * Redis에서 방 정보를 가져오기
      */
     public RedisRoom getRedisRoom(Long roomId) {
-        String redisKey = "room:" + roomId;
-        Object roomJsonObj = redisTemplate.opsForHash().get(redisKey, "data");
-        if (roomJsonObj == null) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(roomJsonObj.toString(), RedisRoom.class);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse RedisRoom JSON: {}", e.getMessage());
-            return null;
-        }
+        return redisRoomRepository.findById(roomId).orElse(null);
     }
 
     /**
      * 기존 RoomContainer 가져오기
      */
-    public RoomContainer getRoomContainer(Long roomId) {
-        String redisKey = "room:" + roomId;
-
-        // "users" 해시 필드
-        Object usersField = redisTemplate.opsForHash().get(redisKey, "users");
-        // "data" 해시 필드
-        Object dataField = redisTemplate.opsForHash().get(redisKey, "data");
-
-        // 없으면 null
-        if (usersField == null || dataField == null) {
-            return null;
-        }
-
-        try {
-            RoomContainer container = new RoomContainer();
-            // users는 Map<String, String>
-            container.setUsers(
-                objectMapper.readValue(usersField.toString(), container.getUsers().getClass()));
-            // data는 RedisRoom
-            RedisRoom redisRoom = objectMapper.readValue(dataField.toString(), RedisRoom.class);
-            container.setData(redisRoom);
-            return container;
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse RoomContainer from Redis: {}", e.getMessage());
-            return null;
-        }
-    }
+//    public RoomContainer getRoomContainer(Long roomId) {
+//        String redisKey = "room:" + roomId;
+//
+//        // "users" 해시 필드
+//        Object usersField = redisTemplate.opsForHash().get(redisKey, "users");
+//        // "data" 해시 필드
+//        Object dataField = redisTemplate.opsForHash().get(redisKey, "data");
+//
+//        // 없으면 null
+//        if (usersField == null || dataField == null) {
+//            return null;
+//        }
+//
+//        try {
+//            RoomContainer container = new RoomContainer();
+//            // users는 Map<String, String>
+//            container.setUsers(
+//                objectMapper.readValue(usersField.toString(), container.getUsers().getClass()));
+//            // data는 RedisRoom
+//            RedisRoom redisRoom = objectMapper.readValue(dataField.toString(), RedisRoom.class);
+//            container.setData(redisRoom);
+//            return container;
+//        } catch (JsonProcessingException e) {
+//            log.error("Failed to parse RoomContainer from Redis: {}", e.getMessage());
+//            return null;
+//        }
+//    }
 
     /**
      * 방 데이터를 Redis에 저장
      */
-    private void saveRoomContainer(Long roomId, RoomContainer container) {
-        String redisKey = "room:" + roomId;
-        try {
-            String usersJson = objectMapper.writeValueAsString(container.getUsers());
-            String dataJson = objectMapper.writeValueAsString(container.getData());
-
-            redisTemplate.opsForHash().put(redisKey, "users", usersJson);
-            redisTemplate.opsForHash().put(redisKey, "data", dataJson);
-
-            log.info("Saved RoomContainer to Redis as a hash => key={}, fields=[users, data]",
-                redisKey);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to save RoomContainer to Redis: {}", e.getMessage());
-        }
-    }
+//    private void saveRoomContainer(Long roomId, RoomContainer container) {
+//        String redisKey = "room:" + roomId;
+//        try {
+//            String usersJson = objectMapper.writeValueAsString(container.getUsers());
+//            String dataJson = objectMapper.writeValueAsString(container.getData());
+//
+//            redisTemplate.opsForHash().put(redisKey, "users", usersJson);
+//            redisTemplate.opsForHash().put(redisKey, "data", dataJson);
+//
+//            log.info("Saved RoomContainer to Redis as a hash => key={}, fields=[users, data]",
+//                redisKey);
+//        } catch (JsonProcessingException e) {
+//            log.error("Failed to save RoomContainer to Redis: {}", e.getMessage());
+//        }
+//    }
 
     /**
      * 이벤트 메시지를 Redis Pub/Sub을 통해 발행
