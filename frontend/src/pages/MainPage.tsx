@@ -91,44 +91,70 @@ const MainPage = () => {
     {
       id: 1,
       name: "주식",
+      totalProblems: 10,
       problems: [
         {
           id: 1,
           title: "PER 계산하기",
           wrongCount: 3,
+          correctCount: 2,
           analysis: "PER(주가수익비율) 계산에서 자주 실수하시는 부분이 있네요. PER은 주가를 주당순이익(EPS)으로 나누어 계산합니다. 특히 EPS 계산 시 당기순이익을 발행주식수로 나누는 것을 잊지 마세요.",
+          attemptHistory: [
+            { date: "2024-02-01", isCorrect: false },
+            { date: "2024-02-03", isCorrect: true },
+            { date: "2024-02-05", isCorrect: false },
+            { date: "2024-02-07", isCorrect: true },
+            { date: "2024-02-09", isCorrect: false },
+          ],
+          weakPoints: ["EPS 계산 과정에서 발행주식수 고려 누락", "당기순이익 개념 이해 부족", "시가총액과 PER의 관계 이해 미흡"],
+          recommendations: ["기업 재무제표 분석 기초 학습하기", "실전 PER 계산 문제 더 풀어보기", "시장 평균 PER과 비교 분석 연습하기"],
         },
         {
           id: 2,
           title: "배당수익률 이해하기",
           wrongCount: 2,
+          correctCount: 3,
           analysis: "배당수익률 문제에서 주로 어려움을 겪으셨습니다. 배당수익률은 주당배당금을 주가로 나누어 계산하며, 이를 백분율로 표시합니다.",
+          attemptHistory: [
+            { date: "2024-02-02", isCorrect: true },
+            { date: "2024-02-04", isCorrect: false },
+            { date: "2024-02-06", isCorrect: true },
+            { date: "2024-02-08", isCorrect: false },
+            { date: "2024-02-10", isCorrect: true },
+          ],
+          weakPoints: ["배당금과 주가의 관계 이해 부족", "배당성향 계산 오류"],
+          recommendations: ["배당 정책의 유형별 특징 학습하기", "배당수익률과 투자 수익률의 관계 이해하기"],
         },
       ],
     },
     {
       id: 2,
       name: "금융",
+      totalProblems: 8,
       problems: [
         {
           id: 3,
           title: "복리 이자 계산",
           wrongCount: 4,
+          correctCount: 1,
           analysis: "복리 이자 계산에서 기간별 이자가 원금에 포함되어 재투자되는 개념을 이해하는 것이 중요합니다. 특히 연복리와 월복리의 차이점을 주의 깊게 보세요.",
+          attemptHistory: [
+            { date: "2024-02-01", isCorrect: false },
+            { date: "2024-02-03", isCorrect: false },
+            { date: "2024-02-05", isCorrect: true },
+            { date: "2024-02-07", isCorrect: false },
+            { date: "2024-02-09", isCorrect: false },
+          ],
+          weakPoints: ["복리 계산 시 기간 단위 혼동", "이자율과 실효이자율의 차이 이해 부족"],
+          recommendations: ["복리 계산기 활용 연습하기", "다양한 기간의 복리 효과 비교해보기"],
         },
       ],
     },
     {
       id: 3,
       name: "코인",
-      problems: [
-        {
-          id: 4,
-          title: "블록체인 기초",
-          wrongCount: 2,
-          analysis: "블록체인의 기본 개념에서 블록 간의 연결성과 합의 알고리즘의 역할을 이해하는 것이 중요합니다.",
-        },
-      ],
+      totalProblems: 5,
+      problems: [],
     },
   ];
 
@@ -220,7 +246,14 @@ const MainPage = () => {
 
             {/* 오답노트 분석 섹션 */}
             <div className="mt-6 mb-6">
-              <WrongAnswerAnalysis onDetailView={() => handleModalOpen("feature")} categories={wrongAnswerCategories} />
+              <WrongAnswerAnalysis
+                onDetailView={() => handleModalOpen("feature")}
+                categories={wrongAnswerCategories}
+                onStartGame={() => {
+                  // 1:1 게임으로 이동하는 로직
+                  console.log("1:1 게임 시작");
+                }}
+              />
             </div>
 
             {/* 계좌 연동 섹션 */}
