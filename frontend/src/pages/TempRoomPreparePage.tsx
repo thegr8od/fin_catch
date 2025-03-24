@@ -58,6 +58,8 @@ const TempRoomPreparePage = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isReady, setIsReady] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   // 사용자 정보 훅 사용
   const { user } = useUserInfo();
@@ -92,7 +94,7 @@ const TempRoomPreparePage = () => {
           case messageTypes.ROOM.KICK:
             // 강퇴 메시지 처리
             if (data.kickUserId === userId) {
-              CustomAlert({ message: "방장에 의해 강퇴되었습니다.", onClose: () => {} });
+              showCustomAlert("방장에 의해 강퇴되었습니다.");
               navigate("/"); // 로비로 이동
             }
             break;
@@ -176,12 +178,12 @@ const TempRoomPreparePage = () => {
     if (!connected || !roomId) return;
 
     if (!isHost) {
-      CustomAlert({ message: "방장만 게임을 시작할 수 있습니다.", onClose: () => {} });
+      showCustomAlert("방장만 게임을 시작할 수 있습니다.");
       return;
     }
 
     if (!allReady) {
-      CustomAlert({ message: "모든 플레이어가 준비 완료 상태일 때만 게임 시작 가능합니다.", onClose: () => {} });
+      showCustomAlert("모든 플레이어가 준비 완료 상태일 때만 게임 시작 가능합니다.");
       return;
     }
 
@@ -200,7 +202,7 @@ const TempRoomPreparePage = () => {
     if (!connected || !roomId || !isHost) return;
 
     if (kickUserId === userId) {
-      CustomAlert({ message: "자기 자신을 강퇴할 수 없습니다.", onClose: () => {} });
+      showCustomAlert("자기 자신을 강퇴할 수 없습니다.");
       return;
     }
 
@@ -254,6 +256,11 @@ const TempRoomPreparePage = () => {
     return categories.find((c) => c.id === categoryId)?.name || categoryId;
   };
 
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
   // 로딩 상태 표시
   if (!roomInfo) {
     return (
@@ -266,119 +273,122 @@ const TempRoomPreparePage = () => {
   }
 
   return (
-    <Background>
-      <div className="w-full h-full flex flex-col items-center justify-center py-8">
-        <div className="w-full max-w-6xl bg-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden">
-          {/* 방 정보 헤더 */}
-          <div className="bg-gray-800 text-white p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold">{roomInfo.title}</h1>
-                <p className="text-gray-300">주제: {getCategoryName(roomInfo.category)}</p>
-              </div>
-              <div className="flex items-center">
-                <div className={`px-3 py-1 rounded mr-3 ${connected ? "bg-green-500" : "bg-red-500"}`}>{connected ? "연결됨" : "연결 중..."}</div>
-                <button onClick={handleLeaveRoom} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-                  나가기
-                </button>
+    <>
+      <Background>
+        <div className="w-full h-full flex flex-col items-center justify-center py-8">
+          <div className="w-full max-w-6xl bg-white bg-opacity-90 rounded-lg shadow-lg overflow-hidden">
+            {/* 방 정보 헤더 */}
+            <div className="bg-gray-800 text-white p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-2xl font-bold">{roomInfo.title}</h1>
+                  <p className="text-gray-300">주제: {getCategoryName(roomInfo.category)}</p>
+                </div>
+                <div className="flex items-center">
+                  <div className={`px-3 py-1 rounded mr-3 ${connected ? "bg-green-500" : "bg-red-500"}`}>{connected ? "연결됨" : "연결 중..."}</div>
+                  <button onClick={handleLeaveRoom} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                    나가기
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex h-[600px]">
-            {/* 왼쪽: 사용자 목록 */}
-            <div className="w-1/3 p-4 border-r">
-              <h2 className="text-xl font-semibold mb-4">
-                참가자 ({users.length}/{roomInfo.maxPlayers})
-              </h2>
-              <div className="space-y-3">
-                {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 bg-gray-100 rounded">
-                    <div className="flex items-center">
-                      <div className="font-medium">
-                        {user.name} {user.isHost && <span className="text-blue-500">(방장)</span>}
+            <div className="flex h-[600px]">
+              {/* 왼쪽: 사용자 목록 */}
+              <div className="w-1/3 p-4 border-r">
+                <h2 className="text-xl font-semibold mb-4">
+                  참가자 ({users.length}/{roomInfo.maxPlayers})
+                </h2>
+                <div className="space-y-3">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-3 bg-gray-100 rounded">
+                      <div className="flex items-center">
+                        <div className="font-medium">
+                          {user.name} {user.isHost && <span className="text-blue-500">(방장)</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className={`px-2 py-1 rounded text-xs font-medium ${user.isReady || user.isHost ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-800"}`}>
+                          {user.isHost ? "방장" : user.isReady ? "준비완료" : "대기중"}
+                        </div>
+
+                        {/* 방장이고 다른 사용자인 경우에만 강퇴 버튼 표시 */}
+                        {isHost && user.id !== userId && (
+                          <button onClick={() => handleKickUser(user.id)} className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600">
+                            강퇴
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center">
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${user.isReady || user.isHost ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-800"}`}>
-                        {user.isHost ? "방장" : user.isReady ? "준비완료" : "대기중"}
-                      </div>
+                  ))}
+                  {users.length === 0 && <div className="text-center text-gray-500">참가자가 없습니다</div>}
+                </div>
 
-                      {/* 방장이고 다른 사용자인 경우에만 강퇴 버튼 표시 */}
-                      {isHost && user.id !== userId && (
-                        <button onClick={() => handleKickUser(user.id)} className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600">
-                          강퇴
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {users.length === 0 && <div className="text-center text-gray-500">참가자가 없습니다</div>}
+                <div className="mt-8 space-y-4">
+                  {!isHost ? (
+                    <button
+                      onClick={handleToggleReady}
+                      disabled={!connected}
+                      className={`w-full py-3 rounded-lg font-bold ${isReady ? "bg-yellow-400 hover:bg-yellow-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
+                    >
+                      {isReady ? "준비 취소" : "준비 완료"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleStartGame}
+                      disabled={!connected || !allReady || users.length < 2}
+                      className={`w-full py-3 rounded-lg font-bold ${
+                        !connected || !allReady || users.length < 2 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"
+                      }`}
+                    >
+                      게임 시작
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-8 space-y-4">
-                {!isHost ? (
-                  <button
-                    onClick={handleToggleReady}
+              {/* 오른쪽: 채팅 */}
+              <div className="w-2/3 p-4 flex flex-col">
+                <h2 className="text-xl font-semibold mb-4">채팅</h2>
+
+                {/* 채팅 메시지 영역 */}
+                <div className="flex-1 overflow-y-auto mb-4 p-3 bg-gray-100 rounded">
+                  {chatMessages.map((msg, index) => (
+                    <div key={index} className={`mb-2 ${msg.userId === userId ? "text-right" : ""}`}>
+                      <div className={`inline-block px-3 py-2 rounded-lg ${msg.userId === userId ? "bg-blue-500 text-white" : "bg-gray-200"}`}>
+                        <div className="font-medium text-xs mb-1">{msg.userId === userId ? "나" : msg.username}</div>
+                        <div>{msg.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {chatMessages.length === 0 && <div className="text-center text-gray-500 py-4">채팅 메시지가 없습니다</div>}
+                </div>
+
+                {/* 채팅 입력 영역 */}
+                <form onSubmit={handleSendMessage} className="flex">
+                  <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
                     disabled={!connected}
-                    className={`w-full py-3 rounded-lg font-bold ${isReady ? "bg-yellow-400 hover:bg-yellow-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
-                  >
-                    {isReady ? "준비 취소" : "준비 완료"}
-                  </button>
-                ) : (
+                    placeholder={connected ? "메시지를 입력하세요..." : "연결 중..."}
+                    className="flex-1 px-4 py-2 border rounded-l focus:outline-none"
+                  />
                   <button
-                    onClick={handleStartGame}
-                    disabled={!connected || !allReady || users.length < 2}
-                    className={`w-full py-3 rounded-lg font-bold ${
-                      !connected || !allReady || users.length < 2 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"
-                    }`}
+                    type="submit"
+                    disabled={!connected || !messageInput.trim()}
+                    className={`px-4 py-2 rounded-r ${!connected || !messageInput.trim() ? "bg-gray-300 text-gray-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
                   >
-                    게임 시작
+                    전송
                   </button>
-                )}
+                </form>
               </div>
-            </div>
-
-            {/* 오른쪽: 채팅 */}
-            <div className="w-2/3 p-4 flex flex-col">
-              <h2 className="text-xl font-semibold mb-4">채팅</h2>
-
-              {/* 채팅 메시지 영역 */}
-              <div className="flex-1 overflow-y-auto mb-4 p-3 bg-gray-100 rounded">
-                {chatMessages.map((msg, index) => (
-                  <div key={index} className={`mb-2 ${msg.userId === userId ? "text-right" : ""}`}>
-                    <div className={`inline-block px-3 py-2 rounded-lg ${msg.userId === userId ? "bg-blue-500 text-white" : "bg-gray-200"}`}>
-                      <div className="font-medium text-xs mb-1">{msg.userId === userId ? "나" : msg.username}</div>
-                      <div>{msg.content}</div>
-                    </div>
-                  </div>
-                ))}
-                {chatMessages.length === 0 && <div className="text-center text-gray-500 py-4">채팅 메시지가 없습니다</div>}
-              </div>
-
-              {/* 채팅 입력 영역 */}
-              <form onSubmit={handleSendMessage} className="flex">
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  disabled={!connected}
-                  placeholder={connected ? "메시지를 입력하세요..." : "연결 중..."}
-                  className="flex-1 px-4 py-2 border rounded-l focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={!connected || !messageInput.trim()}
-                  className={`px-4 py-2 rounded-r ${!connected || !messageInput.trim() ? "bg-gray-300 text-gray-500" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
-                >
-                  전송
-                </button>
-              </form>
             </div>
           </div>
         </div>
-      </div>
-    </Background>
+      </Background>
+      {showAlert && <CustomAlert message={alertMessage} onClose={() => setShowAlert(false)} />}
+    </>
   );
 };
 

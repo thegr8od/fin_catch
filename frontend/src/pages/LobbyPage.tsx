@@ -29,6 +29,8 @@ const LobbyPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [roomTitle, setRoomTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
     // 로컬 스토리지에서 방 목록 불러오기
@@ -90,17 +92,17 @@ const LobbyPage = () => {
     const room = rooms.find((r) => r.id === roomId);
 
     if (!room) {
-      CustomAlert({ message: "존재하지 않는 방입니다.", onClose: () => {} });
+      showCustomAlert("존재하지 않는 방입니다.");
       return;
     }
 
     if (room.status === "playing") {
-      CustomAlert({ message: "이미 게임이 진행 중인 방입니다.", onClose: () => {} });
+      showCustomAlert("이미 게임이 진행 중인 방입니다.");
       return;
     }
 
     if (room.players >= room.maxPlayers) {
-      CustomAlert({ message: "방이 가득 찼습니다.", onClose: () => {} });
+      showCustomAlert("방이 가득 찼습니다.");
       return;
     }
 
@@ -127,6 +129,11 @@ const LobbyPage = () => {
     { id: "product", name: "상품" },
     { id: "delivery", name: "범죄" },
   ];
+
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
 
   return (
     <Background backgroundImage={mainBg}>
@@ -229,6 +236,8 @@ const LobbyPage = () => {
             </div>
           </div>
         )}
+
+        {showAlert && <CustomAlert message={alertMessage} onClose={() => setShowAlert(false)} />}
       </div>
     </Background>
   );
