@@ -1,6 +1,5 @@
 package com.finbattle.domain.quiz.model;
 
-import com.finbattle.domain.game.dto.QuizMode;
 import jakarta.persistence.*;
 import lombok.*;
 

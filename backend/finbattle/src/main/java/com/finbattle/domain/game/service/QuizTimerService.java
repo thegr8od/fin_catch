@@ -1,6 +1,6 @@
 package com.finbattle.domain.game.service;
 
-import com.finbattle.domain.game.dto.QuizMode;
+import com.finbattle.domain.quiz.model.QuizMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

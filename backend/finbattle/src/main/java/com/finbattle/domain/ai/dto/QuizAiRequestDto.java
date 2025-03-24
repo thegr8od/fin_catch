@@ -1,13 +1,11 @@
 package com.finbattle.domain.ai.dto;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
 public class QuizAiRequestDto {
     private Long quizId;
-    private String userAnswer;
+    private Long memberId;
 }

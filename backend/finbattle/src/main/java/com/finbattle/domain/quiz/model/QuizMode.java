@@ -1,6 +1,6 @@
 // 위치: com.finbattle.domain.quiz.model.QuizMode.java
 
-package com.finbattle.domain.game.dto;
+package com.finbattle.domain.quiz.model;
 
 public enum QuizMode {
     SHORT_ANSWER,  // 단답형
