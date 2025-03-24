@@ -1,6 +1,5 @@
 import { ChatMessage } from "./chatType"
 import { useEffect, useRef } from "react"
-
 interface ChatSectionProps {
   chatMessages: ChatMessage[]
   chatInput?: string
