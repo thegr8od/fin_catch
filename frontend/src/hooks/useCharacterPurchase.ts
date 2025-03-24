@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApi } from "./useApi";
 import { useUserInfo } from "./useUserInfo";
-import { Response } from "../types/response/Response";
+import { CustomAlert } from "../components/layout/CustomAlert";
 
 interface Character {
   catId: number;
@@ -47,12 +47,12 @@ export const useCharacterPurchase = () => {
         }, 3000);
       } else {
         setIsSpinning(false);
-        alert("뽑기에 실패했습니다. 다시 시도해주세요.");
+        CustomAlert({ message: "뽑기에 실패했습니다. 다시 시도해주세요.", onClose: () => {} });
       }
     } catch (error) {
       console.error("뽑기 실패:", error);
       setIsSpinning(false);
-      alert("뽑기에 실패했습니다. 다시 시도해주세요.");
+      CustomAlert({ message: "뽑기에 실패했습니다. 다시 시도해주세요.", onClose: () => {} });
     }
   };
 
