@@ -5,6 +5,7 @@ import com.finbattle.domain.token.repository.RefreshTokenRepository;
 import com.finbattle.global.common.Util.JWTUtil;
 import com.finbattle.global.common.exception.exception.BusinessException;
 import com.finbattle.global.common.model.dto.BaseResponseStatus;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,11 @@ public class TokenService {
     private final JWTUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @PostConstruct
+    public void initMetrics() {
+        refreshTokenRepository.registerActiveUsersGauge();
+    }
+
     public String createAccessToken(String providerId, Long memberId) {
         return jwtUtil.createAccessToken(providerId, memberId);
     }
@@ -30,13 +36,18 @@ public class TokenService {
     }
 
     public String reissueAccessToken(String refreshToken) {
-        if (refreshToken == null) {
-            throw new BusinessException(BaseResponseStatus.REFRESH_TOKEN_NOT_FOUND);
-        }
         jwtUtil.validateRefreshToken(refreshToken);
-        TokenData tokenData = refreshTokenRepository.findByToken(refreshToken)
-            .orElseThrow(() -> new BusinessException(BaseResponseStatus.REFRESH_TOKEN_INVALID));
         Long memberId = jwtUtil.getRefreshMemberId(refreshToken);
+
+        // 저장된 리프레시 토큰 조회
+        TokenData tokenData = refreshTokenRepository.findByToken(memberId)
+            .orElseThrow(() -> new BusinessException(BaseResponseStatus.REFRESH_TOKEN_INVALID));
+
+        // 입력받은 refreshToken과 저장된 refreshToken 비교
+        if (!tokenData.token().equals(refreshToken)) {
+            throw new BusinessException(BaseResponseStatus.REFRESH_TOKEN_INVALID);
+        }
+
         String providerId = jwtUtil.getRefreshProviderId(refreshToken);
         String accessToken = jwtUtil.createAccessToken(providerId, memberId);
         log.info("Access Token refresh 성공!");
@@ -45,11 +56,9 @@ public class TokenService {
     }
 
     @Transactional
-    public void deleteRefreshToken(String refreshToken) {
-        jwtUtil.validateRefreshToken(refreshToken);
-
-        refreshTokenRepository.findByToken(refreshToken).ifPresent(tokenData -> {
-            refreshTokenRepository.deleteByToken(refreshToken);
+    public void deleteRefreshToken(Long memberId) {
+        refreshTokenRepository.findByToken(memberId).ifPresent(tokenData -> {
+            refreshTokenRepository.deleteByToken(tokenData.userId());
             log.info("사용자 ID {}: 로그아웃이 완료되었습니다.", tokenData.userId());
         });
     }

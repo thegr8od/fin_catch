@@ -25,7 +25,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Value("${app.clientUrl}")
     private String baseUrl;
-    private static final String LOGIN_SUCCESS_URI = "/login?success=true";
+    private static final String LOGIN_SUCCESS_URI = "/signin?success=true";
 
     @Override
     @Transactional

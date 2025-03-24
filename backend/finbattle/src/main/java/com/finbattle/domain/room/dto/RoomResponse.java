@@ -1,8 +1,6 @@
 package com.finbattle.domain.room.dto;
 
-import com.finbattle.domain.room.model.QuizType;
-import com.finbattle.domain.room.model.RoomStatus;
-import com.finbattle.domain.room.model.RoomType;
+import com.finbattle.domain.room.model.Room;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -17,4 +15,19 @@ public class RoomResponse {
     private int maxPlayer;
     private Long memberId;
     private LocalDateTime createdAt;
+
+    // ✅ fromEntity() 추가
+    public static RoomResponse fromEntity(Room room) {
+        RoomResponse response = new RoomResponse();
+        response.roomId = room.getRoomId();
+        response.roomTitle = room.getRoomTitle();
+        response.status = room.getStatus();
+        response.roomType = room.getRoomType();
+        response.quizType = room.getQuizType();
+        response.maxPlayer = room.getMaxPlayer();
+        response.memberId =
+            room.getHostMember() != null ? room.getHostMember().getMemberId() : null;
+        response.createdAt = room.getCreatedAt();
+        return response;
+    }
 }

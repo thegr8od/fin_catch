@@ -14,7 +14,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
 
   data:
     redis:
@@ -35,6 +35,12 @@ management:
     export:
       prometheus:
         enabled: true
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: "FinBattle API"
+        url: ${app.baseUrl}/v3/api-docs
 
 application:
   version: 1.0.0

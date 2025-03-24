@@ -1,8 +1,8 @@
 package com.finbattle.domain.member.model;
 
-import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.global.common.model.entity.BaseEntity;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,7 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -61,12 +61,20 @@ public class Member extends BaseEntity {
     @Builder.Default // ✅ 기본값 추가
     private Long point = 100000L; // 포인트 (기본값: 0)
 
+    @Schema(description = "사용자 대표 캐릭터", example = "default")
+    private String mainCat;
+
+    // @Column(nullable = false)
+    private LocalDateTime lastLogin;
+
     public static Member of(String providerId, String nickname, String email) {
         // Member 생성
         return Member.builder()
             .providerId(providerId)
             .nickname(nickname)
             .email(email)
+            .mainCat("classic")
+            //.lastLogin(LocalDateTime.now())
             .build();
     }
 

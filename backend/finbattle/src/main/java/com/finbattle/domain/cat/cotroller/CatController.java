@@ -22,7 +22,7 @@ public class CatController {
 
     private final CatService catService;
 
-    @GetMapping("/public")
+    @GetMapping("/public/all")
     // 1. 전체 고양이 조회
     public ResponseEntity<BaseResponse<List<Cat>>> findAll() {
         return ResponseEntity.ok(new BaseResponse<>(catService.findAll()));

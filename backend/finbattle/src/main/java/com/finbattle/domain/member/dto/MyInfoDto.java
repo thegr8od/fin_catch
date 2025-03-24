@@ -20,8 +20,11 @@ public class MyInfoDto {
     @Schema(description = "사용자 닉네임", example = "고양이사랑해")
     private String nickname;
 
+    @Schema(description = "사용자 대표 캐릭터", example = "default")
+    private String mainCat;
+
     @Schema(description = "사용자가 보유한 고양이 목록")
-    private List<CatDto> Cats;
+    private List<CatDto> cats;
 
     @Schema(description = "사용자의 경험치", example = "1500")
     private Long exp; // 경험치 (기본값: 0)
@@ -29,13 +32,15 @@ public class MyInfoDto {
     @Schema(description = "사용자의 포인트", example = "500")
     private Long point; // 포인트 (기본값: 0)
 
-    public MyInfoDto(String email, String nickname, List<Cat> Cats, Long exp, Long point) {
+    public MyInfoDto(String email, String nickname, List<Cat> Cats, String mainCat, Long exp,
+        Long point) {
         this.email = email;
         this.nickname = nickname;
-        this.Cats = Cats.stream()
+        this.cats = Cats.stream()
             .map(CatDto::new)
             .collect(Collectors.toList());
         ;
+        this.mainCat = mainCat;
         this.exp = exp;
         this.point = point;
     }

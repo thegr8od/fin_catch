@@ -1,23 +1,26 @@
 package com.finbattle.domain.game.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finbattle.domain.game.dto.UserStatus;
+import com.finbattle.domain.game.dto.EventMessage;
+import com.finbattle.domain.game.dto.EventType;
+import com.finbattle.domain.game.dto.MemberStatus;
+import com.finbattle.domain.game.dto.QuizMode;
 import com.finbattle.domain.game.model.ShortAnswerQuiz;
 import com.finbattle.domain.game.repository.ShortAnswerQuizRepository;
-import com.finbattle.domain.game.util.UserStatusUtil;
 import com.finbattle.global.common.redis.RedisPublisher;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuizService {
@@ -27,14 +30,13 @@ public class QuizService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RedisTemplate<String, Object> redisTemplate;
     private final GameService gameService;
+    private final QuizTimerService quizTimerService; // 타이머 서비스 주입
 
-    // 각 방의 현재 활성 퀴즈를 저장 (힌트와 정답 검사용)
     private final ConcurrentMap<String, ShortAnswerQuiz> activeQuizMap = new ConcurrentHashMap<>();
-    // 각 방에서 첫 정답 제출자를 기록 (전투 모드용)
-    private final ConcurrentMap<String, String> firstCorrectAnswerMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Long> firstCorrectAnswerMap = new ConcurrentHashMap<>();
 
     /**
-     * 랜덤 퀴즈 문제를 가져와 Redis 채널 "game-quiz"에 발행합니다.
+     * (1) 랜덤 퀴즈 문제 발행 → "topic/game/{roomId}" (EventMessage 사용)
      */
     public void publishRandomQuiz(String roomId) {
         Pageable pageable = PageRequest.of(0, 1);
@@ -42,89 +44,119 @@ public class QuizService {
         if (list.isEmpty()) {
             return;
         }
+
         ShortAnswerQuiz quiz = list.get(0);
         activeQuizMap.put(roomId, quiz);
-        // 초기화: 이전 첫 정답 기록 삭제
         firstCorrectAnswerMap.remove(roomId);
 
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("quizId", quiz.getQuizId());
-        payload.put("question", quiz.getShortQuestion());
-        payload.put("roomId", roomId);
+        EventMessage<Map<String, Object>> message = new EventMessage<>(
+                EventType.QUIZ,
+                roomId,
+                Map.of("quizId", quiz.getQuizId(), "question", quiz.getShortQuestion())
+        );
 
-        try {
-            String jsonMessage = objectMapper.writeValueAsString(payload);
-            redisPublisher.publish("game-quiz", jsonMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        publishToRoom(roomId, message);
+
+        // 단답형 퀴즈의 경우 QuizMode.SHORT_ANSWER 로 타이머 시작 (타임 제한 20초)
+        quizTimerService.startQuizTimer(roomId, quiz.getQuizId(), QuizMode.SHORT_ANSWER);
     }
 
     /**
-     * 현재 활성 퀴즈의 힌트(힌트1, 힌트2)를 Redis 채널 "game-quizHint"에 발행합니다.
+     * (2) 현재 활성 퀴즈 힌트 발행 → "topic/game/{roomId}"
      */
     public void publishQuizHint(String roomId) {
         ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
         if (quiz == null) {
             return;
         }
-        Map<String, String> payload = new HashMap<>();
-        payload.put("hint1", quiz.getShortFirstHint());
-        payload.put("hint2", quiz.getShortSecondHint());
-        payload.put("roomId", roomId);
 
-        try {
-            String jsonMessage = objectMapper.writeValueAsString(payload);
-            redisPublisher.publish("game-quizHint", jsonMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        EventMessage<Map<String, Object>> message = new EventMessage<>(
+                EventType.QUIZ_HINT,
+                roomId,
+                Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
+        );
+
+        publishToRoom(roomId, message);
     }
 
     /**
-     * 제출된 정답과 활성 퀴즈의 정답을 비교 후, 전투모드 로직을 적용합니다.
-     * - 첫 정답 제출 시, 해당 사용자가 정답이면 상대방의 라이프를 1 감소시킵니다.
-     * - 이후 정답 제출은 무시됩니다.
+     * (3) 정답 체크 및 결과 발행 → "topic/game/{roomId}"
      */
-    public void checkQuizAnswer(String roomId, String userAnswer, String userId) {
+    public void checkQuizAnswer(String roomId, String userAnswer, Long memberId) {
         ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
         if (quiz == null) {
             return;
         }
+
         boolean isCorrect = quiz.getShortAnswer().equalsIgnoreCase(userAnswer.trim());
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("quizId", quiz.getQuizId());
-        payload.put("result", isCorrect ? "정답입니다" : "오답입니다");
-        payload.put("roomId", roomId);
-        payload.put("userId", userId);
 
-        String key = "room:users:" + roomId;
+        EventMessage<Map<String, Object>> resultMessage = new EventMessage<>(
+                EventType.QUIZ_RESULT,
+                roomId,
+                Map.of("quizId", quiz.getQuizId(), "result", isCorrect ? "정답입니다" : "오답입니다", "memberId", memberId)
+        );
+
+        publishToRoom(roomId, resultMessage);
+
+        // 첫 정답자는 라이프 유지, 나머지는 -1 처리
         if (isCorrect && !firstCorrectAnswerMap.containsKey(roomId)) {
-            // 첫 정답 제출 처리
-            firstCorrectAnswerMap.put(roomId, userId);
-            // 모든 사용자 상태를 가져와서, 본인을 제외한 상대방의 라이프 1 감소
-            Map<Object, Object> userMap = redisTemplate.opsForHash().entries(key);
-            for (Map.Entry<Object, Object> entry : userMap.entrySet()) {
-                String stored = (String) entry.getValue();
-                UserStatus status = UserStatusUtil.deserialize(stored);
-                if (!status.getUserId().equals(userId)) {
-                    status.setLife(status.getLife() - 1);
-                    redisTemplate.opsForHash().put(key, status.getUserId(), UserStatusUtil.serialize(status));
-                }
-            }
-            // 변경된 사용자 상태 발행
-            gameService.publishUserStatus(roomId);
+            firstCorrectAnswerMap.put(roomId, memberId);
+            updateUserLives(roomId, memberId);
         }
 
-        try {
-            String jsonMessage = objectMapper.writeValueAsString(payload);
-            redisPublisher.publish("game-quizResult", jsonMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // 정답이면 퀴즈 제거
         if (isCorrect) {
             activeQuizMap.remove(roomId);
             firstCorrectAnswerMap.remove(roomId);
+        }
+    }
+
+    /**
+     * (4) 멤버들의 라이프 업데이트 → WebSocket으로 반영
+     */
+    private void updateUserLives(String roomId, Long correctMemberId) {
+        String usersKey = "room:" + roomId + ":users";
+        String jsonArray = (String) redisTemplate.opsForValue().get(usersKey);
+
+        if (jsonArray == null) {
+            return;
+        }
+
+        try {
+            List<MemberStatus> userStatusList = objectMapper.readValue(
+                    jsonArray,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, MemberStatus.class)
+            );
+
+            // 정답자를 제외한 모든 유저의 life를 -1 처리
+            for (MemberStatus ms : userStatusList) {
+                if (ms.getMemberId() != correctMemberId) {
+                    ms.setLife(ms.getLife() - 1);
+                }
+            }
+
+            redisTemplate.opsForValue().set(usersKey, objectMapper.writeValueAsString(userStatusList));
+
+            EventMessage<List<MemberStatus>> userStatusMessage = new EventMessage<>(
+                    EventType.USER_STATUS, roomId, userStatusList
+            );
+            publishToRoom(roomId, userStatusMessage);
+
+        } catch (JsonProcessingException e) {
+            log.error("❌ JSON 변환 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * (5) WebSocket + Redis를 통한 메시지 발행 → "topic/game/{roomId}"
+     */
+    private void publishToRoom(String roomId, EventMessage<?> message) {
+        try {
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            redisPublisher.publish("game:" + roomId, jsonMessage);
+            log.info("🚀 Sent WebSocket message to room {}: {}", roomId, jsonMessage);
+        } catch (JsonProcessingException e) {
+            log.error("❌ JSON 변환 실패: {}", e.getMessage());
         }
     }
 }
