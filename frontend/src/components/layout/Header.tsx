@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useUserInfo } from "../../hooks/useUserInfo";
 import { useAuth } from "../../hooks/useAuth";
 import { useGameExit, getCurrentGameState } from "../../hooks/useGameExit";
-
 const Header: React.FC = () => {
   const { user, loading, clearUserInfo } = useUserInfo();
   const navigate = useNavigate();
