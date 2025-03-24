@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -85,5 +86,12 @@ public class RoomController {
     @GetMapping("/open")
     public ResponseEntity<List<RoomResponse>> getOpenRooms() {
         return ResponseEntity.ok(roomService.getOpenRooms());
+    }
+
+
+    @Operation(summary = "게임 시작하기", description = "room 게임 시작 api")
+    @PutMapping("/start/{roomId}/{memberId}")
+    public void readyRoom(@PathVariable Long roomId, @PathVariable Long memberId) {
+        roomService.startRoom(roomId, memberId);
     }
 }

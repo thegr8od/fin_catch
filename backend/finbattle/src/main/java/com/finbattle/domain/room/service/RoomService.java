@@ -2,21 +2,29 @@ package com.finbattle.domain.room.service;
 
 import static com.finbattle.domain.room.dto.RoomStatus.OPEN;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
+import com.finbattle.domain.room.dto.EventMessage;
+import com.finbattle.domain.room.dto.MessageType;
 import com.finbattle.domain.room.dto.QuizType;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.dto.RoomType;
+import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.domain.room.model.Room;
 import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
+import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoomService {
@@ -24,6 +32,8 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final RedisRoomRepository redisRoomRepository;
+    private final RedisPublisher redisPublisher;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 방 생성
     public RoomResponse createRoom(RoomCreateRequest request) {
@@ -51,20 +61,32 @@ public class RoomService {
         return mapToRoomResponse(savedRoom);
     }
 
-    public RoomResponse startRoom(Long roomId) {
+    public void startRoom(Long roomId, Long memberId) {
         Room room = roomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
         room.setStatus(RoomStatus.IN_PROGRESS);
         roomRepository.save(room);
-        return mapToRoomResponse(room);
-    }
 
-    public RoomResponse closeRoom(Long roomId) {
-        Room room = roomRepository.findById(roomId)
-            .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
-        room.setStatus(RoomStatus.CLOSED);
-        roomRepository.save(room);
-        return mapToRoomResponse(room);
+        RedisRoom redisRoom = redisRoomRepository.findById(roomId)
+            .orElseThrow(() -> new IllegalArgumentException("Redis에 해당 방이 존재하지 않습니다."));
+        redisRoom.setStatus(RoomStatus.IN_PROGRESS);
+        redisRoomRepository.save(redisRoom);
+
+//        if (!redisRoom.getHost().getMemberId().equals(memberId)) {
+//            log.warn("🚨 게임 시작 실패: room:{}의 게임 시작은 방장만 가능합니다.", roomId);
+//            sendError(roomId, "게임 시작 실패: 방장만 게임을 시작할 수 있습니다.");
+//            return;
+//        }
+
+        EventMessage<RedisRoom> eventMessage = new EventMessage<>(MessageType.START, roomId,
+            redisRoom);
+        try {
+            String jsonMessage = objectMapper.writeValueAsString(eventMessage);
+            redisPublisher.publish("room:" + roomId, jsonMessage);
+        } catch (JsonProcessingException e) {
+            log.error("RedisRoom START 이벤트 직렬화 실패", e);
+            throw new IllegalStateException("이벤트 메시지 생성 중 오류가 발생했습니다.");
+        }
     }
 
     public void deleteRoom(Long roomId) {
@@ -99,8 +121,7 @@ public class RoomService {
 
     // OPEN 상태의 방만 가져오기
     public List<RoomResponse> getOpenRooms() {
-        RoomStatus roomStatus = OPEN;
-        return roomRepository.findByStatus(roomStatus).stream()
+        return roomRepository.findByStatus(RoomStatus.OPEN).stream()
             .map(RoomResponse::fromEntity) // Room -> RoomResponse 변환
             .collect(Collectors.toList());
     }
@@ -120,4 +141,14 @@ public class RoomService {
         response.setMemberId(room.getHostMember().getMemberId());
         return response;
     }
+
+//    private void sendError(String roomId, String errorMessage) {
+//        com.finbattle.domain.game.dto.EventMessage<String> message = new com.finbattle.domain.game.dto.EventMessage<>(
+//            EventType.GAME_INFO, roomId,
+//            errorMessage);
+//        publishToRoom(roomId, message);
+//        log.warn("게임 시작 에러 - room {}: {}", roomId, errorMessage);
+//    }
+
+//    private
 }

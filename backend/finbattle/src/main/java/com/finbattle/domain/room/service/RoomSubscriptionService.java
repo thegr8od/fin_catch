@@ -1,14 +1,20 @@
 package com.finbattle.domain.room.service;
 
+import static com.finbattle.global.common.model.dto.BaseResponseStatus.MEMBER_NOT_FOUND;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finbattle.domain.member.model.Member;
+import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.domain.room.dto.EventMessage;
+import com.finbattle.domain.room.dto.FailResponse;
 import com.finbattle.domain.room.dto.MessageType;
 import com.finbattle.domain.room.dto.RedisRoomMember;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.domain.room.repository.RedisRoomRepository;
+import com.finbattle.global.common.exception.exception.BusinessException;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +29,7 @@ public class RoomSubscriptionService {
     private final RedisRoomRepository redisRoomRepository;
     private final RedisPublisher redisPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final MemberRepository memberRepository;
 
     /**
      * 방을 생성하고 Redis에 저장 후 이벤트 발행
@@ -33,14 +40,15 @@ public class RoomSubscriptionService {
         redisRoom.setMaxPeople(2);
         redisRoom.setStatus(RoomStatus.OPEN);
 
+        Member member = memberRepository.findByMemberId(response.getMemberId())
+            .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
+
         RedisRoomMember host = new RedisRoomMember();
-        if (response.getMemberId() != null) {
-            host.setMemberId(response.getMemberId());
-        } else {
-            log.error("방 생성 시 Member ID가 null 입니다.");
-            throw new IllegalStateException("방 생성 시 Member ID가 null 입니다.");
-        }
+        host.setMemberId(member.getMemberId());
+        host.setMainCat(member.getMainCat());
+        host.setNickname(member.getNickname());
         host.setStatus("READY");
+
         redisRoom.setHost(host);
         redisRoom.getMembers().add(host);
 
@@ -49,7 +57,7 @@ public class RoomSubscriptionService {
 
         redisRoomRepository.save(redisRoom);
 //        saveRoomContainer(response.getRoomId(), container);
-        publishEvent(MessageType.CREATE, response.getRoomId(), null, null, 0, null);
+        publishEvent(MessageType.CREATE, response.getRoomId(), redisRoom);
     }
 
     /**
@@ -58,7 +66,7 @@ public class RoomSubscriptionService {
     public void getRoomUserCount(Long roomId) {
         RedisRoom redisRoom = getRedisRoom(roomId);
         int count = redisRoom == null ? 0 : redisRoom.getMembers().size();
-        publishEvent(MessageType.COUNT, roomId, null, null, count, null);
+        publishEvent(MessageType.COUNT, roomId, count);
     }
 
     /**
@@ -68,29 +76,34 @@ public class RoomSubscriptionService {
         RedisRoom redisRoom = getRedisRoom(roomId);
 
         if (redisRoom.getStatus() != RoomStatus.OPEN) {
-            publishEvent(MessageType.JOIN_FAIL, roomId, userId, "방이 닫혀있습니다.", 0, null);
+            publishEvent(MessageType.JOIN_FAIL, roomId, new FailResponse("방이 닫혀있습니다."));
             throw new IllegalStateException("방에 입장할 수 없는 상태입니다.");
         }
 
         if (redisRoom.getMembers().size() >= redisRoom.getMaxPeople()) {
-            publishEvent(MessageType.JOIN_FAIL, roomId, userId, "방 정원이 초과되었습니다.", 0, null);
+            publishEvent(MessageType.JOIN_FAIL, roomId, new FailResponse("방 정원이 초과되었습니다."));
             throw new IllegalStateException("방 정원이 초과되었습니다.");
         }
 
         boolean alreadyIn = redisRoom.getMembers().stream()
             .anyMatch(m -> userId.equals(m.getMemberId()));
         if (alreadyIn) {
-            publishEvent(MessageType.JOIN_FAIL, roomId, userId, "이미 입장한 유저입니다.", 0, null);
+            publishEvent(MessageType.JOIN_FAIL, roomId, new FailResponse("이미 입장한 유저입니다."));
             throw new IllegalStateException("이미 방에 입장해 있습니다.");
         }
 
+        Member m = memberRepository.findByMemberId(userId)
+            .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
+
         RedisRoomMember member = new RedisRoomMember();
         member.setMemberId(userId);
+        member.setNickname(m.getNickname());
+        member.setMainCat(m.getMainCat());
         member.setStatus("NOT_READY");
         redisRoom.getMembers().add(member);
 
         redisRoomRepository.save(redisRoom);
-        publishEvent(MessageType.READY, roomId, userId, null, redisRoom.getMembers().size(), null);
+        publishEvent(MessageType.READY, roomId, userId);
     }
 
     /**
@@ -100,7 +113,7 @@ public class RoomSubscriptionService {
         RedisRoom redisRoom = getRedisRoom(roomId);
         if (redisRoom == null) {
             // ✅ MessageType.DELETE 사용
-            publishEvent(MessageType.DELETE, roomId, null, null, 0, null);
+            publishEvent(MessageType.DELETE, roomId, null);
             return;
         }
 
@@ -124,7 +137,7 @@ public class RoomSubscriptionService {
 
         // 5) 이벤트 발행
         // ✅ MessageType.LEAVE 사용
-        publishEvent(MessageType.LEAVE, roomId, userId, null, members.size(), null);
+        publishEvent(MessageType.LEAVE, roomId, userId);
     }
 
     /**
@@ -134,7 +147,7 @@ public class RoomSubscriptionService {
         RedisRoom redisRoom = getRedisRoom(roomId);
         if (redisRoom == null) {
             // ✅ MessageType.KICK_FAIL 사용
-            publishEvent(MessageType.KICK_FAIL, roomId, targetUserId, "방이 존재하지 않습니다.", 0, null);
+            publishEvent(MessageType.KICK_FAIL, roomId, new FailResponse("방이 존재하지 않습니다."));
             throw new IllegalStateException("방이 존재하지 않습니다.");
         }
 
@@ -142,8 +155,7 @@ public class RoomSubscriptionService {
         boolean removed = members.removeIf(m -> m.getMemberId().equals(targetUserId));
         if (!removed) {
             // ✅ MessageType.KICK_FAIL 사용
-            publishEvent(MessageType.KICK_FAIL, roomId, targetUserId, "유저가 존재하지 않습니다.",
-                redisRoom.getMembers().size(), null);
+            publishEvent(MessageType.KICK_FAIL, roomId, new FailResponse("유저가 존재하지 않습니다."));
             throw new IllegalStateException("해당 유저가 방에 없습니다.");
         }
 
@@ -154,8 +166,7 @@ public class RoomSubscriptionService {
         redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.KICK 사용
-        publishEvent(MessageType.KICK, roomId, targetUserId, null, redisRoom.getMembers().size(),
-            null);
+        publishEvent(MessageType.KICK, roomId, targetUserId);
     }
 
 
@@ -164,7 +175,7 @@ public class RoomSubscriptionService {
      */
     public void deleteRoom(Long roomId) {
         redisRoomRepository.deleteById(roomId);
-        publishEvent(MessageType.DELETE, roomId, null, null, 0, null);
+        publishEvent(MessageType.DELETE, roomId, null);
         log.info("Room {} deleted from Redis", roomId);
     }
 
@@ -176,7 +187,7 @@ public class RoomSubscriptionService {
         if (redisRoom == null) {
             return;
         }
-        publishEvent(MessageType.INFO, roomId, null, null, 0, redisRoom);
+        publishEvent(MessageType.INFO, roomId, redisRoom);
     }
 
     /**
@@ -206,7 +217,7 @@ public class RoomSubscriptionService {
         redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.READY 사용
-        publishEvent(MessageType.READY, roomId, userId, null, members.size(), null);
+        publishEvent(MessageType.READY, roomId, redisRoom);
     }
 
     /**
@@ -217,63 +228,33 @@ public class RoomSubscriptionService {
     }
 
     /**
-     * 기존 RoomContainer 가져오기
+     * Redis에서 방 유저 준비 해제
      */
-//    public RoomContainer getRoomContainer(Long roomId) {
-//        String redisKey = "room:" + roomId;
-//
-//        // "users" 해시 필드
-//        Object usersField = redisTemplate.opsForHash().get(redisKey, "users");
-//        // "data" 해시 필드
-//        Object dataField = redisTemplate.opsForHash().get(redisKey, "data");
-//
-//        // 없으면 null
-//        if (usersField == null || dataField == null) {
-//            return null;
-//        }
-//
-//        try {
-//            RoomContainer container = new RoomContainer();
-//            // users는 Map<String, String>
-//            container.setUsers(
-//                objectMapper.readValue(usersField.toString(), container.getUsers().getClass()));
-//            // data는 RedisRoom
-//            RedisRoom redisRoom = objectMapper.readValue(dataField.toString(), RedisRoom.class);
-//            container.setData(redisRoom);
-//            return container;
-//        } catch (JsonProcessingException e) {
-//            log.error("Failed to parse RoomContainer from Redis: {}", e.getMessage());
-//            return null;
-//        }
-//    }
+    public void setUserUnReady(Long roomId, Long userId) {
+        RedisRoom redisRoom = getRedisRoom(roomId);
 
-    /**
-     * 방 데이터를 Redis에 저장
-     */
-//    private void saveRoomContainer(Long roomId, RoomContainer container) {
-//        String redisKey = "room:" + roomId;
-//        try {
-//            String usersJson = objectMapper.writeValueAsString(container.getUsers());
-//            String dataJson = objectMapper.writeValueAsString(container.getData());
-//
-//            redisTemplate.opsForHash().put(redisKey, "users", usersJson);
-//            redisTemplate.opsForHash().put(redisKey, "data", dataJson);
-//
-//            log.info("Saved RoomContainer to Redis as a hash => key={}, fields=[users, data]",
-//                redisKey);
-//        } catch (JsonProcessingException e) {
-//            log.error("Failed to save RoomContainer to Redis: {}", e.getMessage());
-//        }
-//    }
+        List<RedisRoomMember> members = redisRoom.getMembers();
+        RedisRoomMember member = members.stream()
+            .filter(m -> userId.equals(m.getMemberId()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("해당 유저는 방에 없습니다."));
+
+        if ("READY".equals(member.getStatus())) {
+            member.setStatus("NOT_READY");
+            redisRoomRepository.save(redisRoom);
+            publishEvent(MessageType.NOT_READY, roomId, redisRoom);
+            log.info("✅ 유저 {}의 상태를 NOT_READY로 변경", userId);
+        } else {
+            log.info("ℹ️ 유저 {}는 이미 NOT_READY 상태입니다.", userId);
+        }
+    }
 
     /**
      * 이벤트 메시지를 Redis Pub/Sub을 통해 발행
      */
-    private void publishEvent(MessageType event, Long roomId, Long userId, String reason,
-        int userCount, RedisRoom redisRoom) {
+    private void publishEvent(MessageType event, Long roomId, Object data) {
         try {
-            EventMessage message = new EventMessage(event, roomId, userId, reason, userCount,
-                redisRoom);
+            EventMessage<Object> message = new EventMessage<>(event, roomId, data);
             String jsonMessage = objectMapper.writeValueAsString(message);
             redisPublisher.publish("room:" + roomId, jsonMessage);
             log.info("🚀 Published event: {} -> room:{}", event, roomId);
@@ -281,5 +262,6 @@ public class RoomSubscriptionService {
             log.error("Failed to publish event: {}", e.getMessage());
         }
     }
+
 
 }

@@ -83,6 +83,12 @@ public class RoomWebSocketController {
         roomSubscriptionService.setUserReady(roomId, userId);
     }
 
+    @MessageMapping("/room/{roomId}/unready/{userId")
+    public void setUnready(@DestinationVariable Long roomId, @DestinationVariable Long userId) {
+        log.info("User {} unready set READY in room {}", userId, roomId);
+        roomSubscriptionService.setUserUnReady(roomId, userId);
+    }
+
     /**
      * 방 삭제 요청 처리
      */

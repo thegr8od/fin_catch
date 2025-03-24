@@ -11,4 +11,7 @@ public class RedisRoomMember {
 
     private Long memberId;
     private String status; // 예: "READY", "NOT_READY"
+    private String nickname;
+    private String mainCat;
+    
 }
