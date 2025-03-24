@@ -19,6 +19,7 @@ import QuizResultSection from "../components/quiz/QuizResultSection";
 import CharacterInfoModal from "../components/character/CharacterInfoModal";
 import CharacterList from "../components/character/CharacterList";
 import AnimatedCharacterDisplay from "../components/character/AnimatedCharacterDisplay";
+import WrongAnswerAnalysis from "../components/analysis/WrongAnswerAnalysis";
 
 // API 응답의 Cat 타입을 Character 타입으로 변환하는 함수
 const convertCatToCharacter = (cat: any): Character => {
@@ -84,6 +85,51 @@ const MainPage = () => {
     { id: 1, topic: "투자 위험 관리", level: "high" as const },
     { id: 2, topic: "세금 계산", level: "medium" as const },
     { id: 3, topic: "금융 상품 이해", level: "low" as const },
+  ];
+
+  const wrongAnswerCategories = [
+    {
+      id: 1,
+      name: "주식",
+      problems: [
+        {
+          id: 1,
+          title: "PER 계산하기",
+          wrongCount: 3,
+          analysis: "PER(주가수익비율) 계산에서 자주 실수하시는 부분이 있네요. PER은 주가를 주당순이익(EPS)으로 나누어 계산합니다. 특히 EPS 계산 시 당기순이익을 발행주식수로 나누는 것을 잊지 마세요.",
+        },
+        {
+          id: 2,
+          title: "배당수익률 이해하기",
+          wrongCount: 2,
+          analysis: "배당수익률 문제에서 주로 어려움을 겪으셨습니다. 배당수익률은 주당배당금을 주가로 나누어 계산하며, 이를 백분율로 표시합니다.",
+        },
+      ],
+    },
+    {
+      id: 2,
+      name: "금융",
+      problems: [
+        {
+          id: 3,
+          title: "복리 이자 계산",
+          wrongCount: 4,
+          analysis: "복리 이자 계산에서 기간별 이자가 원금에 포함되어 재투자되는 개념을 이해하는 것이 중요합니다. 특히 연복리와 월복리의 차이점을 주의 깊게 보세요.",
+        },
+      ],
+    },
+    {
+      id: 3,
+      name: "코인",
+      problems: [
+        {
+          id: 4,
+          title: "블록체인 기초",
+          wrongCount: 2,
+          analysis: "블록체인의 기본 개념에서 블록 간의 연결성과 합의 알고리즘의 역할을 이해하는 것이 중요합니다.",
+        },
+      ],
+    },
   ];
 
   // 캐릭터 리스트 정렬: 대표 캐릭터를 맨 앞으로
@@ -170,6 +216,11 @@ const MainPage = () => {
               </div>
 
               <CharacterList characters={sortedCharacters} selectedCharacter={selectedCharacter} onSelect={handleCharacterSelect} mainCat={profileData.mainCat} />
+            </div>
+
+            {/* 오답노트 분석 섹션 */}
+            <div className="mt-6 mb-6">
+              <WrongAnswerAnalysis onDetailView={() => handleModalOpen("feature")} categories={wrongAnswerCategories} />
             </div>
 
             {/* 계좌 연동 섹션 */}
