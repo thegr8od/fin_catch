@@ -5,19 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.EventMessage;
 import com.finbattle.domain.game.dto.EventType;
 import com.finbattle.domain.game.dto.MemberStatus;
-import com.finbattle.domain.game.dto.QuizMode;
+import com.finbattle.domain.quiz.model.QuizMode;
 import com.finbattle.domain.room.dto.RedisRoomMember;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.global.common.redis.RedisPublisher;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -26,7 +25,8 @@ public class GameService {
 
     private final RedisPublisher redisPublisher;
     private final RedisTemplate<String, Object> redisTemplate;
-    @Lazy private final QuizTimerService quizTimerService; // 퀴즈 타이머 호출용
+    @Lazy
+    private final QuizTimerService quizTimerService; // 퀴즈 타이머 호출용
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String ROOM_DATA_KEY_PREFIX = "room:";
@@ -56,7 +56,7 @@ public class GameService {
             return;
         }
         boolean allReady = roomMembers.stream()
-                .allMatch(member -> "READY".equalsIgnoreCase(member.getStatus()));
+            .allMatch(member -> "READY".equalsIgnoreCase(member.getStatus()));
         if (!allReady) {
             log.warn("🚨 게임 시작 실패: room:{}의 모든 플레이어가 준비완료되어야 합니다.", roomId);
             sendError(roomId, "모든 사용자가 준비완료가 되어야합니다.");
@@ -81,7 +81,8 @@ public class GameService {
 
         publishUserStatus(roomId);
 
-        EventMessage<String> startMessage = new EventMessage<>(EventType.GAME_INFO, roomId, "IN_PROGRESS");
+        EventMessage<String> startMessage = new EventMessage<>(EventType.GAME_INFO, roomId,
+            "IN_PROGRESS");
         publishToRoom(roomId, startMessage);
         log.info("✅ 게임 시작: room:{}에서 방장 {}의 요청으로 게임을 시작합니다.", roomId, requesterId);
 
@@ -108,8 +109,10 @@ public class GameService {
         }
         try {
             List<MemberStatus> userList = objectMapper.readValue(jsonArray,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, MemberStatus.class));
-            EventMessage<List<MemberStatus>> message = new EventMessage<>(EventType.USER_STATUS, roomId, userList);
+                objectMapper.getTypeFactory()
+                    .constructCollectionType(List.class, MemberStatus.class));
+            EventMessage<List<MemberStatus>> message = new EventMessage<>(EventType.USER_STATUS,
+                roomId, userList);
             publishToRoom(roomId, message);
             log.info("🚀 UserStatus 전송 -> {}", message);
         } catch (JsonProcessingException e) {
@@ -152,7 +155,8 @@ public class GameService {
     }
 
     private void sendError(String roomId, String errorMessage) {
-        EventMessage<String> message = new EventMessage<>(EventType.GAME_INFO, roomId, errorMessage);
+        EventMessage<String> message = new EventMessage<>(EventType.GAME_INFO, roomId,
+            errorMessage);
         publishToRoom(roomId, message);
         log.warn("게임 시작 에러 - room {}: {}", roomId, errorMessage);
     }

@@ -2,6 +2,7 @@ package com.finbattle.domain.game.model;
 
 import com.finbattle.domain.game.dto.QuizSubject;
 import com.finbattle.domain.game.dto.QuizType;
+import com.finbattle.domain.quiz.model.ShortAnswerQuiz;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
