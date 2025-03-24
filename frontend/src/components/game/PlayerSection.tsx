@@ -19,7 +19,7 @@ const PlayerSection = ({ name, health, state, bubble, resourcesLoaded, direction
       <div className="w-full flex flex-col items-center mb-2">
         {/* 말풍선 */}
         {bubble && (
-          <div className="w-full flex justify-center mb-2">
+          <div className="absolute -top-[4.5rem] sm:-top-[5rem] md:-top-[5.5rem] lg:-top-[6rem] left-1/2 left-1/2 -translate-x-1/2 w-full flex justify-center mb-2">
             <div className="bg-white bg-opacity-80 rounded-lg p-4 min-w-[10rem] max-w-[15rem] relative">
               {/* 스크롤이 있는 메시지 컨테이너 */}
               <div className="max-h-[100px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
