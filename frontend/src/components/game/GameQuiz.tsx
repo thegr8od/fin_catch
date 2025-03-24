@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CharacterType } from "../game/constants/animations";
 import CharacterAnimation from "./CharacterAnimation";
+import bgforest from "/assets/bgforest.png";
 
 interface GameQuizProps {
   timeLeft: number;
@@ -38,7 +39,7 @@ const GameQuiz = ({ timeLeft, isTimeUp, onShowResults, playerCat, opponentCat }:
 
       <div className="w-full flex flex-col items-center">
         {/* 고양이 대결 영역 */}
-        <div className="w-full flex justify-between items-center my-4 bg-white rounded-lg shadow-lg p-4 overflow-hidden relative border-2 border-primary border-opacity-30 shadow-lg" style={{ height: '252px' }}>
+        <div className="w-full flex justify-between items-center my-4" style={{ backgroundImage: `url(${bgforest})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.87 }}>
           {/* 플레이어 고양이 (왼쪽) */}
           <div className="flex items-center justify-start pl-4">
             <CharacterAnimation state={'idle'} direction={true} scale={3} size="large" />
