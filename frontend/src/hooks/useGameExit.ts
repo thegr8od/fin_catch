@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 
 interface GameStateType {
   isInGame: boolean;
-  gameType: "1vs1" | "battle-royale" | null;
+  gameType: "1vs1" | null;
   roomId: string | null;
 }
 
