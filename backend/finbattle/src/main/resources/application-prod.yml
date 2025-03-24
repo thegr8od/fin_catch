@@ -13,8 +13,8 @@ server:
   port: 9091
 
 app:
-  baseUrl: https://j12d108.p.ssafy.io
   clientUrl: https://j12d108.p.ssafy.io
+  baseUrl: https://j12d108.p.ssafy.io
 
 logging:
   level:
