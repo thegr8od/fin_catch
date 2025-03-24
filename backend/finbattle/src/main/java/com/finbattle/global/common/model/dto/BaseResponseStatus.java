@@ -28,7 +28,20 @@ public enum BaseResponseStatus {
     CAT_ALL_GONE(false, HttpStatus.NOT_FOUND, 2005, "고양이가 모두 도망갔습니다."),
     NOT_HAVE_CAT(false, HttpStatus.BAD_REQUEST, 2006, "해당 고양이를 아직 길들이지 못했습니다."),
     CAT_MAIN_ALREADY(false, HttpStatus.BAD_REQUEST, 2007, "이미 주인공인 고양이 입니다."),
-    ;
+
+    // Banking (3001 ~ 3099)
+    HEADER_INVALID(false, HttpStatus.BAD_REQUEST, 3000, "HEADER 정보가 유효하지 않습니다."),
+    API_NAME_INVALID(false, HttpStatus.BAD_REQUEST, 3001, "API 이름이 유효하지 않습니다."),
+    TRANSMISSION_DATE_INVALID(false, HttpStatus.BAD_REQUEST, 3002, "전송일자 형식이 유효하지 않습니다."),
+    TRANSMISSION_TIME_INVALID(false, HttpStatus.BAD_REQUEST, 3003, "전송시각 형식이 유효하지 않습니다."),
+    INSTITUTION_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3004, "기관코드가 유효하지 않습니다."),
+    FINTECH_APP_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3005, "핀테크 앱 일련번호가 유효하지 않습니다."),
+    API_SERVICE_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3006, "API 서비스코드가 유효하지 않습니다."),
+    INSTITUTION_TRANSACTION_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3010, "기관거래고유번호가 유효하지 않습니다."),
+    INSTITUTION_TRANSACTION_NO_DUPLICATE(false, HttpStatus.BAD_REQUEST, 3007,
+        "기관거래고유번호가 중복된 값입니다."),
+    API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
+    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다.");
 
     private final boolean isSuccess;
     @JsonIgnore

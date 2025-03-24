@@ -8,7 +8,8 @@ public enum EventType {
     QUIZ,
     QUIZ_RESULT,
     QUIZ_HINT,
-    GAME_INFO;
+    GAME_INFO,
+    GAME_START;  // 추가된 상수
 
     @JsonValue
     @Override

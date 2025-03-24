@@ -3,154 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <title>FinBattle - Chat, Game & Quiz Test</title>
-  <!-- SockJS와 StompJS 라이브러리 -->
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #fff8f8;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none" stroke="%23ffcccc" stroke-width="1"><path d="M25,10 Q30,5 35,10 Q40,15 35,20 Q30,25 25,20 Q20,15 25,10 Z"/><circle cx="20" cy="40" r="3"/><circle cx="30" cy="40" r="3"/></svg>');
-      background-size: 100px 100px;
-    }
-
-    .section {
-      border: 2px solid #ffaaaa;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      background-color: white;
-      box-shadow: 0 3px 6px rgba(255, 170, 170, 0.2);
-      position: relative;
-    }
-
-    .section::after {
-      content: "🐾";
-      position: absolute;
-      bottom: 5px;
-      right: 10px;
-      opacity: 0.2;
-      font-size: 20px;
-    }
-
-    .logBox {
-      border: 1px solid #ffcccc;
-      padding: 10px;
-      height: 100px;
-      overflow-y: auto;
-      margin-top: 10px;
-      background: #fff9f9;
-      border-radius: 8px;
-    }
-
-    .statusBox {
-      border: 1px solid #ffcccc;
-      padding: 10px;
-      height: 150px;
-      overflow-y: auto;
-      margin-top: 10px;
-      background: #fff0f5;
-      border-radius: 8px;
-    }
-
-    .userItem {
-      margin: 5px 0;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background-color: #fff5f5;
-    }
-
-    .correct {
-      color: green;
-      font-weight: bold;
-      margin-left: 10px;
-    }
-
-    button {
-      padding: 5px 10px;
-      margin: 0 5px;
-      border-radius: 8px;
-      cursor: pointer;
-      background-color: #ff9999;
-      border: none;
-      color: white;
-      transition: all 0.2s;
-    }
-
-    button:hover {
-      background-color: #ff7777;
-      transform: translateY(-2px);
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      padding: 5px;
-      border-radius: 6px;
-      border: 1px solid #ffaaaa;
-      background-color: #fffafa;
-    }
-
-    h1 {
-      color: #ff6b6b;
-      text-align: center;
-    }
-
-    h1::before, h1::after {
-      content: "🐱";
-      margin: 0 10px;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #ff6b6b;
-      border-bottom: 2px dotted #ffdddd;
-      padding-bottom: 5px;
-    }
-
-    .game-buttons {
-      text-align: center;
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #fff0f5;
-      border-radius: 10px;
-      border: 1px dashed #ffaaaa;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #fff8f8; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none" stroke="%23ffcccc" stroke-width="1"><path d="M25,10 Q30,5 35,10 Q40,15 35,20 Q30,25 25,20 Q20,15 25,10 Z"/><circle cx="20" cy="40" r="3"/><circle cx="30" cy="40" r="3"/></svg>'); background-size: 100px 100px; }
+    .section { border: 2px solid #ffaaaa; padding: 15px; margin-bottom: 20px; border-radius: 10px; background-color: white; box-shadow: 0 3px 6px rgba(255, 170, 170, 0.2); position: relative; }
+    .section::after { content: "🐾"; position: absolute; bottom: 5px; right: 10px; opacity: 0.2; font-size: 20px; }
+    .logBox { border: 1px solid #ffcccc; padding: 10px; height: 100px; overflow-y: auto; margin-top: 10px; background: #fff9f9; border-radius: 8px; }
+    .statusBox { border: 1px solid #ffcccc; padding: 10px; height: 150px; overflow-y: auto; margin-top: 10px; background: #fff0f5; border-radius: 8px; }
+    .userItem { margin: 5px 0; padding: 3px 8px; border-radius: 6px; background-color: #fff5f5; }
+    button { padding: 5px 10px; margin: 0 5px; border-radius: 8px; cursor: pointer; background-color: #ff9999; border: none; color: white; transition: all 0.2s; }
+    button:hover { background-color: #ff7777; transform: translateY(-2px); }
+    input[type="text"], input[type="number"] { padding: 5px; border-radius: 6px; border: 1px solid #ffaaaa; background-color: #fffafa; }
+    h1 { color: #ff6b6b; text-align: center; }
+    h1::before, h1::after { content: "🐱"; margin: 0 10px; }
+    h2 { margin-top: 0; color: #ff6b6b; border-bottom: 2px dotted #ffdddd; padding-bottom: 5px; }
+    .game-buttons { text-align: center; margin-top: 20px; padding: 10px; background-color: #fff0f5; border-radius: 10px; border: 1px dashed #ffaaaa; }
   </style>
 </head>
 <body>
 <h1>FinBattle - Chat, Game & Quiz Test</h1>
 
-<!-- (1) 방 생성 영역 -->
 <div class="section">
   <h2>방 생성</h2>
-  <!-- userId (방 생성자 ID) -->
-  <label>생성자 ID:</label>
-  <input type="number" id="creatorUserId" placeholder="Enter Creator's User ID"/>
-
-  <br/><br/>
-  <label>방 제목:</label>
-  <input type="text" id="roomTitle" placeholder="방 제목 입력"/>
-
-  <br/><br/>
-  <label>비밀번호:</label>
-  <input type="text" id="roomPassword" placeholder="비밀번호(옵션)"/>
-
-  <br/><br/>
-  <label>최대 인원 수:</label>
-  <input type="number" id="maxPlayer" placeholder="예) 4"/>
-
-  <br/><br/>
-  <!-- RoomType을 select로 변경 -->
+  <label>생성자 ID:</label> <input type="number" id="creatorUserId" placeholder="Enter Creator's User ID"/><br/><br/>
+  <label>방 제목:</label> <input type="text" id="roomTitle" placeholder="방 제목 입력"/><br/><br/>
+  <label>비밀번호:</label> <input type="text" id="roomPassword" placeholder="비밀번호(옵션)"/><br/><br/>
+  <label>최대 인원 수:</label> <input type="number" id="maxPlayer" placeholder="예) 4"/><br/><br/>
   <label>방 유형:</label>
   <select id="roomType">
     <option value="ONE_ON_ONE">1대1 방</option>
     <option value="MULTI">다인전</option>
     <option value="AI_BATTLE">AI 배틀</option>
-  </select>
-
-  <br/><br/>
-  <!-- QuizType을 select로 변경 -->
+  </select><br/><br/>
   <label>퀴즈 유형:</label>
   <select id="quizType">
     <option value="FIN_KNOWLEDGE">금융 지식</option>
@@ -158,88 +43,72 @@
     <option value="FIN_POLICY">금융 정책</option>
     <option value="FIN_PRODUCT">금융 상품</option>
     <option value="FIN_INVESTMENT">금융 투자</option>
-  </select>
-
-  <br/><br/>
+  </select><br/><br/>
   <button onclick="createRoom()">Create Room</button>
-  <!-- 방 생성 결과를 표시할 영역 -->
   <div id="createRoomResult" class="logBox"></div>
 </div>
 
-<!-- (2) 방 접속 영역 -->
 <div class="section">
   <h2>방 접속</h2>
-  <label>Room ID: </label>
-  <input type="text" id="roomId" placeholder="Enter Room ID"/>
-  <label>User ID: </label>
-  <input type="text" id="userId" placeholder="Enter Your ID"/>
+  <label>Room ID: </label> <input type="text" id="roomId" placeholder="Enter Room ID"/>
+  <label>User ID: </label> <input type="text" id="userId" placeholder="Enter Your ID"/>
   <button onclick="connect()">Connect</button>
 </div>
 
-<!-- (3) 접속 상태 영역 -->
 <div class="section">
   <h2>Online Users</h2>
   <div id="userStatus" class="statusBox"></div>
 </div>
 
-<!-- 방 목록 출력 영역 -->
 <div class="section">
   <h2>방 목록 (OPEN 상태만)</h2>
   <button onclick="loadOpenRooms()">방 목록 새로고침</button>
   <div id="roomList" class="logBox"></div>
 </div>
 
-<!-- 방 정보 영역 -->
 <div class="section">
   <h2>Room Info</h2>
   <button onclick="requestRoomInfo()">Get Room Info</button>
   <div id="roomInfo" class="logBox"></div>
 </div>
 
-<!-- [추가] 강퇴, 준비 버튼 영역 -->
 <div class="section">
   <h2>Room Controls</h2>
-  <!-- 다른 사용자를 강퇴할 수 있는 UI 예시 -->
-  <label>Target User ID to kick: </label>
-  <input type="text" id="kickUserId" placeholder="Enter target user ID"/>
-  <button onclick="kickUser()">Kick User</button>
-  <br/><br/>
-  <!-- 자신을 ready 상태로 만들기 -->
+  <label>Target User ID to kick: </label> <input type="text" id="kickUserId" placeholder="Enter target user ID"/>
+  <button onclick="kickUser()">Kick User</button><br/><br/>
   <button onclick="setReady()">I'm Ready</button>
-  <div class="logBox" id="controlLog"></div>
+  <div id="controlLog" class="logBox"></div>
 </div>
 
-<!-- (4) 채팅 영역 -->
 <div class="section">
   <h2>Chat</h2>
-  <label>Message: </label>
-  <input type="text" id="chatMessage" placeholder="Type your chat message"/>
+  <label>Message: </label> <input type="text" id="chatMessage" placeholder="Type your chat message"/>
   <button onclick="sendChat()">Send Chat</button>
   <div id="chatLog" class="logBox"></div>
 </div>
 
-<!-- (5) 퀴즈 영역 -->
 <div class="section">
   <h2>Quiz</h2>
   <button onclick="getQuiz()">Get Quiz Question</button>
   <button onclick="requestQuizHint()">Get Quiz Hint</button>
-  <!-- 타이머 표시 영역 -->
   <div id="quizTimer" class="logBox"></div>
-  <div id="quizQuestion" class="logBox"></div>
-  <br/>
+  <div id="quizQuestion" class="logBox"></div><br/>
   <input type="text" id="quizAnswer" placeholder="Your Answer"/>
   <button onclick="submitQuizAnswer()">Submit Answer</button>
   <div id="quizResult" class="logBox"></div>
 </div>
 
-<!-- (6) 게임 정보 영역 -->
 <div class="game-buttons">
   <button onclick="requestGameInfo()">Get Game Info</button>
   <button onclick="requestGameHint()">Request Game Hint</button>
   <button onclick="startGame()">🔥 Start Game</button>
 </div>
 
-<!-- 로그 표시용 (숨김) -->
+<div class="section">
+  <h2>Game Status</h2>
+  <div id="gameStatus" class="logBox">게임 시작 전</div>
+</div>
+
 <div id="gameInfo" style="display: none;"></div>
 <div id="gameHint" style="display: none;"></div>
 
@@ -248,19 +117,21 @@
   let currentUserId = null;
   let quizCountdown = 0;
   let quizTimerInterval = null;
+  let gameStarted = false;
+  let userScores = {};
+  let currentPlayers = 0;    // 현재 방에 접속한 플레이어 수
+  // quizRoundActive가 true면 현재 퀴즈 라운드가 활성 상태임 (한 번만 다음 퀴즈 요청)
+  let quizRoundActive = false;
 
   document.addEventListener('DOMContentLoaded', function () {
     const quizAnswerInput = document.getElementById('quizAnswer');
     if (quizAnswerInput) {
       quizAnswerInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-          submitQuizAnswer();
-        }
+        if (event.key === 'Enter') submitQuizAnswer();
       });
     }
   });
 
-  // ========== (A) 방 생성 함수 (RoomCreateRequest -> RoomResponse) ==========
   function createRoom() {
     const creatorId = document.getElementById('creatorUserId').value;
     const title = document.getElementById('roomTitle').value;
@@ -274,7 +145,6 @@
       return;
     }
 
-    // RoomCreateRequest에 맞춰 JSON 데이터를 구성
     const payload = {
       memberId: parseInt(creatorId, 10),
       roomTitle: title,
@@ -284,77 +154,51 @@
       quizType: quizType
     };
 
-    // --- 새 백엔드: /api/room POST로 Room 생성 ---
-    fetch('/api/room', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`서버 응답 에러: ${response.status}`);
-              }
-              return response.json();
-            })
+    fetch('/api/room', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
+            .then(response => { if (!response.ok) throw new Error(`서버 응답 에러: ${response.status}`); return response.json(); })
             .then(data => {
-              // data는 RoomResponse 형태
-              const resultDiv = document.getElementById('createRoomResult');
-              resultDiv.innerHTML = `
-        <strong>방 생성 성공!</strong><br/>
-        Room ID: ${data.roomId}<br/>
-        Title: ${data.roomTitle}<br/>
-        Status: ${data.status}<br/>
-        RoomType: ${data.roomType}<br/>
-        QuizType: ${data.quizType}<br/>
-        MaxPlayer: ${data.maxPlayer}<br/>
-        CreatedAt: ${data.createdAt}
-      `;
-              // 방 접속 섹션에 roomId, userId 자동 설정
+              document.getElementById('createRoomResult').innerHTML = `
+          <strong>방 생성 성공!</strong><br/>
+          Room ID: ${data.roomId}<br/>
+          Title: ${data.roomTitle}<br/>
+          Status: ${data.status}<br/>
+          RoomType: ${data.roomType}<br/>
+          QuizType: ${data.quizType}<br/>
+          MaxPlayer: ${data.maxPlayer}<br/>
+          CreatedAt: ${data.createdAt}`;
               document.getElementById('roomId').value = data.roomId;
               document.getElementById('userId').value = creatorId;
               connect();
             })
-            .catch(error => {
-              console.error("방 생성 실패:", error);
-              alert("방 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.");
-            });
+            .catch(error => { console.error("방 생성 실패:", error); alert("방 생성 중 오류 발생. 콘솔 확인."); });
   }
 
   function loadOpenRooms() {
     fetch('/api/room/open')
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`서버 오류: ${response.status}`);
-              }
-              return response.json();
-            })
+            .then(response => { if (!response.ok) throw new Error(`서버 오류: ${response.status}`); return response.json(); })
             .then(rooms => {
               const roomListDiv = document.getElementById('roomList');
-              roomListDiv.innerHTML = '';
-              if (rooms.length === 0) {
-                roomListDiv.innerHTML = '<p>현재 생성된 OPEN 방이 없습니다.</p>';
-                return;
-              }
+              roomListDiv.innerHTML = rooms.length === 0 ? '<p>현재 생성된 OPEN 방이 없습니다.</p>' : '';
               rooms.forEach(room => {
                 const roomElement = document.createElement('div');
                 roomElement.classList.add('userItem');
                 roomElement.innerHTML = `
-                <strong>방 제목:</strong> ${room.roomTitle} <br/>
-                <strong>방 ID:</strong> ${room.roomId} <br/>
-                <strong>인원:</strong> ${room.members ? room.members.length : 0} / ${room.maxPeople} <br/>
-                <strong>상태:</strong> ${room.status} <br/>
-                <button onclick="joinRoom(${room.roomId})">입장</button>
-            `;
+            <strong>방 제목:</strong> ${room.roomTitle} <br/>
+            <strong>방 ID:</strong> ${room.roomId} <br/>
+            <strong>인원:</strong> ${room.members ? room.members.length : 0} / ${room.maxPeople} <br/>
+            <strong>상태:</strong> ${room.status} <br/>
+            <button onclick="joinRoom(${room.roomId})">입장</button>`;
                 roomListDiv.appendChild(roomElement);
               });
             })
-            .catch(error => {
-              console.error("방 목록 불러오기 실패:", error);
-              alert("방 목록을 불러오는 중 오류가 발생했습니다.");
-            });
+            .catch(error => { console.error("방 목록 불러오기 실패:", error); alert("방 목록 불러오기 오류."); });
   }
 
-  // ========== (B) 방 접속 함수 ==========
+  function joinRoom(roomId) {
+    document.getElementById('roomId').value = roomId;
+    connect();
+  }
+
   function connect() {
     const socket = new SockJS('/ws/firechat');
     stompClient = Stomp.over(socket);
@@ -363,52 +207,90 @@
       const roomId = document.getElementById('roomId').value;
       currentUserId = document.getElementById('userId').value || 'Anonymous';
       console.log(`🟢 구독 요청: /topic/room/${roomId}`);
+
       stompClient.subscribe(`/topic/chat/${roomId}`, function (msg) {
         const chatMessage = JSON.parse(msg.body);
         appendLog('chatLog', `${chatMessage.sender}: ${chatMessage.content}`);
       });
+
       stompClient.subscribe(`/topic/room/${roomId}`, function (message) {
         const eventData = JSON.parse(message.body);
-        if (eventData.event === "KICK") {
-          appendLog('controlLog', `User ${eventData.targetUserId} was kicked from room ${eventData.roomId}`);
-        } else if (eventData.event === "KICK_FAIL") {
-          appendLog('controlLog', `Kick failed: ${eventData.reason}`);
-        } else if (eventData.event === "READY") {
-          appendLog('controlLog', `User ${eventData.userId} is ready!`);
-        } else if (eventData.event === "READY_FAIL") {
-          appendLog('controlLog', `Ready failed: ${eventData.reason}`);
-        } else if (eventData.event === "JOIN") {
-          appendLog('controlLog', `User ${eventData.userId} joined the room`);
-        } else if (eventData.event === "JOIN_FAIL") {
-          appendLog('controlLog', `Join failed: ${eventData.reason}`);
-        } else if (eventData.event === "LEAVE") {
-          appendLog('controlLog', `User ${eventData.userId} left the room`);
-        } else if (eventData.event === "DELETE") {
-          appendLog('controlLog', `Room ${eventData.roomId} has been deleted`);
-        } else if (eventData.event === "COUNT") {
-          appendLog('controlLog', `User Count: ${eventData.userCount}`);
-        } else if (eventData.event === "INFO") {
-          displayRoomInfo(eventData.roomData);
+        if (eventData.event === "KICK") appendLog('controlLog', `User ${eventData.targetUserId} was kicked from room ${eventData.roomId}`);
+        else if (eventData.event === "READY") appendLog('controlLog', `User ${eventData.userId} is ready!`);
+        else if (eventData.event === "LEAVE") appendLog('controlLog', `User ${eventData.userId} left the room`);
+        else if (eventData.event === "DELETE") appendLog('controlLog', `Room ${eventData.roomId} has been deleted`);
+        else if (eventData.event === "INFO") displayRoomInfo(eventData.roomData);
+      });
+
+      stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
+        const gameData = JSON.parse(message.body);
+        console.log("Game Message Received:", gameData);
+        switch (gameData.event) {
+          case "USER_STATUS":
+            displayUserStatus(gameData.data);
+            break;
+          case "GAME_INFO":
+            if (gameData.data === "IN_PROGRESS" && !gameStarted) {
+              document.getElementById('gameStatus').textContent = "게임이 시작되었습니다!";
+              gameStarted = true;
+              userScores = {};
+              // 첫 퀴즈 요청
+              getQuiz();
+            } else if (Array.isArray(gameData.data)) { // 게임 종료 시 사용자 상태 수신
+              displayGameResult(gameData.data);
+              gameStarted = false;
+            } else if (gameData.data !== "IN_PROGRESS") {
+              document.getElementById('gameStatus').textContent = gameData.data;
+              gameStarted = false;
+            }
+            break;
+          case "QUIZ":
+            document.getElementById('quizQuestion').textContent = "Question: " + gameData.data.question;
+            startQuizCountdown(20);
+            // 새 퀴즈 라운드 시작 시 quizRoundActive를 true로 설정
+            quizRoundActive = true;
+            break;
+          case "QUIZ_RESULT":
+            // gameData.data는 { memberId: result, ... } 형태
+            let aggregatedResults = gameData.data;
+            let resultText = "Quiz Results:\n";
+            for (const [uid, status] of Object.entries(aggregatedResults)) {
+              resultText += `User ${uid}: ${status}\n`;
+              if (status === "정답입니다") {
+                userScores[uid] = (userScores[uid] || 0) + 1;
+              }
+            }
+            document.getElementById('quizResult').textContent = resultText;
+            updateUserStatusWithScores();
+            // 만약 모든 플레이어가 제출했거나(aggregatedResults 키 수가 currentPlayers와 같다면)
+            // 그리고 현재 라운드가 활성 상태이면 다음 퀴즈를 한 번만 요청
+            if (quizRoundActive && Object.keys(aggregatedResults).length === currentPlayers) {
+              quizRoundActive = false;
+              setTimeout(() => getQuiz(), 2000);
+            }
+            break;
+          case "QUIZ_HINT":
+            document.getElementById('quizQuestion').textContent += ` HINT1: ${gameData.data.hint1} HINT2: ${gameData.data.hint2}`;
+            break;
+          default:
+            console.warn("Unknown Game Event:", gameData);
         }
       });
-      stompClient.onclose = function () {
-        console.log("🔴 WebSocket 연결 끊어짐");
-      };
+
+      stompClient.onclose = function () { console.log("🔴 WebSocket 연결 끊어짐"); };
       stompClient.send(`/app/room/${roomId}/join/${currentUserId}`, {}, {});
     });
   }
 
-  // ========== (C) 채팅 전송 ==========
   function sendChat() {
     const roomId = document.getElementById('roomId').value;
     const content = document.getElementById('chatMessage').value;
     if (!roomId || !content || !currentUserId) return;
-    const msgObj = {sender: currentUserId, content: content, roomId: roomId};
+    const msgObj = { sender: currentUserId, content: content, roomId: roomId };
     stompClient.send(`/app/chat/${roomId}`, {}, JSON.stringify(msgObj));
     document.getElementById('chatMessage').value = '';
   }
 
-  // ========== (D) 기타 기능 요청 ==========
   function requestGameInfo() {
     const roomId = document.getElementById('roomId').value;
     if (!roomId) return;
@@ -425,10 +307,8 @@
 
   function getQuiz() {
     const roomId = document.getElementById('roomId').value;
-    if (!roomId) return;
+    if (!roomId || !gameStarted) return;
     stompClient.send(`/app/game/${roomId}/getQuiz`, {}, {});
-    // 클라이언트에서 단답형 퀴즈 타이머 (20초) 시작
-    startQuizCountdown(20);
   }
 
   function requestQuizHint() {
@@ -441,15 +321,13 @@
     const roomId = document.getElementById('roomId').value;
     const answer = document.getElementById('quizAnswer').value;
     if (!roomId || !answer || !currentUserId) return;
-    const payload = {userAnswer: answer, memberId: currentUserId};
+    const payload = { userAnswer: answer, memberId: currentUserId };
     stompClient.send(`/app/game/${roomId}/checkAnswer`, {}, JSON.stringify(payload));
     document.getElementById('quizAnswer').value = '';
-    // 정답 제출 시 타이머 종료
     clearInterval(quizTimerInterval);
-    document.getElementById('quizTimer').innerText = "";
+    document.getElementById('quizTimer').textContent = "";
   }
 
-  // ========== (E) UI 업데이트 함수들 ==========
   function appendLog(elementId, message) {
     const logDiv = document.getElementById(elementId);
     const newLine = document.createElement('div');
@@ -460,43 +338,28 @@
 
   function requestRoomInfo() {
     const roomId = document.getElementById('roomId').value;
-    if (!roomId) {
-      alert("Room ID를 입력하세요!");
-      return;
-    }
+    if (!roomId) { alert("Room ID를 입력하세요!"); return; }
     stompClient.send(`/app/room/${roomId}/info`, {}, {});
   }
 
   function displayRoomInfo(roomData) {
     const infoBox = document.getElementById('roomInfo');
-    if (!roomData) {
-      infoBox.innerHTML = "<strong>방 정보를 불러올 수 없습니다.</strong>";
-      return;
-    }
-    let membersHTML = "";
-    if (roomData.members && roomData.members.length > 0) {
-      roomData.members.forEach(m => {
-        membersHTML += `<div> - User: ${m.memberId}, State: ${m.status}</div>`;
-      });
-    } else {
-      membersHTML = "<div>(No members found)</div>";
-    }
+    if (!roomData) { infoBox.innerHTML = "<strong>방 정보를 불러올 수 없습니다.</strong>"; return; }
+    let membersHTML = roomData.members && roomData.members.length > 0
+            ? roomData.members.map(m => `<div> - User: ${m.memberId}, State: ${m.status}</div>`).join('')
+            : "<div>(No members found)</div>";
     infoBox.innerHTML = `
-        <div><strong>Room ID:</strong> ${roomData.roomId}</div>
-        <div><strong>Max People:</strong> ${roomData.maxPeople}</div>
-        <div><strong>Status:</strong> ${roomData.status}</div>
-        <div><strong>Host:</strong> ${roomData.host ? roomData.host.memberId : 'None'}</div>
-        <div><strong>Members:</strong> ${membersHTML}</div>
-    `;
+      <div><strong>Room ID:</strong> ${roomData.roomId}</div>
+      <div><strong>Max People:</strong> ${roomData.maxPeople}</div>
+      <div><strong>Status:</strong> ${roomData.status}</div>
+      <div><strong>Host:</strong> ${roomData.host ? roomData.host.memberId : 'None'}</div>
+      <div><strong>Members:</strong> ${membersHTML}</div>`;
   }
 
   function kickUser() {
     const roomId = document.getElementById('roomId').value;
     const targetUserId = document.getElementById('kickUserId').value;
-    if (!roomId || !targetUserId) {
-      alert("Room ID와 Kick 대상 User ID가 필요합니다.");
-      return;
-    }
+    if (!roomId || !targetUserId) { alert("Room ID와 Kick 대상 User ID가 필요합니다."); return; }
     stompClient.send(`/app/room/${roomId}/kick/${targetUserId}`, {}, {});
   }
 
@@ -508,69 +371,83 @@
 
   function startGame() {
     const roomId = document.getElementById('roomId').value;
-    if (!roomId) {
-      alert("Room ID를 입력하세요!");
-      return;
-    }
-    if (!stompClient.subscribedToGame) {
-      stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
-        const gameData = JSON.parse(message.body);
-        switch (gameData.event) {
-          case "USER_STATUS":
-            displayUserStatus(gameData.data);
-            break;
-          case "GAME_START":
-            alert("게임이 시작되었습니다!");
-            break;
-          case "QUIZ":
-            document.getElementById('quizQuestion').textContent = "Question: " + gameData.data.data.question;
-            break;
-          case "QUIZ_RESULT":
-            document.getElementById('quizResult').textContent = `Result: ${gameData.data.data.result} (User: ${gameData.data.data.userId})`;
-            break;
-          case "QUIZ_HINT":
-            document.getElementById('quizQuestion').textContent += ` HINT1: ${gameData.data.data.hint1} HINT2: ${gameData.data.data.hint2}`;
-            break;
-          default:
-            console.warn("Unknown Game Event:", gameData);
-        }
-      });
-      stompClient.subscribedToGame = true;
-    }
-    stompClient.send(`/app/game/${roomId}/start`, {}, {});
+    if (!roomId || !currentUserId) { alert("Room ID와 User ID를 입력하세요!"); return; }
+    stompClient.send(`/app/game/${roomId}/start/${currentUserId}`, {}, {});
     alert("게임 시작 요청이 전송되었습니다!");
   }
 
   function displayUserStatus(userStatusList) {
-    const userStatusBox = document.getElementById('userStatus');
-    if (!userStatusList || userStatusList.length === 0) {
-      userStatusBox.innerHTML = "<strong>현재 유저 정보 없음</strong>";
-      return;
-    }
-    let statusHTML = "<h3>🔥 Current Player Status</h3>";
-    userStatusList.forEach(user => {
-      statusHTML += `<div>🔹 User ID: ${user.userId}, Life: ${user.life}</div>`;
-    });
-    userStatusBox.innerHTML = statusHTML;
+    updateUserStatusWithScores(userStatusList);
   }
 
-  // ========== 클라이언트 측 퀴즈 타이머 ==========
+  function updateUserStatusWithScores(userStatusList = null) {
+    const userStatusBox = document.getElementById('userStatus');
+    let statusHTML = "<h3>🔥 Current Player Status</h3>";
+    if (userStatusList && userStatusList.length > 0) {
+      currentPlayers = userStatusList.length; // 현재 플레이어 수 업데이트
+      userStatusList.forEach(user => {
+        const score = userScores[user.memberId] || 0;
+        statusHTML += `<div>🔹 User ID: ${user.memberId}, Life: ${user.life}, Score: ${score}</div>`;
+      });
+    } else {
+      Object.keys(userScores).forEach(userId => {
+        const score = userScores[userId];
+        statusHTML += `<div>🔹 User ID: ${userId}, Score: ${score}</div>`;
+      });
+    }
+    userStatusBox.innerHTML = statusHTML || "<strong>현재 유저 정보 없음</strong>";
+  }
+
+  function displayGameResult(userList) {
+    const gameStatusBox = document.getElementById('gameStatus');
+    let resultHTML = "<h3>🎉 Game Over - Results</h3>";
+    let maxScore = -1;
+    let winnerId = null;
+
+    userList.forEach(user => {
+      const score = userScores[user.memberId] || 0;
+      resultHTML += `<div>🔹 User ID: ${user.memberId}, Life: ${user.life}, Score: ${score}</div>`;
+      if (score > maxScore && user.life > 0) {
+        maxScore = score;
+        winnerId = user.memberId;
+      }
+    });
+
+    if (winnerId) {
+      resultHTML += `<div><strong>🏆 Winner: User ${winnerId} (Score: ${maxScore})</strong></div>`;
+    } else {
+      resultHTML += "<div><strong>No winner (all players out of life)</strong></div>";
+    }
+
+    gameStatusBox.innerHTML = resultHTML;
+    gameStarted = false;
+    clearInterval(quizTimerInterval);
+    document.getElementById('quizTimer').textContent = "";
+    document.getElementById('quizQuestion').textContent = "";
+    document.getElementById('quizResult').textContent = "";
+  }
+
   function startQuizCountdown(duration) {
     quizCountdown = duration;
     updateQuizTimerDisplay();
     if (quizTimerInterval) clearInterval(quizTimerInterval);
-    quizTimerInterval = setInterval(function() {
+    quizTimerInterval = setInterval(function () {
       quizCountdown--;
       updateQuizTimerDisplay();
       if (quizCountdown <= 0) {
         clearInterval(quizTimerInterval);
         appendLog('quizResult', "Time's up!");
+        // 타이머 종료 시, 만약 현재 라운드가 활성 상태라면 한 번만 다음 퀴즈 요청
+        if (quizRoundActive) {
+          quizRoundActive = false;
+          setTimeout(() => getQuiz(), 2000);
+        }
       }
     }, 1000);
   }
 
   function updateQuizTimerDisplay() {
-    document.getElementById('quizTimer').innerText = "Time left: " + quizCountdown + " seconds";
+    document.getElementById('quizTimer').textContent = "Time left: " + quizCountdown + " seconds";
   }
 </script>
 </body>

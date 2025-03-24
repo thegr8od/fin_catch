@@ -5,8 +5,11 @@ import com.finbattle.domain.oauth.service.CustomOAuth2UserService;
 import com.finbattle.global.common.exception.exception.security.CustomAccessDeniedHandler;
 import com.finbattle.global.common.exception.exception.security.CustomAuthenticationEntryPoint;
 import com.finbattle.global.common.filter.JWTFilter;
+import com.finbattle.global.common.filter.LoggingFilter;
+import com.finbattle.global.common.model.enums.PublicEndpoint;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,8 +30,15 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final JWTFilter jwtFilter;
+    private final LoggingFilter loggingFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+
+    @Value("${app.baseUrl}")
+    private String baseUrl;
+
+    @Value("${app.clientUrl}")
+    private String clientUrl;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,12 +52,10 @@ public class SecurityConfig {
                 .successHandler(customSuccessHandler)
             )
             .authorizeHttpRequests((auth) -> auth
-                .requestMatchers("/", "/login", "/api/member/public/**", "/api/cat/public**",
-                    "/oauth2/**").permitAll()
-                .requestMatchers("/error", "/swagger-ui/**", "/v3/api-docs/**",
-                    "/swagger-resources/**", "/webjars/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(PublicEndpoint.getAll().toArray(new String[0])).permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .sessionManagement((session) -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -63,16 +71,14 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(httpBasic -> httpBasic.disable());
 
-
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");
-        //config.setAllowedOrigins(
-        //    Arrays.asList("http://localhost:3000", "http://localhost:8080")); // 프론트엔드 주소
+        //config.addAllowedOriginPattern("*");
+        config.setAllowedOrigins(Arrays.asList(baseUrl, clientUrl)); // 프론트엔드 주소
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
