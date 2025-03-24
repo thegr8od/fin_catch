@@ -19,10 +19,10 @@ const AiQuizPage = () => {
 
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
-    const catTypes: CharacterType[] = ["classic", "tabby", "tuxedo", "siamese", "persian"];
+    const catTypes: CharacterType[] = ["classic", "batman", "slave", "master", "unique_rabbit"];
     // 현재 유저의 메인 캣이 아닌 다른 캣을 선택
-    const userMainCat = user?.mainCat as unknown as CharacterType || "classic";
-    const availableCats = catTypes.filter(cat => cat !== userMainCat);
+    const userMainCat = (user?.mainCat as unknown as CharacterType) || "classic";
+    const availableCats = catTypes.filter((cat) => cat !== userMainCat);
     const randomIndex = Math.floor(Math.random() * availableCats.length);
     return availableCats[randomIndex];
   }, [user]);
@@ -49,16 +49,16 @@ const AiQuizPage = () => {
     <div
       className="w-full flex flex-col items-center bg-cover h-screen overflow-y-auto"
       style={{
-        backgroundImage: `url(${Background})`
+        backgroundImage: `url(${Background})`,
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-10"></div>
       {gameState === "quiz" ? (
-        <GameQuiz 
+        <GameQuiz
           timeLeft={timeLeft}
           isTimeUp={isTimeUp}
           onShowResults={() => setGameState("goodResult")}
-          playerCat={user?.mainCat as unknown as CharacterType || "classic"}
+          playerCat={(user?.mainCat as unknown as CharacterType) || "classic"}
           opponentCat={randomCat}
         />
       ) : (
