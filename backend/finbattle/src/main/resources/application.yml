@@ -37,11 +37,10 @@ management:
         enabled: true
 
 springdoc:
-  api-docs:
-    enabled: true
   swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
+    urls:
+      - name: "FinBattle API"
+        url: ${app.baseUrl}/v3/api-docs
 
 application:
   version: 1.0.0
