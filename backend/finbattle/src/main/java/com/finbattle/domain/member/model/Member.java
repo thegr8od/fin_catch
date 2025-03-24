@@ -1,5 +1,6 @@
 package com.finbattle.domain.member.model;
 
+import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.global.common.model.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
