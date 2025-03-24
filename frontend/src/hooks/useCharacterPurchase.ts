@@ -16,6 +16,8 @@ export const useCharacterPurchase = () => {
   const [showModal, setShowModal] = useState(false);
   const [pickedCharacters, setPickedCharacters] = useState<Character[]>([]);
   const [purchaseAmount, setPurchaseAmount] = useState(0);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const { fetchUserInfo } = useUserInfo();
   const { execute } = useApi<Character[]>("/api/member/pick/cat", "GET");
@@ -47,12 +49,12 @@ export const useCharacterPurchase = () => {
         }, 3000);
       } else {
         setIsSpinning(false);
-        CustomAlert({ message: "뽑기에 실패했습니다. 다시 시도해주세요.", onClose: () => {} });
+        showCustomAlert("뽑기에 실패했습니다. 다시 시도해주세요.");
       }
     } catch (error) {
       console.error("뽑기 실패:", error);
       setIsSpinning(false);
-      CustomAlert({ message: "뽑기에 실패했습니다. 다시 시도해주세요.", onClose: () => {} });
+      showCustomAlert("뽑기에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -63,6 +65,11 @@ export const useCharacterPurchase = () => {
     setPurchaseAmount(0);
   };
 
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
   return {
     isSpinning,
     showModal,
@@ -70,5 +77,8 @@ export const useCharacterPurchase = () => {
     purchaseAmount,
     handlePurchase,
     closeModal,
+    showAlert,
+    alertMessage,
+    setShowAlert,
   };
 };

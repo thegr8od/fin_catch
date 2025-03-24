@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import SlotMachine from "./SlotMachine";
 import { CustomAlert } from "../layout/CustomAlert";
 
@@ -10,10 +10,14 @@ interface SlotMachineSectionProps {
 }
 
 const SlotMachineSection: React.FC<SlotMachineSectionProps> = ({ isSpinning, onPurchase, disabled, userCoins }) => {
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
   const handlePurchase = (amount: number) => {
     const cost = amount === 1 ? 500 : 5000;
     if (userCoins < cost) {
-      CustomAlert({ message: "코인이 부족합니다!", onClose: () => {} });
+      setAlertMessage("코인이 부족합니다!");
+      setShowAlert(true);
       return;
     }
     onPurchase(amount);
@@ -25,6 +29,9 @@ const SlotMachineSection: React.FC<SlotMachineSectionProps> = ({ isSpinning, onP
 
       {/* 슬롯 머신 */}
       <SlotMachine isSpinning={isSpinning} onPurchase={handlePurchase} disabled={disabled} />
+
+      {/* 경고창 */}
+      {showAlert && <CustomAlert message={alertMessage} onClose={() => setShowAlert(false)} />}
     </div>
   );
 };
