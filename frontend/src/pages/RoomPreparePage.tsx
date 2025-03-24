@@ -5,6 +5,7 @@ import botImg from "../assets/Bot.png"
 import oneVsOneImg from "../assets/one_vs_one.png"
 import multiImg from "../assets/multi.png"
 import mainBg from "../assets/main.gif"
+import { CustomAlert } from "../components/layout/CustomAlert"
 
 // 게임 모드 타입 정의
 type GameMode = "oneVsOne" | null
@@ -116,8 +117,8 @@ const RoomPreparePage: React.FC = () => {
     const allReady = players.every((player) => player.isHost || player.isReady)
 
     if (!allReady) {
-      alert("모든 플레이어가 준비 상태여야 게임을 시작할 수 있습니다.")
-      return
+      CustomAlert({ message: "모든 플레이어가 준비 상태여야 게임을 시작할 수 있습니다.", onClose: () => {} });
+      return;
     }
 
     // 방 상태 업데이트 (실제로는 서버에 요청)

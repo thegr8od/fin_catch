@@ -8,6 +8,7 @@ import DifficultySelector, { Difficulty } from "../components/difficulty/Difficu
 // 주제 이미지 import
 import financeImg from "../assets/topics/finance.svg";
 import investmentImg from "../assets/topics/investment.svg";
+import { CustomAlert } from "../components/layout/CustomAlert";
 
 const BotPage = () => {
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ const BotPage = () => {
       // navigate(`/bot/game?topic=${selectedTopic?.id}&difficulty=${selectedDifficulty}`);
 
       // 임시로 알림만 표시
-      alert(`게임 시작: 주제 - ${selectedTopic?.title}, 난이도 - ${selectedDifficulty}`);
+      CustomAlert({ message: `게임 시작: 주제 - ${selectedTopic?.title}, 난이도 - ${selectedDifficulty}`, onClose: () => {} });
     }
   };
 

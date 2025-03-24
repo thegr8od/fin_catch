@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useUserInfo } from "../hooks/useUserInfo";
 import Background from "../components/layout/Background";
+import { CustomAlert } from "../components/layout/CustomAlert";
 
 /**
  * 사용자 상태 인터페이스
@@ -91,7 +92,7 @@ const TempRoomPreparePage = () => {
           case messageTypes.ROOM.KICK:
             // 강퇴 메시지 처리
             if (data.kickUserId === userId) {
-              alert("방장에 의해 강퇴되었습니다.");
+              CustomAlert({ message: "방장에 의해 강퇴되었습니다.", onClose: () => {} });
               navigate("/"); // 로비로 이동
             }
             break;
@@ -175,12 +176,12 @@ const TempRoomPreparePage = () => {
     if (!connected || !roomId) return;
 
     if (!isHost) {
-      alert("방장만 게임을 시작할 수 있습니다.");
+      CustomAlert({ message: "방장만 게임을 시작할 수 있습니다.", onClose: () => {} });
       return;
     }
 
     if (!allReady) {
-      alert("모든 플레이어가 준비 완료 상태일 때만 게임 시작 가능합니다.");
+      CustomAlert({ message: "모든 플레이어가 준비 완료 상태일 때만 게임 시작 가능합니다.", onClose: () => {} });
       return;
     }
 
@@ -199,7 +200,7 @@ const TempRoomPreparePage = () => {
     if (!connected || !roomId || !isHost) return;
 
     if (kickUserId === userId) {
-      alert("자기 자신을 강퇴할 수 없습니다.");
+      CustomAlert({ message: "자기 자신을 강퇴할 수 없습니다.", onClose: () => {} });
       return;
     }
 

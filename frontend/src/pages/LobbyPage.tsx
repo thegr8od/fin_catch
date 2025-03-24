@@ -1,13 +1,14 @@
-import Background from "../components/layout/Background"
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import Background from "../components/layout/Background";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 // 모드 이미지 import
-import botImg from "../assets/Bot.png"
-import oneVsOneImg from "../assets/one_vs_one.png"
-import multiImg from "../assets/multi.png"
-import mainBg from "../assets/main.gif"
+import botImg from "../assets/Bot.png";
+import oneVsOneImg from "../assets/one_vs_one.png";
+import multiImg from "../assets/multi.png";
+import mainBg from "../assets/main.gif";
+import { CustomAlert } from "../components/layout/CustomAlert";
 // 게임 모드 타입 정의
-type GameMode = "oneVsOne" | null
+type GameMode = "oneVsOne" | null;
 
 // 방 인터페이스 정의
 interface Room {
@@ -29,7 +30,6 @@ const LobbyPage = () => {
   const [roomTitle, setRoomTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-
   useEffect(() => {
     // 로컬 스토리지에서 방 목록 불러오기
     try {
@@ -42,16 +42,14 @@ const LobbyPage = () => {
     } catch (error) {
       console.error("방 목록을 불러오는 중 오류 발생:", error);
     }
-
   }, []);
-
 
   // 방 생성 처리
   const handleCreateRoom = () => {
-    if (!roomTitle) return
+    if (!roomTitle) return;
 
     // 새 방 ID 생성 (실제로는 서버에서 생성)
-    const newRoomId = Date.now().toString()
+    const newRoomId = Date.now().toString();
 
     // 새 방 객체 생성
     const newRoom: Room = {
@@ -64,63 +62,63 @@ const LobbyPage = () => {
       status: "waiting",
       category: selectedCategory || undefined,
       createdAt: new Date(),
-    }
+    };
 
     // 방 목록에 추가 (실제로는 서버에 저장)
-    const updatedRooms = [...rooms, newRoom]
-    setRooms(updatedRooms)
+    const updatedRooms = [...rooms, newRoom];
+    setRooms(updatedRooms);
 
     // 로컬 스토리지에 방 정보 저장
     try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms))
+      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
     } catch (error) {
-      console.error("방 정보를 저장하는 중 오류 발생:", error)
+      console.error("방 정보를 저장하는 중 오류 발생:", error);
     }
 
     // 모달 닫기 및 상태 초기화
-    setShowModal(false)
-    setRoomTitle("")
-    setSelectedCategory("")
+    setShowModal(false);
+    setRoomTitle("");
+    setSelectedCategory("");
 
     // 준비 페이지로 이동
-    navigate(`/room/prepare/${newRoomId}`)
-  }
+    navigate(`/room/prepare/${newRoomId}`);
+  };
 
   // 방 입장 처리
   const handleJoinRoom = (roomId: string) => {
     // 방 정보 확인 (실제로는 서버에서 확인)
-    const room = rooms.find((r) => r.id === roomId)
+    const room = rooms.find((r) => r.id === roomId);
 
     if (!room) {
-      alert("존재하지 않는 방입니다.")
-      return
+      CustomAlert({ message: "존재하지 않는 방입니다.", onClose: () => {} });
+      return;
     }
 
     if (room.status === "playing") {
-      alert("이미 게임이 진행 중인 방입니다.")
-      return
+      CustomAlert({ message: "이미 게임이 진행 중인 방입니다.", onClose: () => {} });
+      return;
     }
 
     if (room.players >= room.maxPlayers) {
-      alert("방이 가득 찼습니다.")
-      return
+      CustomAlert({ message: "방이 가득 찼습니다.", onClose: () => {} });
+      return;
     }
 
     // 방 입장 처리 (실제로는 서버에 요청)
-    const updatedRooms = rooms.map((r) => (r.id === roomId ? { ...r, players: r.players + 1 } : r))
+    const updatedRooms = rooms.map((r) => (r.id === roomId ? { ...r, players: r.players + 1 } : r));
 
-    setRooms(updatedRooms)
+    setRooms(updatedRooms);
 
     // 로컬 스토리지 업데이트
     try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms))
+      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
     } catch (error) {
-      console.error("방 정보를 업데이트하는 중 오류 발생:", error)
+      console.error("방 정보를 업데이트하는 중 오류 발생:", error);
     }
 
     // 준비 페이지로 이동
-    navigate(`/room/prepare/${roomId}`)
-  }
+    navigate(`/room/prepare/${roomId}`);
+  };
 
   // 카테고리 데이터
   const categories = [
@@ -128,7 +126,7 @@ const LobbyPage = () => {
     { id: "economy", name: "정책" },
     { id: "product", name: "상품" },
     { id: "delivery", name: "범죄" },
-  ]
+  ];
 
   return (
     <Background backgroundImage={mainBg}>
@@ -158,9 +156,7 @@ const LobbyPage = () => {
                 {rooms.map((room) => (
                   <tr key={room.id} className="border-t border-gray-300 hover:bg-gray-100">
                     <td className="py-3 px-4">{room.title}</td>
-                    <td className="py-3 px-4">
-                      {room.category && `${room.category}`}
-                    </td>
+                    <td className="py-3 px-4">{room.category && `${room.category}`}</td>
                     <td className="py-3 px-4">{room.host}</td>
                     <td className="py-3 px-4 text-center">
                       {room.players}/{room.maxPlayers}
@@ -235,7 +231,7 @@ const LobbyPage = () => {
         )}
       </div>
     </Background>
-  )
-}
+  );
+};
 
-export default LobbyPage
+export default LobbyPage;

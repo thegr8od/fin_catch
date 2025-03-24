@@ -6,6 +6,7 @@ import BattleScreen from "../components/game/BattleScreen"
 import { useLoading } from "../contexts/LoadingContext"
 import { CharacterState, PlayerStatus } from "../components/game/types/character"
 import { useGameExit, setCurrentGameState } from "../hooks/useGameExit"
+import { CustomAlert } from "../components/layout/CustomAlert"
 
 /**
  * 채팅 메시지 인터페이스
@@ -248,8 +249,8 @@ const OneToOnePage: React.FC = () => {
         console.error("리소스 로드 중 오류 발생:", error)
         if (isComponentMounted) {
           // 로딩 실패 시 사용자에게 알림
-          alert("게임 리소스 로드에 실패했습니다. 페이지를 새로고침해주세요.")
-          setLoading(false)
+          CustomAlert({ message: "게임 리소스 로드에 실패했습니다. 페이지를 새로고침해주세요.", onClose: () => {} });
+          setLoading(false);
         }
       }
     }
