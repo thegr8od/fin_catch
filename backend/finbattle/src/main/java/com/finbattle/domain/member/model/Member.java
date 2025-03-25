@@ -39,7 +39,8 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
-    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "member", optional = true)
+    @JsonIgnore
     private FinanceMember financeMember; // 금융망회원 엔티티 (식별 1:1 관계)
 
     @Column(nullable = false, unique = true)
@@ -66,7 +67,6 @@ public class Member extends BaseEntity {
     @Schema(description = "사용자 대표 캐릭터", example = "default")
     private String mainCat;
 
-    // @Column(nullable = false)
     private LocalDateTime lastLogin;
 
     public static Member of(String providerId, String nickname, String email) {
@@ -76,7 +76,7 @@ public class Member extends BaseEntity {
             .nickname(nickname)
             .email(email)
             .mainCat("classic")
-            //.lastLogin(LocalDateTime.now())
+            .lastLogin(LocalDateTime.now())
             .build();
     }
 

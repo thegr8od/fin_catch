@@ -1,6 +1,6 @@
 package com.finbattle.domain.banking.controller;
 
-import com.finbattle.domain.banking.dto.financemember.FinanceMemberResponseDto;
+import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.banking.service.FinanceService;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.model.dto.BaseResponse;
@@ -25,19 +25,19 @@ public class FinanceMemberController {
 
     @PostMapping("/")
     // 1. 금융망 유저 생성
-    public ResponseEntity<BaseResponse<FinanceMemberResponseDto>> register(
+    public ResponseEntity<BaseResponse<FinanceMember>> register(
         @AuthenticationPrincipal AuthenticatedUser detail) {
 
-        FinanceMemberResponseDto res = financeService.register(detail.getMemberId()).block();
+        FinanceMember res = financeService.register(detail.getMemberId());
         return ResponseEntity.ok(new BaseResponse<>(res));
     }
 
     @GetMapping("/")
     // 1. 금융망 유저 조회
-    public ResponseEntity<BaseResponse<FinanceMemberResponseDto>> search(
+    public ResponseEntity<BaseResponse<FinanceMember>> search(
         @AuthenticationPrincipal AuthenticatedUser detail) {
 
-        FinanceMemberResponseDto res = financeService.search(detail.getMemberId()).block();
+        FinanceMember res = financeService.search(detail.getMemberId());
         return ResponseEntity.ok(new BaseResponse<>(res));
     }
 }
