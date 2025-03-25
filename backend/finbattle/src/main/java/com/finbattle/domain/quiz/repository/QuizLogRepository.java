@@ -13,4 +13,6 @@ public interface QuizLogRepository extends JpaRepository<QuizLog, Long> {
     List<QuizLog> findByQuizId(Long quizId);
 
     Optional<QuizLog> findTopByQuizIdAndMemberIdOrderByCreatedAtDesc(Long quizId, Long memberId); // 🔥 추가
+
+    List<QuizLog> findByMemberIdAndIsCorrectFalse(Long memberId);
 }
