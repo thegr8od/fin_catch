@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<BaseResponse<BaseResponseStatus>> handleBusinessException(
         BusinessException e, HttpServletRequest req) {
-        LOG.error("BusinessException occurred: {}", e.getMessage());
+        String logMessage = String.format("""
+            ⚠️ [BusinessException 발생]
+            📍 URI: %s
+            ❗ 예외 메시지: %s
+            🔑 파라미터:
+            %s
+            """, req.getRequestURI(), e.getMessage(), getParams(req));
+
+        LOG.error("\n{}", logMessage);
 
         return ResponseEntity.status(e.getBaseResponseStatus().getHttpStatus())
             .body(new BaseResponse<>(e.getBaseResponseStatus()));
@@ -34,7 +41,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<BaseResponse<BaseResponseStatus>> handleHttpMessageNotReadableException(
         HttpMessageNotReadableException e, HttpServletRequest req) {
-        LOG.error("JSON Parse error occurred: {}", e.getMessage());
+        String logMessage = String.format("""
+            ⚠️ [NotReadableException 발생]
+            📍 URI: %s
+            ❗ 예외 메시지: %s
+            🔑 파라미터:
+            %s
+            """, req.getRequestURI(), e.getMessage(), getParams(req));
+
+        LOG.error("\n{}", logMessage);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new BaseResponse<>(BaseResponseStatus.BAD_REQUEST));
@@ -42,7 +57,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e, HttpServletRequest req) {
-        LOG.error("Exception occurred: {}", e.getMessage());
+        String logMessage = String.format("""
+            ___________________ ⚠️ [Exception 발생] ________________________
+            📨 URI: %s
+            ❗ 예외 메시지: %s
+            ✔️ 파라미터: %s
+            ___________________ ⚠️ [Exception 종료] ________________________
+            """, req.getRequestURI(), e.getMessage(), getParams(req));
+
+        LOG.error("\n{}", logMessage);
+
         return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

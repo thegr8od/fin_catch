@@ -40,9 +40,9 @@ public class MemberService {
     public MyInfoDto getMyInfo(Long memberId) {
         Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(MEMBER_NOT_FOUND));
-
         return new MyInfoDto(member.getEmail(), member.getNickname(),
-            getCatIdsByMemberId(memberId), member.getMainCat(), member.getExp(), member.getPoint());
+            getCatIdsByMemberId(memberId), member.getMainCat(), member.getExp(), member.getPoint(),
+            member.getFinanceMember());
     }
 
     // 모든 회원 조회
