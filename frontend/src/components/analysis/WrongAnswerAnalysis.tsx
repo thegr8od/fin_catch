@@ -52,28 +52,25 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
   // 문제 선택 및 분석 핸들러
   const handleProblemSelect = async (problem: Problem) => {
     setSelectedProblem(problem);
-    setAnalyzingProblemId(151); // 하드코딩된 quizId
+    setAnalyzingProblemId(problem.id);
 
     try {
-      const result = await analyzeWrongAnswer(151); // 하드코딩된 quizId
+      const result = await analyzeWrongAnswer(problem.id);
+      console.log("API 응답 데이터:", result);
       if (result.success && result.data) {
+        console.log("분석 데이터:", {
+          analysis: result.data.analysis,
+          weakness: result.data.weakness,
+          recommendation: result.data.recommendation,
+        });
         // 분석 데이터 업데이트
         setSelectedProblem((prev) => {
           if (!prev) return null;
           return {
             ...prev,
-            title: "금융통화위원회의 역할",
-            type: "객관식",
-            wrongCount: 3,
-            correctCount: 2,
             analysis: result.data.analysis,
             weakPoints: [result.data.weakness],
             recommendations: [result.data.recommendation],
-            attemptHistory: [
-              { date: "2024-02-01", isCorrect: false },
-              { date: "2024-02-03", isCorrect: true },
-              { date: "2024-02-05", isCorrect: false },
-            ],
           };
         });
       }

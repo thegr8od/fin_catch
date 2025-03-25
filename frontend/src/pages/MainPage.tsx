@@ -97,16 +97,20 @@ const MainPage = () => {
     {
       id: 1,
       name: "금융통화위원회의 역할",
-      totalProblems: 30,
+      totalProblems: 5,
       problems: [
         {
-          id: 1,
+          id: 151, // API 호출에 사용할 ID
           title: "금융통화위원회의 역할",
           type: "객관식",
           wrongCount: 3,
           correctCount: 2,
           analysis: "",
-          attemptHistory: [],
+          attemptHistory: [
+            { date: "2024-02-01", isCorrect: false },
+            { date: "2024-02-03", isCorrect: true },
+            { date: "2024-02-05", isCorrect: false },
+          ],
           weakPoints: [],
           recommendations: [],
         },
