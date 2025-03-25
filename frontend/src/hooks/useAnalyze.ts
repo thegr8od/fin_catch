@@ -1,17 +1,27 @@
 import { useApi } from "./useApi";
+import { useCallback } from "react";
 
-interface analyzePayload {
+interface AnalyzePayload {
   quizId: number;
 }
 
-export const useAnalyze = () => {
-  const { loading, error, execute: analyzeAnswer } = useApi<boolean, analyzePayload>("api/ai/analyze", "POST");
+interface AnalyzeResponse {
+  analysis: string;
+  weakness: string;
+  recommendation: string;
+}
 
-  const analyzeWrongAnswer = async (quizId: number) => {
-    return await analyzeAnswer({
-      quizId,
-    });
-  };
+export const useAnalyze = () => {
+  const { loading, error, execute: analyzeAnswer } = useApi<AnalyzeResponse, AnalyzePayload>("api/ai/analyze", "POST");
+
+  const analyzeWrongAnswer = useCallback(
+    async (quizId: number) => {
+      return await analyzeAnswer({
+        quizId,
+      });
+    },
+    [analyzeAnswer]
+  );
 
   return {
     loading,

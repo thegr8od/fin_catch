@@ -52,12 +52,21 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
   // 문제 선택 및 분석 핸들러
   const handleProblemSelect = async (problem: Problem) => {
     setSelectedProblem(problem);
-    setAnalyzingProblemId(problem.id);
+    setAnalyzingProblemId(151); // 하드코딩된 quizId
 
     try {
-      const result = await analyzeWrongAnswer(problem.id);
-      if (result.success) {
-        console.log("분석 완료:", result.data);
+      const result = await analyzeWrongAnswer(151); // 하드코딩된 quizId
+      if (result.success && result.data) {
+        // 분석 데이터 업데이트
+        setSelectedProblem((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            analysis: result.data.analysis,
+            weakPoints: [result.data.weakness],
+            recommendations: [result.data.recommendation],
+          };
+        });
       }
     } catch (err) {
       console.error("분석 오류:", err);
