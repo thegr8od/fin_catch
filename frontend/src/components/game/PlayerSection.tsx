@@ -7,12 +7,11 @@ interface PlayerSectionProps {
   health: number;
   state: CharacterState;
   bubble: ChatMessage | null;
-  resourcesLoaded: boolean;
   direction: boolean;
   onAnimationComplete: (state: CharacterState) => void;
 }
 
-const PlayerSection = ({ name, health, state, bubble, resourcesLoaded, direction, onAnimationComplete }: PlayerSectionProps) => {
+const PlayerSection = ({ name, health, state, bubble, direction, onAnimationComplete }: PlayerSectionProps) => {
   return (
     <div className="w-full flex flex-col items-center justify-start relative">
       {/* 이름과 말풍선을 하나의 그룹으로 묶음 */}

@@ -5,6 +5,9 @@ interface BattleStatusProps {
 }
 
 const BattleStatus = ({ timer, question }: BattleStatusProps) => {
+
+  
+
   return (
     <div className="flex flex-col items-center justify-center px-4 w-full">
       <div className="flex items-center justify-center mb-4">

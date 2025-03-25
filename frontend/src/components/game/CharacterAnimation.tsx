@@ -1,6 +1,6 @@
 import React from "react";
 import { CharacterAnimationProps } from "./types/character";
-import { useCharacterAnimation } from "./hooks/useCharacterAnimation";
+import { useCharacterAnimation } from "../../hooks/useCharacterAnimation";
 import { CharacterType } from "./constants/animations";
 import { useUserInfo } from "../../hooks/useUserInfo";
 
@@ -12,7 +12,6 @@ interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
 
 const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
   state,
-  isPlaying = true,
   direction = true,
   scale = 2,
   className = "",
