@@ -57,12 +57,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
     try {
       const result = await analyzeWrongAnswer(problem.id);
       console.log("API 응답 데이터:", result);
-      if (result.success && result.data) {
-        console.log("분석 데이터:", {
-          analysis: result.data.analysis,
-          weakness: result.data.weakness,
-          recommendation: result.data.recommendation,
-        });
+      if (result && result.data) {
+        console.log("분석 데이터:", result.data);
         // 분석 데이터 업데이트
         setSelectedProblem((prev) => {
           if (!prev) return null;
