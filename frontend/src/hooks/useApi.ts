@@ -8,7 +8,7 @@ interface CustomConfig {
   params?: Record<string, any>;
 }
 
-export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "DELETE" = "GET") => {
+export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "POST" | "DELETE" = "GET") => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
@@ -35,6 +35,12 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
             response = await axiosInstance.delete<Response<T>>(url, {
               headers,
               data: payload,
+            });
+            break;
+
+          case "POST":
+            response = await axiosInstance.post<Response<T>>(url, payload, {
+              headers,
             });
             break;
         }
