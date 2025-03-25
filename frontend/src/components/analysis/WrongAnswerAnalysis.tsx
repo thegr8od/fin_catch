@@ -62,9 +62,18 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
           if (!prev) return null;
           return {
             ...prev,
+            title: "금융통화위원회의 역할",
+            type: "객관식",
+            wrongCount: 3,
+            correctCount: 2,
             analysis: result.data.analysis,
             weakPoints: [result.data.weakness],
             recommendations: [result.data.recommendation],
+            attemptHistory: [
+              { date: "2024-02-01", isCorrect: false },
+              { date: "2024-02-03", isCorrect: true },
+              { date: "2024-02-05", isCorrect: false },
+            ],
           };
         });
       }
