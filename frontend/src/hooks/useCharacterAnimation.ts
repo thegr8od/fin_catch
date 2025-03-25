@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
 import * as PIXI from "pixi.js";
-import { CharacterState, CharacterSpriteConfig } from "../types/character";
-import { useCharacter, CharacterType } from "../constants/animations";
+import { CharacterState, CharacterSpriteConfig } from "../components/game/types/character";
+import { useCharacter, CharacterType } from "../components/game/constants/animations";
 
 interface UseCharacterAnimationProps {
   state: CharacterState;
