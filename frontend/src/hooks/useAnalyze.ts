@@ -2,16 +2,14 @@ import { useApi } from "./useApi";
 
 interface analyzePayload {
   quizId: number;
-  memberId: number;
 }
 
 export const useAnalyze = () => {
   const { loading, error, execute: analyzeAnswer } = useApi<boolean, analyzePayload>("api/ai/analyze", "POST");
 
-  const analyzeWrongAnswer = async (quizId: number, memberId: number) => {
+  const analyzeWrongAnswer = async (quizId: number) => {
     return await analyzeAnswer({
       quizId,
-      memberId,
     });
   };
 

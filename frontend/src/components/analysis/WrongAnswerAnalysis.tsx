@@ -34,10 +34,9 @@ interface AnalysisProps {
   onDetailView: () => void;
   categories: Category[];
   onStartGame?: () => void;
-  memberId: number;
 }
 
-const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, memberId, onDetailView }) => {
+const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, onDetailView }) => {
   // 상태 관리
   const [selectedCategory, setSelectedCategory] = useState<number>(categories[0]?.id);
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
@@ -56,7 +55,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
     setAnalyzingProblemId(problem.id);
 
     try {
-      const result = await analyzeWrongAnswer(problem.id, memberId);
+      const result = await analyzeWrongAnswer(problem.id);
       if (result.success) {
         console.log("분석 완료:", result.data);
       }

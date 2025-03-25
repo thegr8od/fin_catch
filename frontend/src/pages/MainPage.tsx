@@ -259,7 +259,6 @@ const MainPage = () => {
                 // 오답노트 분석 컴포넌트 카테고리 데이터
                 categories={wrongAnswerCategories}
                 // 오답노트 분석 컴포넌트 멤버 아이디
-                memberId={user.memberId}
                 onStartGame={() => {
                   // 1:1 게임으로 이동하는 로직
                   navigate("/lobby");
