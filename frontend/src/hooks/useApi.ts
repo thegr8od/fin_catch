@@ -8,7 +8,7 @@ interface CustomConfig {
   params?: Record<string, any>;
 }
 
-export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "DELETE" = "GET") => {
+export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "POST" | "DELETE" = "GET") => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
@@ -37,10 +37,23 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
               data: payload,
             });
             break;
+
+          case "POST":
+            response = await axiosInstance.post<Response<T>>(url, payload, {
+              headers,
+            });
+            break;
         }
 
         const responseData = response.data;
 
+        // AI analyze 엔드포인트는 다른 형식으로 응답
+        if (endpoint === "api/ai/analyze") {
+          setData(responseData as T);
+          return { success: true, data: responseData as T };
+        }
+
+        // 기존 API 응답 처리
         if (responseData.isSuccess) {
           setData(responseData.result);
           return { success: true, data: responseData.result, message: responseData.message };

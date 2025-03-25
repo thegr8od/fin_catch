@@ -96,23 +96,23 @@ const MainPage = () => {
   const wrongAnswerCategories: Category[] = [
     {
       id: 1,
-      name: "금융 정책",
-      totalProblems: 30,
+      name: "금융통화위원회의 역할",
+      totalProblems: 5,
       problems: [
         {
-          id: 1,
+          id: 151, // API 호출에 사용할 ID
           title: "금융통화위원회의 역할",
           type: "객관식",
           wrongCount: 3,
           correctCount: 2,
-          analysis: "금융통화위원회의 주요 기능과 역할에 대한 이해가 필요합니다. 특히 기준금리 결정 과정과 그 영향에 대해 주의 깊게 학습하세요.",
+          analysis: "",
           attemptHistory: [
             { date: "2024-02-01", isCorrect: false },
             { date: "2024-02-03", isCorrect: true },
             { date: "2024-02-05", isCorrect: false },
           ],
-          weakPoints: ["금융정책 결정 과정 이해 부족", "통화정책과 경제 영향 관계 파악 미흡"],
-          recommendations: ["한국은행 통화정책 보고서 학습", "경제뉴스 정기적 확인하기"],
+          weakPoints: [],
+          recommendations: [],
         },
       ],
     },
@@ -258,6 +258,7 @@ const MainPage = () => {
                 onDetailView={() => handleModalOpen("feature")}
                 // 오답노트 분석 컴포넌트 카테고리 데이터
                 categories={wrongAnswerCategories}
+                // 오답노트 분석 컴포넌트 멤버 아이디
                 onStartGame={() => {
                   // 1:1 게임으로 이동하는 로직
                   navigate("/lobby");

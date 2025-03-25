@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Doughnut, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend, ChartOptions, Scale, CoreScaleOptions } from "chart.js";
+import { useAnalyze } from "../../hooks/useAnalyze";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend);
 
-// 오답노트 분석 타입 정의
+// 문제 타입 정의
 export interface Problem {
   id: number;
   title: string;
@@ -20,7 +21,7 @@ export interface Problem {
   recommendations: string[];
 }
 
-// 오답노트 분석 카테고리 타입 정의
+// 카테고리 타입 정의
 export interface Category {
   id: number;
   name: string;
@@ -28,26 +29,65 @@ export interface Category {
   totalProblems?: number;
 }
 
-// 오답노트 분석 컴포넌트 타입 정의
+// 컴포넌트 props 타입 정의
 interface AnalysisProps {
   onDetailView: () => void;
   categories: Category[];
   onStartGame?: () => void;
 }
 
-// 오답노트 분석 컴포넌트 구현
-const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame }) => {
-  // 카테고리 선택 상태 관리
+const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, onDetailView }) => {
+  // 상태 관리
   const [selectedCategory, setSelectedCategory] = useState<number>(categories[0]?.id);
-
-  // 선택된 문제 상태 관리
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+  const [analyzingProblemId, setAnalyzingProblemId] = useState<number | null>(null);
 
-  // 현재 선택된 카테고리 조회
+  // 분석 훅 사용
+  const { analyzeWrongAnswer, loading, error } = useAnalyze();
+
+  // 현재 선택된 카테고리
   const currentCategory = categories.find((cat) => cat.id === selectedCategory);
-
-  // 현재 카테고리에 문제가 있는지 확인
   const hasProblems = currentCategory?.problems && currentCategory.problems.length > 0;
+
+  // 문제 선택 및 분석 핸들러
+  const handleProblemSelect = async (problem: Problem) => {
+    setSelectedProblem(problem);
+    setAnalyzingProblemId(problem.id);
+
+    try {
+      const result = await analyzeWrongAnswer(problem.id);
+      console.log("API 응답 데이터:", result);
+      if (result.success && result.data) {
+        const analysisData = result.data;
+        console.log("분석 데이터:", analysisData);
+        // 분석 데이터 업데이트
+        setSelectedProblem((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            analysis: analysisData.analysis,
+            weakPoints: [analysisData.weakness],
+            recommendations: [analysisData.recommendation],
+          };
+        });
+      }
+    } catch (err) {
+      console.error("분석 오류:", err);
+    } finally {
+      setAnalyzingProblemId(null);
+    }
+  };
+
+  // 로딩 상태 컴포넌트
+  const renderLoadingState = () => (
+    <div className="flex items-center justify-center p-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <span className="ml-2 font-korean-pixel">분석 중...</span>
+    </div>
+  );
+
+  // 에러 상태 컴포넌트
+  const renderErrorState = () => <div className="text-red-500 p-4 text-center font-korean-pixel">분석 중 오류가 발생했습니다. 다시 시도해주세요.</div>;
 
   // 데이터가 없을 때 표시할 섹션
   const renderNoDataSection = () => (
@@ -59,20 +99,19 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
         <br />
         재미있게 금융 지식을 쌓아보세요!
       </p>
-      {/* 1:1 게임 시작 버튼 */}
-      <button onClick={onStartGame} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300">
-        1:1 게임 시작하기
-      </button>
+      {onStartGame && (
+        <button onClick={onStartGame} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300">
+          1:1 게임 시작하기
+        </button>
+      )}
     </div>
   );
 
-  // 문제 분석 차트 렌더링
+  // 분석 차트 렌더링
   const renderAnalysisCharts = (problem: Problem) => {
-    // 정답률 계산
     const correctRate = (problem.correctCount / (problem.correctCount + problem.wrongCount)) * 100;
     const wrongRate = 100 - correctRate;
 
-    // 정답률 차트 데이터 생성
     const doughnutData = {
       labels: ["정답", "오답"],
       datasets: [
@@ -84,7 +123,6 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       ],
     };
 
-    // 풀이 기록 차트 데이터 생성
     const historyData = {
       labels: problem.attemptHistory.map((h) => h.date),
       datasets: [
@@ -97,7 +135,6 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       ],
     };
 
-    // 풀이 기록 차트 옵션 설정
     const lineOptions: ChartOptions<"line"> = {
       scales: {
         y: {
@@ -113,7 +150,6 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       },
     };
 
-    // 문제 분석 차트 렌더링
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-6">
@@ -127,7 +163,6 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
             </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            {/* 풀이 기록 차트 렌더링 */}
             <h5 className="font-korean-pixel text-gray-700 mb-4">풀이 기록</h5>
             <Line data={historyData} options={lineOptions} />
           </div>
@@ -136,38 +171,62 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     );
   };
 
-  // 오답노트 분석 페이지 렌더링
+  // 문제 목록 렌더링
+  const renderProblemList = () => (
+    <div className="space-y-3">
+      {currentCategory?.problems.map((problem) => (
+        <div
+          key={problem.id}
+          onClick={() => handleProblemSelect(problem)}
+          className={`p-4 rounded-lg cursor-pointer transition-colors relative ${selectedProblem?.id === problem.id ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100"}`}
+        >
+          <div className="flex justify-between items-center">
+            <h4 className="font-korean-pixel text-gray-800">{problem.title}</h4>
+            <span
+              className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
+                problem.type === "객관식" ? "bg-blue-100 text-blue-700" : problem.type === "주관식" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"
+              }`}
+            >
+              {problem.type}
+            </span>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-sm text-red-500 font-korean-pixel">틀린 횟수: {problem.wrongCount}회</p>
+            <p className="text-sm text-green-500 font-korean-pixel">정답 횟수: {problem.correctCount}회</p>
+          </div>
+
+          {analyzingProblemId === problem.id && (
+            <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
+              <div className="flex items-center bg-white px-3 py-2 rounded-lg">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                <span className="font-korean-pixel text-sm">분석 중...</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="bg-white/95 rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-transform duration-300">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">📝 오답노트 분석</h3>
       </div>
 
-      {/* 카테고리 탭 */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {/* 카테고리 탭 버튼 */}
         {categories.map((category) => (
-          // 카테고리 탭 버튼
           <button
-            // 카테고리 탭 버튼 클릭 이벤트 핸들러
             key={category.id}
-            // 카테고리 탭 버튼 클릭 시 선택된 카테고리 업데이트
             onClick={() => {
-              // 선택된 카테고리 업데이트
               setSelectedCategory(category.id);
-              // 선택된 문제 초기화
               setSelectedProblem(null);
             }}
-            // 카테고리 탭 버튼 스타일 설정
             className={`px-4 py-2 rounded-lg font-korean-pixel transition-colors ${selectedCategory === category.id ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
           >
-            {/* 카테고리 탭 버튼 텍스트 */}
             {category.name}
-            {/* 카테고리 탭 버튼 텍스트 추가 */}
             {category.totalProblems && (
-              // 카테고리 탭 버튼 텍스트 추가
               <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm">
-                {/* 카테고리 탭 버튼 텍스트 추가 */}
                 {category.problems.length}/{category.totalProblems}
               </span>
             )}
@@ -175,46 +234,18 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
         ))}
       </div>
 
-      {/* 데이터가 없을 때 표시할 섹션 */}
       {!hasProblems ? (
-        // 데이터가 없을 때 표시할 섹션
         renderNoDataSection()
       ) : (
-        // 데이터가 있을 때 표시할 섹션
         <div className="grid grid-cols-2 gap-6">
-          {/* 문제 목록 */}
-          <div className="space-y-3">
-            {currentCategory?.problems.map((problem) => (
-              // 문제 목록
-              <div
-                // 문제 목록 클릭 이벤트 핸들러
-                key={problem.id}
-                // 문제 목록 클릭 시 선택된 문제 업데이트
-                onClick={() => setSelectedProblem(problem)}
-                className={`p-4 rounded-lg cursor-pointer transition-colors ${selectedProblem?.id === problem.id ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100"}`}
-              >
-                {/* 문제 목록 텍스트 */}
-                <div className="flex justify-between items-center">
-                  <h4 className="font-korean-pixel text-gray-800">{problem.title}</h4>
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
-                      problem.type === "객관식" ? "bg-blue-100 text-blue-700" : problem.type === "주관식" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"
-                    }`}
-                  >
-                    {problem.type}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-sm text-red-500 font-korean-pixel">틀린 횟수: {problem.wrongCount}회</p>
-                  <p className="text-sm text-green-500 font-korean-pixel">정답 횟수: {problem.correctCount}회</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-3">{renderProblemList()}</div>
 
-          {/* 분석 내용 */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            {selectedProblem ? (
+            {loading ? (
+              renderLoadingState()
+            ) : error ? (
+              renderErrorState()
+            ) : selectedProblem ? (
               <div className="space-y-6">
                 <div>
                   <h4 className="font-korean-pixel text-lg text-gray-800 mb-4">{selectedProblem.title}</h4>
