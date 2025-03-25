@@ -1,6 +1,7 @@
 package com.finbattle.domain.ai.service;
 
 import com.finbattle.domain.ai.dto.QuizAiRequestDto;
+import com.finbattle.domain.ai.dto.QuizAiResponseDto;
 import com.finbattle.domain.quiz.model.*;
 import com.finbattle.domain.quiz.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +32,9 @@ public class QuizAnalysisService {
 
     private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-    public String analyze(QuizAiRequestDto dto) {
+    public QuizAiResponseDto analyze(Long memberId, QuizAiRequestDto dto) {
         Long quizId = dto.getQuizId();
-        Long memberId = dto.getMemberId();
 
-        // 🟡 유저 답변 조회
         QuizLog quizLog = quizLogRepository
                 .findTopByQuizIdAndMemberIdOrderByCreatedAtDesc(quizId, memberId)
                 .orElseThrow(() -> new RuntimeException("해당 퀴즈에 대한 유저 답변이 존재하지 않습니다."));
@@ -43,7 +42,6 @@ public class QuizAnalysisService {
         String userAnswer = quizLog.getUserAnswer();
         String prompt;
 
-        // 🟡 문제 유형 판별
         Optional<ShortAnswerQuiz> shortOpt = shortAnswerQuizRepository.findById(quizId);
         if (shortOpt.isPresent()) {
             ShortAnswerQuiz q = shortOpt.get();
@@ -51,7 +49,15 @@ public class QuizAnalysisService {
                     문제: %s
                     사용자 답변: %s
 
-                    위 사용자 답변이 어떤 점에서 부족하거나 틀렸는지, 어떻게 개선하면 좋을지 피드백을 줘.
+                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
+                    [분석 내용]
+                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
+
+                    [취약점]
+                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
+
+                    [추천 학습]
+                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
                     """.formatted(q.getShortQuestion(), userAnswer);
             return callOpenAi(prompt);
         }
@@ -63,7 +69,15 @@ public class QuizAnalysisService {
                     문제: %s
                     사용자 답변: %s
 
-                    사용자 답변을 평가하고 논리성, 문법, 핵심 포인트 도달 여부 측면에서 피드백을 줘.
+                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
+                    [분석 내용]
+                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
+
+                    [취약점]
+                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
+
+                    [추천 학습]
+                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
                     """.formatted(q.getEssayQuestion(), userAnswer);
             return callOpenAi(prompt);
         }
@@ -84,7 +98,15 @@ public class QuizAnalysisService {
                     %s
                     사용자 답변: %s
 
-                    사용자의 답변이 정답과 비교하여 어떤지 설명해줘. 정답이 무엇인지, 오답인 경우 무엇을 잘못 이해했는지 알려줘.
+                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
+                    [분석 내용]
+                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
+
+                    [취약점]
+                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
+
+                    [추천 학습]
+                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
                     """.formatted(q.getMutipleQuestion(), optionsText, userAnswer);
             return callOpenAi(prompt);
         }
@@ -92,7 +114,7 @@ public class QuizAnalysisService {
         throw new RuntimeException("해당 퀴즈 ID로 문제 유형을 찾을 수 없습니다.");
     }
 
-    private String callOpenAi(String prompt) {
+    private QuizAiResponseDto callOpenAi(String prompt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(openaiApiKey);
@@ -118,6 +140,22 @@ public class QuizAnalysisService {
         );
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
-        return (String) ((Map<String, Object>) choices.get(0).get("message")).get("content");
+        String content = (String) ((Map<String, Object>) choices.get(0).get("message")).get("content");
+
+        return parseFeedback(content);
+    }
+
+    private QuizAiResponseDto parseFeedback(String content) {
+        String[] sections = content.split("\\[.*?\\]");
+        List<String> parts = Arrays.stream(sections)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+
+        String analysis = parts.size() > 0 ? parts.get(0) : "";
+        String weakness = parts.size() > 1 ? parts.get(1) : "";
+        String recommendation = parts.size() > 2 ? parts.get(2) : "";
+
+        return new QuizAiResponseDto(analysis, weakness, recommendation);
     }
 }
