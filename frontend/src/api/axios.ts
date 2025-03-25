@@ -11,9 +11,9 @@ const axiosInstance: AxiosInstance = axios.create({
 });
 
 // 요청 인터셉터
+// 요청 인터셉터
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 로컬 스토리지에서 액세스 토큰 가져오기
     const token = localStorage.getItem("accessToken");
     console.log("요청 전 저장된 토큰:", token);
 
@@ -21,15 +21,21 @@ axiosInstance.interceptors.request.use(
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // 디버깅용 로그
-    console.log("API 요청:", {
+    // 디버깅용 로그에서 params가 undefined일 때는 제외
+    const logObject: any = {
       url: config.url,
       method: config.method,
-      params: config.params,
       headers: config.headers,
       withCredentials: config.withCredentials,
       cookies: document.cookie,
-    });
+    };
+
+    // params가 있을 때만 로그 객체에 추가
+    if (config.params) {
+      logObject.params = config.params;
+    }
+
+    console.log("API 요청:", logObject);
 
     return config;
   },
