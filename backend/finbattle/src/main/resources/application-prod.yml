@@ -18,7 +18,6 @@ app:
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG  # Hibernate SQL 로그 출력
     org.springframework.security: WARN  # Security 관련 로그 줄이기
     org.springframework.web.filter.CommonsRequestLoggingFilter: WARN  # 요청 로그 줄이기
     com.finbattle.global.common.filter.JWTFilter: WARN  # JWT 필터 로깅 최소화
