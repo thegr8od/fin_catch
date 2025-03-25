@@ -5,6 +5,7 @@ export interface User {
   point: number;
   cats: Array<Cat>;
   mainCat: Cat;
+  memberId: number;
 }
 
 interface Cat {
