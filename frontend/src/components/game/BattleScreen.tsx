@@ -58,7 +58,6 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
               health={playerStatus.health}
               state={playerStatus.state}
               bubble={playerBubble}
-              resourcesLoaded={resourcesLoaded}
               direction={true}
               onAnimationComplete={onPlayerAnimationComplete}
             />
@@ -88,7 +87,6 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
               health={opponentStatus.health}
               state={opponentStatus.state}
               bubble={null}
-              resourcesLoaded={resourcesLoaded}
               direction={false}
               onAnimationComplete={onOpponentAnimationComplete}
             />
