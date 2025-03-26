@@ -1,6 +1,8 @@
 import { CharacterType } from "../components/game/constants/animations";
 
 export interface Character {
+  catId: number;
   catName: CharacterType;
-  isUnlocked: boolean;
+  description: string;
+  grade: string;
 }
