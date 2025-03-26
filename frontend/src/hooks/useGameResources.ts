@@ -6,8 +6,22 @@ export const useGameResources = (characterTypes: string[]) => {
   const { setLoading, setProgress, completeLoading } = useLoading()
   const [resourcesLoaded, setResourcesLoaded] = useState(false)
   const isMountedRef = useRef<boolean>(false)
+  const prevCharacterTypesRef = useRef<string[]>(characterTypes)
 
   useEffect(() => {
+    // 이전 characterTypes와 현재 characterTypes를 비교
+    const hasSameLength = prevCharacterTypesRef.current.length === characterTypes.length
+    const hasSameValues = hasSameLength && 
+      characterTypes.every((type, index) => type === prevCharacterTypesRef.current[index])
+
+    // 값이 같으면 리소스 로딩을 건너뜀
+    if (hasSameValues && resourcesLoaded) {
+      return
+    }
+
+    // 값이 다르면 현재 값을 저장하고 리소스 로딩 시작
+    prevCharacterTypesRef.current = [...characterTypes]
+    
     // 초기 로딩 상태 설정
     setLoading(true)
     setProgress(0)
@@ -79,7 +93,7 @@ export const useGameResources = (characterTypes: string[]) => {
       isMountedRef.current = false
       setLoading(false)
     }
-  }, [setLoading, setProgress, completeLoading, characterTypes])
+  }, [characterTypes, resourcesLoaded])
 
   return { resourcesLoaded }
 }
