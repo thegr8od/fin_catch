@@ -25,7 +25,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // 실제 API 호출은 나중에 구현
-      // const response = await setDefaultAccount(account.accountNumber);
+      // const response = await setDefaultAccount(account.accountNo);
       // if (!response.success) {
       //   throw new Error(response.message);
       // }
@@ -40,8 +40,8 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
     setSelectLoading(false);
   };
 
-  const formatAccountNumber = (accountNumber: number) => {
-    const numbers = accountNumber.toString();
+  const formataccountNo = (accountNo: number) => {
+    const numbers = accountNo.toString();
     return numbers.replace(/(\d{4})(?=\d)/g, "$1-");
   };
 
@@ -86,7 +86,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
                     </div>
                     <div className="text-left">
                       <div className="text-lg font-korean-pixel text-gray-800">{account.accountName}</div>
-                      <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(account.accountNo)}</div>
+                      <div className="text-sm font-korean-pixel text-gray-600">{formataccountNo(account.accountNo)}</div>
                     </div>
                   </div>
                   {/* <div className="text-right font-korean-pixel">

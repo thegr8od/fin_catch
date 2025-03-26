@@ -69,8 +69,8 @@ interface AccountLinkSectionProps {
 const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, mainAccount }) => {
   const [showTransactions, setShowTransactions] = useState(false);
 
-  const formatAccountNumber = (accountNumber: number) => {
-    return accountNumber.toString().replace(/(\d{4})(?=\d)/g, "$1-");
+  const formataccountNo = (accountNo: number) => {
+    return accountNo.toString().replace(/(\d{4})(?=\d)/g, "$1-");
   };
 
   const formatBalance = (balance: number) => {
@@ -108,7 +108,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
                 </div>
                 <div>
                   <div className="text-lg font-korean-pixel text-gray-800">{mainAccount.accountName}</div>
-                  <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(mainAccount.accountNo)}</div>
+                  <div className="text-sm font-korean-pixel text-gray-600">{formataccountNo(mainAccount.accountNo)}</div>
                 </div>
               </div>
               <div className="text-right">
