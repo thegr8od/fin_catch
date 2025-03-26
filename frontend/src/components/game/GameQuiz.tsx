@@ -8,8 +8,8 @@ interface GameQuizProps {
   onShowResults: () => void;
   playerCat: CharacterType;
   opponentCat: CharacterType;
-  quiz: string;
-  answer: string;
+  // quiz: string;
+  // answer: string;
 }
 
 const GameQuiz = ({ timeLeft, isTimeUp, onShowResults, playerCat, opponentCat, quiz, answer }: GameQuizProps) => {
