@@ -3,9 +3,9 @@ import { bankLogo } from "../../utils/BankLogo";
 
 interface MainAccount {
   bankCode: string;
-  accountNumber: number;
-  productName: string;
-  balance: number;
+  accountNo: number;
+  accountName: string;
+  accountBalance: number;
 }
 
 interface Transaction {
@@ -107,12 +107,12 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
                   <img src={bankLogo[mainAccount.bankCode]} alt="bank logo" className="max-w-full max-h-full" />
                 </div>
                 <div>
-                  <div className="text-lg font-korean-pixel text-gray-800">{mainAccount.productName}</div>
-                  <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(mainAccount.accountNumber)}</div>
+                  <div className="text-lg font-korean-pixel text-gray-800">{mainAccount.accountName}</div>
+                  <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(mainAccount.accountNo)}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-semibold font-korean-pixel text-gray-800">{formatBalance(mainAccount.balance)}원</div>
+                <div className="text-lg font-semibold font-korean-pixel text-gray-800">{formatBalance(mainAccount.accountBalance)}원</div>
               </div>
             </div>
           </div>

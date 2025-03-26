@@ -1,16 +1,14 @@
 import { Response } from "../response/Response";
 
 export interface Account {
-  accountNumber: number;
+  accountNo: number;
   bankCode: string;
-  productName: string;
+  accountName: string;
   accountBalance: number;
-  isDefault: boolean;
 }
 
 export interface AllAccount {
   accountList: Account[];
-  totalBalance: number;
 }
 
 export interface AccountDetail {
