@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { CharacterState, PlayerStatus } from "../components/game/types/character"
+import { useUserInfo } from "./useUserInfo"
+import { CharacterType } from "../components/game/constants/animations"
 
 interface GameState {
   roomId: string | null
@@ -11,6 +13,10 @@ interface GameState {
 }
 
 export const useGameState = (roomId: string) => {
+  const { user } = useUserInfo()
+  console.log("유저 정보: ", user)
+  const userCat = (user?.mainCat || "classic") as CharacterType
+  console.log("대표 캐릭터: ", userCat)
   const [gameState, setGameState] = useState<GameState>({
     roomId: roomId || null,
     currentQuestion: "",
@@ -21,7 +27,7 @@ export const useGameState = (roomId: string) => {
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>({
     id: 1,
     name: localStorage.getItem("host") || "방장",
-    characterType: "classic",
+    characterType: userCat,
     health: 5,
     state: "idle",
     score: 0,
@@ -30,7 +36,7 @@ export const useGameState = (roomId: string) => {
   const [opponentStatus, setOpponentStatus] = useState<PlayerStatus>({
     id: 1,
     name: "참가자",
-    characterType: "classic",
+    characterType: userCat,
     health: 5,
     state: "idle",
     score: 0,
