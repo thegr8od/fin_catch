@@ -126,9 +126,9 @@ const MainPage = () => {
                   mainAccount
                     ? {
                         bankCode: mainAccount.bankCode,
-                        accountNumber: mainAccount.accountNumber,
-                        productName: mainAccount.productName,
-                        balance: mainAccount.accountBalance,
+                        accountNo: mainAccount.accountNo,
+                        accountName: mainAccount.accountName,
+                        accountBalance: mainAccount.accountBalance,
                       }
                     : null
                 }

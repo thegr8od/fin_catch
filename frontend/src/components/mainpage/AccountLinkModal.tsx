@@ -76,7 +76,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
             <div className="space-y-4">
               {accounts.map((account) => (
                 <button
-                  key={account.accountNumber}
+                  key={account.accountNo}
                   className="w-full bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-between border border-gray-200 hover:border-primary"
                   onClick={() => handleAccountSelect(account)}
                 >
@@ -85,14 +85,14 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
                       <img src={bankLogo[account.bankCode]} alt="bank logo" className="max-w-full max-h-full" />
                     </div>
                     <div className="text-left">
-                      <div className="text-lg font-korean-pixel text-gray-800">{account.productName}</div>
-                      <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(account.accountNumber)}</div>
+                      <div className="text-lg font-korean-pixel text-gray-800">{account.accountName}</div>
+                      <div className="text-sm font-korean-pixel text-gray-600">{formatAccountNumber(account.accountNo)}</div>
                     </div>
                   </div>
-                  <div className="text-right font-korean-pixel">
+                  {/* <div className="text-right font-korean-pixel">
                     <div className="text-lg font-semibold text-gray-800">{formatBalance(account.accountBalance)}원</div>
                     {account.isDefault && <div className="text-sm text-primary">현재 주 거래 통장</div>}
-                  </div>
+                  </div> */}
                 </button>
               ))}
             </div>
