@@ -19,9 +19,7 @@ public interface FinanceApi {
         description = "로그인한 사용자의 금융망 계좌 정보를 모두 조회합니다."
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "계좌 조회 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 필요)"),
-        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        @ApiResponse(responseCode = "200", description = "계좌 조회 성공")
     })
     ResponseEntity<BaseResponse<FindAllAccountResponseDto>> findAllAccount(
         @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser detail);
