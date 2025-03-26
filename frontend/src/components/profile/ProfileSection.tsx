@@ -14,9 +14,10 @@ interface ProfileData {
 interface ProfileSectionProps {
   profileData: ProfileData;
   onNicknameChange: () => void;
+  onCharacterClick: () => void;
 }
 
-const ProfileSection: React.FC<ProfileSectionProps> = ({ profileData, onNicknameChange }) => {
+const ProfileSection: React.FC<ProfileSectionProps> = ({ profileData, onNicknameChange, onCharacterClick }) => {
   const navigate = useNavigate();
 
   return (
@@ -26,8 +27,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ profileData, onNickname
           <img
             src={`/cats_assets/${profileData.mainCat}/${profileData.mainCat}_cat_static.png`}
             alt="프로필"
-            className="w-24 h-24 rounded-full border-4 border-yellow-400"
+            className="w-24 h-24 rounded-full border-4 border-yellow-400 cursor-pointer hover:border-blue-400 transition-colors"
             style={{ imageRendering: "pixelated" }}
+            onClick={onCharacterClick}
           />
           <div>
             <div className="flex items-center gap-2 mb-2">
