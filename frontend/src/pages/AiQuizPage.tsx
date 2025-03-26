@@ -18,12 +18,13 @@ const AiQuizPage = () => {
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
   const [score] = useState<number>(50);
   const [randomCat, setRandomCat] = useState<CharacterType>("classic");
+  const [quiz, setQuiz] = useState<string>("");
+  const [answer, setAnswer] = useState<string>("");
 
   usePreventNavigation({
-    roomId: gameState.roomId || null,
+    roomId: null,
     gameType: "AiQuiz",
-  })
-
+  });
 
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
@@ -68,8 +69,8 @@ const AiQuizPage = () => {
           onShowResults={() => setGameState("goodResult")}
           playerCat={(user?.mainCat as unknown as CharacterType) || "classic"}
           opponentCat={randomCat}
-          // quiz={quiz}
-          // answer={answer}
+          quiz={quiz}
+          answer={answer}
         />
       ) : (
         <GameResult
