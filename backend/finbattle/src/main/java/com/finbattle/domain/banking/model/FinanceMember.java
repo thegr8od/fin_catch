@@ -3,20 +3,22 @@ package com.finbattle.domain.banking.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.finbattle.domain.banking.dto.financemember.FinanceMemberResponseDto;
 import com.finbattle.domain.member.model.Member;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 public class FinanceMember {
 
@@ -36,8 +38,18 @@ public class FinanceMember {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "main_account")
+    private Long Mainaccount = 0L;
+
+    @OneToMany(mappedBy = "financemember", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Account> accounts = new ArrayList<>();
+
     public FinanceMember(FinanceMemberResponseDto dto, Member member) {
         this.member = member;
         this.financeKey = dto.getUserKey();
+    }
+
+    public void changeMainAccount(Long num) {
+        this.Mainaccount = num;
     }
 }
