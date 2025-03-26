@@ -1,9 +1,9 @@
 import React from "react";
-import { AccountInfo } from "./AccountLinkModal";
+import { Account } from "../../types/Accounts/Account";
 
 interface AccountAnalysisModalProps {
   onClose: () => void;
-  accountInfo: AccountInfo;
+  accountInfo: Account;
 }
 
 interface TransactionItem {
@@ -58,7 +58,7 @@ const AccountAnalysisModal: React.FC<AccountAnalysisModalProps> = ({ onClose, ac
             <div className="bg-white rounded-xl p-4 mb-4 shadow-md">
               <div className="flex justify-between items-center">
                 <h3 className="font-korean-pixel text-lg">현재 잔고</h3>
-                <p className="font-korean-pixel text-xl font-bold">{formatNumber(accountInfo.balance)} 원</p>
+                <p className="font-korean-pixel text-xl font-bold">{formatNumber(accountInfo.accountBalance)} 원</p>
               </div>
             </div>
 
