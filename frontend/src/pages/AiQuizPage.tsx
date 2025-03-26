@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import Background from "../assets/survival.gif";
+import Background from "../assets/bg1.png";
 import GameQuiz from "../components/game/GameQuiz";
 import GameResult from "../components/game/GameResult";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
+import { usePreventNavigation } from "../hooks/usePreventNavigation";
+// import { useGameResources } from "../hooks/useGameResources"
 
 type GameState = "quiz" | "goodResult" | "badResult";
 
@@ -16,6 +18,12 @@ const AiQuizPage = () => {
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
   const [score] = useState<number>(50);
   const [randomCat, setRandomCat] = useState<CharacterType>("classic");
+
+  usePreventNavigation({
+    roomId: gameState.roomId || null,
+    gameType: "AiQuiz",
+  })
+
 
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
@@ -60,6 +68,8 @@ const AiQuizPage = () => {
           onShowResults={() => setGameState("goodResult")}
           playerCat={(user?.mainCat as unknown as CharacterType) || "classic"}
           opponentCat={randomCat}
+          // quiz={quiz}
+          // answer={answer}
         />
       ) : (
         <GameResult
