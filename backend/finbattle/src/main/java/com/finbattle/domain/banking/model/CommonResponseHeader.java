@@ -1,8 +1,12 @@
 package com.finbattle.domain.banking.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
+@Getter
+@Setter
 public class CommonResponseHeader {
 
     private String responseCode;
@@ -11,7 +15,7 @@ public class CommonResponseHeader {
     private String transmissionDate;
     private String transmissionTime;
     private String institutionCode;
-    private String fintechAppNo;
+    private String apiKey;
     private String apiServiceCode;
     private String institutionTransactionUniqueNo;
 
@@ -24,7 +28,7 @@ public class CommonResponseHeader {
             "\"transmissionDate\": \"" + transmissionDate + "\"," +
             "\"transmissionTime\": \"" + transmissionTime + "\"," +
             "\"institutionCode\": \"" + institutionCode + "\"," +
-            "\"fintechAppNo\": \"" + fintechAppNo + "\"," +
+            "\"apiKey\": \"" + apiKey + "\"," +
             "\"apiServiceCode\": \"" + apiServiceCode + "\"," +
             "\"institutionTransactionUniqueNo\": \"" + institutionTransactionUniqueNo + "\"" +
             "}";

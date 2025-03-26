@@ -1,19 +1,50 @@
 package com.finbattle.domain.banking.model;
 
+import com.finbattle.domain.banking.dto.account.AccountApiResponseDto;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
+
+@Entity
+@NoArgsConstructor
+@Getter
 public class Account {
 
-    private String bankCode; // 은행코드
-    private String bankName; // 은행명
-    private String username; // 예금주명
-    private String accountNo; // 계좌번호
-    private String accountName; // 상품명
-    private String accountTypeCode; // 상품구분코드 (1: 수시입출금, 2: 정기예금, 3: 정기적금, 4: 대출)
-    private String accountTypeName; // 상품종류명
-    private String accountCreatedDate; // 계좌개설일 (YYYYMMDD)
-    private String accountExpiryDate; // 계좌만기일 (YYYYMMDD)
-    private Long dailyTransferLimit = 500000000L; // 1일이체한도 (기본값: 5억)
-    private Long oneTimeTransferLimit = 100000000L; // 1회이체한도 (기본값: 1억)
-    private Long accountBalance; // 계좌잔액
-    private String lastTransactionDate; // 최종거래일 (YYYYMMDD, nullable)
-    private String currency; // 통화코드
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
+    private Long accountId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    @JsonIgnore
+    private FinanceMember financemember;
+
+    @Column(name = "account_no", nullable = false, unique = true)
+    private Long accountNo;
+
+    @Column(name = "bank_code", nullable = false)
+    private Integer bankCode;
+
+    @Column(name = "account_name", nullable = false)
+    private String accountName;
+
+    @Column(name = "account_balance", nullable = false)
+    private Long accountBalance;
+
+    public Account(AccountApiResponseDto dto, FinanceMember member) {
+        this.financemember = member;
+        this.accountNo = Long.parseLong(dto.getAccountNo());
+        this.bankCode = Integer.parseInt(dto.getBankCode());
+        this.accountName = dto.getAccountTypeName();
+        this.accountBalance = Long.parseLong(dto.getAccountBalance());
+    }
 }

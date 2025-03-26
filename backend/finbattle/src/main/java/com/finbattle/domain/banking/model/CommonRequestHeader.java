@@ -3,8 +3,12 @@ package com.finbattle.domain.banking.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
+import java.util.Random;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class CommonRequestHeader {
 
     private String apiName;
@@ -32,9 +36,11 @@ public class CommonRequestHeader {
 
     // 고유 거래번호 생성
     private String generateUniqueTransactionNo() {
-        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) +
-            LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss")) +
-            UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+        String randomNum = String.format("%06d",
+            new Random().nextInt(1_000_000)); // 0~999999 숫자 8자리
+        return date + time + randomNum;
     }
 
     @Override
