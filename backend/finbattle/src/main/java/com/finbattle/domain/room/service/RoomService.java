@@ -4,11 +4,26 @@ import static com.finbattle.domain.room.dto.RoomStatus.OPEN;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finbattle.domain.game.dto.GameMemberStatus;
+import com.finbattle.domain.game.model.GameData;
+import com.finbattle.domain.game.repository.RedisGameRepository;
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
+import com.finbattle.domain.quiz.dto.EssayQuizDto;
+import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
+import com.finbattle.domain.quiz.dto.QuizOptionDto;
+import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
+import com.finbattle.domain.quiz.model.EssayQuiz;
+import com.finbattle.domain.quiz.model.MultipleChoiceQuiz;
+import com.finbattle.domain.quiz.model.QuizOption;
+import com.finbattle.domain.quiz.model.ShortAnswerQuiz;
+import com.finbattle.domain.quiz.repository.EssayQuizRepository;
+import com.finbattle.domain.quiz.repository.MultipleChoiceQuizRepository;
+import com.finbattle.domain.quiz.repository.QuizOptionRepository;
+import com.finbattle.domain.quiz.repository.ShortAnswerQuizRepository;
 import com.finbattle.domain.room.dto.EventMessage;
 import com.finbattle.domain.room.dto.MessageType;
-import com.finbattle.domain.room.dto.QuizType;
+import com.finbattle.domain.room.dto.RedisRoomMember;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
@@ -17,11 +32,15 @@ import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.domain.room.model.Room;
 import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
+import com.finbattle.global.common.model.enums.SubjectType;
 import com.finbattle.global.common.redis.RedisPublisher;
+import jakarta.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -32,8 +51,13 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final MemberRepository memberRepository;
     private final RedisRoomRepository redisRoomRepository;
+    private final EssayQuizRepository essayQuizRepository;
+    private final ShortAnswerQuizRepository shortAnswerQuizRepository;
     private final RedisPublisher redisPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RedisGameRepository redisGameRepository;
+    private final MultipleChoiceQuizRepository multipleChoiceQuizRepository;
+    private final QuizOptionRepository quizOptionRepository;
 
     // 방 생성
     public RoomResponse createRoom(RoomCreateRequest request) {
@@ -46,9 +70,9 @@ public class RoomService {
         room.setRoomTitle(request.getRoomTitle());
         room.setPassword(request.getPassword());
         room.setMaxPlayer(request.getMaxPlayer());
-        room.setRoomType(RoomType.valueOf(request.getRoomType().toUpperCase()));
+        room.setRoomType(request.getRoomType());
         room.setStatus(OPEN); // 기본 상태
-        room.setQuizType(QuizType.valueOf(request.getQuizType().toUpperCase()));
+        room.setSubjectType(request.getSubjectType());
 
         // --- 1:N 핵심 ---
         // 방의 소유자(=호스트)를 Member로 직접 지정
@@ -61,9 +85,17 @@ public class RoomService {
         return mapToRoomResponse(savedRoom);
     }
 
+    @Transactional
     public void startRoom(Long roomId, Long memberId) {
+        // (1) Room / RedisRoom 변경
         Room room = roomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+
+        // 방장 체크 (예: 예외 처리)
+        if (!room.getHostMember().getMemberId().equals(memberId)) {
+            throw new IllegalStateException("방장만 게임 시작을 할 수 있습니다.");
+        }
+
         room.setStatus(RoomStatus.IN_PROGRESS);
         roomRepository.save(room);
 
@@ -72,12 +104,73 @@ public class RoomService {
         redisRoom.setStatus(RoomStatus.IN_PROGRESS);
         redisRoomRepository.save(redisRoom);
 
-//        if (!redisRoom.getHost().getMemberId().equals(memberId)) {
-//            log.warn("🚨 게임 시작 실패: room:{}의 게임 시작은 방장만 가능합니다.", roomId);
-//            sendError(roomId, "게임 시작 실패: 방장만 게임을 시작할 수 있습니다.");
-//            return;
-//        }
+        // (2) 방 멤버 목록 조회
+        List<RedisRoomMember> members = redisRoom.getMembers();
 
+        // (3) GameDataDto 생성
+        GameData gameData = new GameData();
+        gameData.setRoomId(roomId);
+        gameData.setQuizNum(1);
+
+        // (3-1) GameMemberStatusList 구성
+        List<GameMemberStatus> gameMemberStatusList = new ArrayList<>();
+        for (RedisRoomMember member : members) {
+            GameMemberStatus gms = new GameMemberStatus();
+            gms.setLife(5);
+            gms.setMemberId(member.getMemberId());
+            gms.setMainCat(member.getMainCat());
+            gms.setNickname(member.getNickname());
+            // 필요 시 다른 필드 추가
+            gameMemberStatusList.add(gms);
+        }
+        gameData.setGameMemberStatusList(gameMemberStatusList);
+
+        // (3-2) 문제 정보 세팅
+        // -> 객관식 5개, 단답식 3개, 서술형 1개
+        SubjectType subject = room.getSubjectType();
+
+        // 1) EssayQuiz (서술형) 1개
+        List<EssayQuiz> essayList = essayQuizRepository.findRandomBySubject(
+            subject, PageRequest.of(0, 1));
+        if (essayList.isEmpty()) {
+            throw new IllegalStateException("서술형 퀴즈가 부족합니다.");
+        }
+        EssayQuiz essayQuizEntity = essayList.get(0);
+        // EssayQuizDto 변환 (직접 세팅 or toDto)
+        EssayQuizDto essayQuizDto = EssayQuizDto.toDto(essayQuizEntity);
+        gameData.setEssayQuiz(essayQuizDto);
+
+        // 2) ShortAnswerQuiz (단답형) 3개
+        List<ShortAnswerQuiz> shortEntities = shortAnswerQuizRepository.findRandomBySubject(
+            subject, PageRequest.of(0, 3));
+        List<ShortAnswerQuizDto> shortDtos = shortEntities.stream().map(entity -> {
+            ShortAnswerQuizDto dto = ShortAnswerQuizDto.toDto(entity);
+            return dto;
+        }).toList();
+        gameData.setShortAnswerQuizList(shortDtos);
+
+        // 3) MultipleChoiceQuiz (객관식) 5개
+        List<MultipleChoiceQuiz> multipleList = multipleChoiceQuizRepository.findRandomBySubject(
+            subject, PageRequest.of(0, 5));
+        // 각 객관식 문항에 대해 옵션을 조회한 뒤 DTO로 변환
+        List<MultipleChoiceQuizDto> multipleDtos = multipleList.stream().map(mEntity -> {
+            // 옵션 채워넣기
+            List<QuizOption> options = quizOptionRepository.findByQuizId(mEntity.getQuizId());
+            List<QuizOptionDto> optionDtos = QuizOptionDto.toDtoList(options);
+
+            MultipleChoiceQuizDto dto = MultipleChoiceQuizDto.toDto(mEntity);
+            dto.setQuizOptions(optionDtos);
+
+            return dto;
+        }).toList();
+        gameData.setMultipleChoiceQuizList(multipleDtos);
+
+        // (4) Redis 저장 (DTO 자체를)
+        // 아래는 예시로 CrudRepository<GameDataDto, Long>를 사용한다고 가정
+        // (직접 RedisTemplate을 쓸 수도 있음)
+        redisGameRepository.save(gameData);
+
+        // (5) 시작 이벤트 발행
         EventMessage<RedisRoom> eventMessage = new EventMessage<>(MessageType.START, roomId,
             redisRoom);
         try {
@@ -88,6 +181,7 @@ public class RoomService {
             throw new IllegalStateException("이벤트 메시지 생성 중 오류가 발생했습니다.");
         }
     }
+
 
     public void deleteRoom(Long roomId) {
         Room room = roomRepository.findById(roomId)
@@ -137,18 +231,8 @@ public class RoomService {
         response.setRoomType(room.getRoomType());
         response.setMaxPlayer(room.getMaxPlayer());
         response.setCreatedAt(room.getCreatedAt());
-        response.setQuizType(room.getQuizType());
+        response.setSubjectType(room.getSubjectType());
         response.setMemberId(room.getHostMember().getMemberId());
         return response;
     }
-
-//    private void sendError(String roomId, String errorMessage) {
-//        com.finbattle.domain.game.dto.EventMessage<String> message = new com.finbattle.domain.game.dto.EventMessage<>(
-//            EventType.GAME_INFO, roomId,
-//            errorMessage);
-//        publishToRoom(roomId, message);
-//        log.warn("게임 시작 에러 - room {}: {}", roomId, errorMessage);
-//    }
-
-//    private
 }

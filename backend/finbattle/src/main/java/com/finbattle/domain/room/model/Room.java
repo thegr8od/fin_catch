@@ -1,9 +1,9 @@
 package com.finbattle.domain.room.model;
 
 import com.finbattle.domain.member.model.Member;
-import com.finbattle.domain.room.dto.QuizType;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.dto.RoomType;
+import com.finbattle.global.common.model.enums.SubjectType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -54,7 +54,7 @@ public class Room {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private QuizType quizType;
+    private SubjectType subjectType;
 
     // --- 1:N 관계 구현을 위한 핵심 ---
     // "한 Member"가 "여러 Room"을 생성할 수 있으므로,

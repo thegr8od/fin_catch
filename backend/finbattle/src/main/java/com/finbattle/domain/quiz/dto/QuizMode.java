@@ -1,4 +1,4 @@
-package com.finbattle.domain.game.dto;
+package com.finbattle.domain.quiz.dto;
 
 public enum QuizMode {
     SHORT_ANSWER,       // 단답형 (20초)

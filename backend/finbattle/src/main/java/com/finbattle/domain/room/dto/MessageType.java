@@ -8,13 +8,14 @@ public enum MessageType {
     READY,          //방 준비하기
     COUNT,          //방 인원수
     JOIN_FAIL,      //방 참가 실패
-    NOT_READY,      //방 준비 안됨
+    NOT_READY,      //방 준비 안된 오류 메시지
     DELETE,         //방 삭제
     LEAVE,          //방 떠나기
     KICK_FAIL,      //강퇴 실패
     KICK,           //강퇴
     INFO,           //방 정보
-    START;        //인원 준비 안됨
+    START,          //게임 시작
+    UNREADY;        //인원 준비 안됨
 
     @JsonValue
     @Override

@@ -1,6 +1,6 @@
-package com.finbattle.domain.room.dto;
+package com.finbattle.global.common.model.enums;
 
-public enum QuizType {
+public enum SubjectType {
     FIN_KNOWLEDGE,  //금융 지식
     FIN_CRIME,      //금융 범죄
     FIN_POLICY,     //금융 정책

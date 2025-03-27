@@ -52,11 +52,8 @@ public class RoomSubscriptionService {
         redisRoom.setHost(host);
         redisRoom.getMembers().add(host);
 
-//        RoomContainer container = new RoomContainer();
-//        container.setData(redisRoom);
-
         redisRoomRepository.save(redisRoom);
-//        saveRoomContainer(response.getRoomId(), container);
+
         publishEvent(MessageType.CREATE, response.getRoomId(), redisRoom);
     }
 
@@ -99,7 +96,7 @@ public class RoomSubscriptionService {
         member.setMemberId(userId);
         member.setNickname(m.getNickname());
         member.setMainCat(m.getMainCat());
-        member.setStatus("NOT_READY");
+        member.setStatus("UNREADY");
         redisRoom.getMembers().add(member);
 
         redisRoomRepository.save(redisRoom);
@@ -127,15 +124,10 @@ public class RoomSubscriptionService {
             return;
         }
 
-        // 3) 기존 RoomContainer 가져와서 멤버 목록 갱신
-//        RoomContainer container = getRoomContainer(roomId);
-//        container.getData().setMembers(members);
-//
-//        // 4) Redis에 다시 저장
-//        saveRoomContainer(roomId, container);
+        // 3) Redis에 다시 저장
         redisRoomRepository.save(redisRoom);
 
-        // 5) 이벤트 발행
+        // 4) 이벤트 발행
         // ✅ MessageType.LEAVE 사용
         publishEvent(MessageType.LEAVE, roomId, userId);
     }
@@ -160,15 +152,11 @@ public class RoomSubscriptionService {
         }
 
         // 기존 RoomContainer를 가져와서 members 갱신
-//        RoomContainer container = getRoomContainer(roomId);
-//        container.getData().setMembers(members);
-//        saveRoomContainer(roomId, container);
         redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.KICK 사용
         publishEvent(MessageType.KICK, roomId, targetUserId);
     }
-
 
     /**
      * 방 삭제 및 이벤트 발행
@@ -211,9 +199,6 @@ public class RoomSubscriptionService {
         member.setStatus("READY");
 
         // 변경된 멤버 목록을 다시 세팅
-//        RoomContainer container = getRoomContainer(roomId);
-//        container.getData().setMembers(members);
-//        saveRoomContainer(roomId, container);
         redisRoomRepository.save(redisRoom);
 
         // ✅ MessageType.READY 사용
@@ -240,12 +225,12 @@ public class RoomSubscriptionService {
             .orElseThrow(() -> new IllegalStateException("해당 유저는 방에 없습니다."));
 
         if ("READY".equals(member.getStatus())) {
-            member.setStatus("NOT_READY");
+            member.setStatus("UNREADY");
             redisRoomRepository.save(redisRoom);
-            publishEvent(MessageType.NOT_READY, roomId, redisRoom);
-            log.info("✅ 유저 {}의 상태를 NOT_READY로 변경", userId);
+            publishEvent(MessageType.UNREADY, roomId, redisRoom);
+            log.info("✅ 유저 {}의 상태를 UNREADY 로 변경", userId);
         } else {
-            log.info("ℹ️ 유저 {}는 이미 NOT_READY 상태입니다.", userId);
+            log.info("ℹ️ 유저 {}는 이미 UNREADY 상태입니다.", userId);
         }
     }
 
@@ -262,6 +247,5 @@ public class RoomSubscriptionService {
             log.error("Failed to publish event: {}", e.getMessage());
         }
     }
-
 
 }
