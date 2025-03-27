@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Background from "../components/layout/Background";
 import myPageBg from "../assets/mypage_bg.png";
 import { useUserInfo } from "../hooks/useUserInfo";
@@ -19,6 +19,7 @@ import { useAnalyze } from "../hooks/useAnalyze";
 import { Category } from "../types/analysis/Problem";
 import QuizResultSection from "../components/quiz/QuizResultSection";
 import { dummyQuizScores, dummyWeakPoints } from "../data/dummyData";
+import { useAccount } from "../hooks/useAccount";
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -26,12 +27,23 @@ const MainPage = () => {
   const { characters, selectedCharacter, handleCharacterSelect, changeMyCat } = useCharacterManagement();
   const { showNicknameModal, showCharacterInfoModal, handleModalOpen, handleModalClose } = useModalManagement(user);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [mainAccount, setMainAccount] = useState<Account | null>(null);
+  const { accounts, error: accountError } = useAccount();
   const { categories } = useAnalyze();
 
-  const handleAccountLink = (account: Account) => {
-    setMainAccount(account);
+  // 계좌 목록에서 main_account와 매칭되는 계좌 찾기
+  const mainAccountInfo = React.useMemo(() => {
+    if (!user?.main_account || !accounts) return null;
+    return accounts.find((account) => account.accountNo === user.main_account) || null;
+  }, [accounts, user?.main_account]);
+
+  // 계좌 연동 후 정보 갱신
+  const handleAccountLink = async (account: Account) => {
     setIsAccountModalOpen(false);
+    try {
+      await fetchUserInfo(); // 사용자 정보만 갱신 (계좌 정보는 useAccount 훅에서 자동으로 갱신됨)
+    } catch (error) {
+      console.error("계좌 연동 후 정보 갱신 실패:", error);
+    }
   };
 
   const handleUpdateNickname = async (newNickname: string) => {
@@ -70,19 +82,7 @@ const MainPage = () => {
               <ProfileSection profileData={profileData} onNicknameChange={() => handleModalOpen("nickname")} onCharacterClick={handleCharacterClick} />
 
               {/* 계좌 연동 섹션 */}
-              <AccountLinkSection
-                onAccountLink={() => setIsAccountModalOpen(true)}
-                mainAccount={
-                  mainAccount
-                    ? {
-                        bankCode: mainAccount.bankCode,
-                        accountNo: mainAccount.accountNo,
-                        accountName: mainAccount.accountName,
-                        accountBalance: mainAccount.accountBalance,
-                      }
-                    : null
-                }
-              />
+              <AccountLinkSection onAccountLink={() => setIsAccountModalOpen(true)} mainAccount={mainAccountInfo} error={accountError} />
 
               {/* 오답 분석 */}
               <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
