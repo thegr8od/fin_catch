@@ -2,10 +2,12 @@ package com.finbattle.domain.banking.dto.account;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
-public class AccountApiResponseDto {
+@ToString
+public class AccountDetailDto {
 
     private String bankCode;
     private String bankName;

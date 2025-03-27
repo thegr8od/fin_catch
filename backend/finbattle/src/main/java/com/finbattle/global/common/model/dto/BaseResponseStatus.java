@@ -41,7 +41,8 @@ public enum BaseResponseStatus {
     INSTITUTION_TRANSACTION_NO_DUPLICATE(false, HttpStatus.BAD_REQUEST, 3007,
         "기관거래고유번호가 중복된 값입니다."),
     API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
-    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다.");
+    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다."),
+    ACCOUNT_NOT_FOUND(false, HttpStatus.BAD_REQUEST, 3010, "일치하는 계좌번호가 없습니다.");
 
     private final boolean isSuccess;
     @JsonIgnore

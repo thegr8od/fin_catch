@@ -1,4 +1,4 @@
-package com.finbattle.domain.member.cotroller;
+package com.finbattle.domain.member.controller;
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.member.dto.CatDto;

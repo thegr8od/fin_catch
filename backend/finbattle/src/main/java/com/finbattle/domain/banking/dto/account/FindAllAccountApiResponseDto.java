@@ -10,11 +10,11 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class FindAccountsApiResponseDto {
+public class FindAllAccountApiResponseDto {
 
     @JsonProperty("Header")
     private CommonResponseHeader Header;
 
     @JsonProperty("REC")
-    private List<AccountApiResponseDto> REC;
+    private List<AccountDetailDto> REC;
 }
