@@ -55,7 +55,10 @@ public enum BaseResponseStatus {
     // AI (4100 ~ 4199)
     AI_ANALYSIS_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, 4100, "AI 분석에 실패하였습니다."),
     OPENAI_API_ERROR(false, HttpStatus.INTERNAL_SERVER_ERROR, 4101, "OpenAI API 호출 중 오류가 발생했습니다."),
-    AI_RESPONSE_INVALID(false, HttpStatus.BAD_REQUEST, 4102, "AI 응답이 유효하지 않습니다."); // 🔥 예외 대비 추가
+    AI_RESPONSE_INVALID(false, HttpStatus.BAD_REQUEST, 4102, "AI 응답이 유효하지 않습니다."),
+    AI_QUIZ_CREATION_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, 4103, "AI 퀴즈 생성에 실패하였습니다.");
+
+
     private final boolean isSuccess;
     @JsonIgnore
     private final HttpStatus httpStatus;
