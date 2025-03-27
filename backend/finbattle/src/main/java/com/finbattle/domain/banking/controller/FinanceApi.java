@@ -41,6 +41,17 @@ public interface FinanceApi {
         @RequestBody AccountRequestDto requestDto);
 
     @Operation(
+        summary = "주 거래 계좌 변경",
+        description = "로그인한 사용자의 주 거래 계좌를 변경합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "계좌 변경 성공")
+    })
+    ResponseEntity<BaseResponse<String>> changeMainAccount(
+        @AuthenticationPrincipal AuthenticatedUser detail,
+        @RequestBody AccountRequestDto requestDto);
+
+    @Operation(
         summary = "금융 계좌 거래 내역 조회",
         description = "로그인한 사용자의 금융망 특정 계좌의 거래 내역 리스트를 조회합니다."
     )
