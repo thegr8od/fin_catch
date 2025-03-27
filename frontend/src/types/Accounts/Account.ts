@@ -1,28 +1,63 @@
-import { Response } from "../response/Response";
-
 export interface Account {
   accountNo: number;
-  bankCode: string;
+  bankCode: number;
   accountName: string;
   accountBalance: number;
 }
 
 export interface AllAccount {
-  accountList: Account[];
+  mainAccount: number;
+  accounts: Account[];
 }
 
 export interface AccountDetail {
-  consumeHistory: ConsumeHistory[];
-  ownerName: string;
-  dailyLimit: number;
-  oneTimeLimit: number;
-  accountOpenDate: string;
-  accountCloseDate: string;
+  bankCode: string;
+  bankName: string;
+  userName: string;
+  accountNo: string;
+  accountName: string;
+  accountTypeCode: string;
+  accountTypeName: string;
+  accountCreateDate: string;
+  accountExpiryDate: string;
+  dailyTransferLimit: number;
+  oneTimeTransferLimit: number;
+  accountBalance: number;
+  lastTranscationDate: string;
+  currency: string;
 }
 
 export interface ConsumeHistory {
-  consumeDate: string;
-  consumeAmount: number;
-  consumeType: string;
-  consumePlace: string;
+  transcationUniqueNo: number;
+  transcationDate: string;
+  transcationTime: string;
+  transcationType: string;
+  transcationTypeName: string;
+  transcationBalance: number;
+  transcationAfterBalance: number;
+  transcationSummary: string;
+  transcationMemo: string;
+}
+
+export interface AllConsumeHistory {
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  result: {
+    Header: {
+      responseCode: string;
+      responseMessage: string;
+      apiName: string;
+      transmissionDate: string;
+      transmissionTime: string;
+      institutionCode: string;
+      apiKey: string;
+      apiServiceCode: string;
+      institutionTransactionUniqueNo: string;
+    };
+    REC: {
+      totalCount: string;
+      list: ConsumeHistory[];
+    };
+  };
 }

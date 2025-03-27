@@ -2,39 +2,9 @@ import React, { useState } from "react";
 import { Doughnut, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend, ChartOptions, Scale, CoreScaleOptions } from "chart.js";
 import { useAnalyze } from "../../hooks/useAnalyze";
+import { Problem, Category, AnalysisProps } from "../../types/analysis/Problem";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend);
-
-// 문제 타입 정의
-export interface Problem {
-  id: number;
-  title: string;
-  type: "객관식" | "주관식" | "서술형";
-  wrongCount: number;
-  correctCount: number;
-  analysis: string;
-  attemptHistory: {
-    date: string;
-    isCorrect: boolean;
-  }[];
-  weakPoints: string[];
-  recommendations: string[];
-}
-
-// 카테고리 타입 정의
-export interface Category {
-  id: number;
-  name: string;
-  problems: Problem[];
-  totalProblems?: number;
-}
-
-// 컴포넌트 props 타입 정의
-interface AnalysisProps {
-  onDetailView: () => void;
-  categories: Category[];
-  onStartGame?: () => void;
-}
 
 const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, onDetailView }) => {
   // 상태 관리
@@ -93,11 +63,11 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
   const renderNoDataSection = () => (
     <div className="flex flex-col items-center justify-center h-[400px] bg-gray-50 rounded-lg p-8">
       <img src="/cats_assets/classic/classic_cat_static.png" alt="퀴즈 캐릭터" className="w-32 h-32 mb-6" />
-      <h3 className="text-xl font-bold text-gray-800 font-korean-pixel mb-4">아직 푼 문제가 없어요!</h3>
+      <h3 className="text-xl font-bold text-gray-800 font-korean-pixel mb-4">오답이 하나도 없어요!</h3>
       <p className="text-gray-600 font-korean-pixel text-center mb-6">
-        1:1 게임에 참여하여 다른 플레이어와 함께
+        정말 대단해요! 모든 문제를 맞추셨네요.
         <br />
-        재미있게 금융 지식을 쌓아보세요!
+        계속해서 금융 지식을 쌓아보세요!
       </p>
       {onStartGame && (
         <button onClick={onStartGame} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300">

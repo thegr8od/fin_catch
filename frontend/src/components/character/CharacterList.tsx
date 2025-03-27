@@ -1,11 +1,11 @@
 import React from "react";
-import { Character } from "../../types/Character";
+import { Cat } from "../../types/profile/Cat";
 import { CharacterType } from "../../components/game/constants/animations";
 
 interface CharacterListProps {
-  characters: Character[];
-  selectedCharacter: Character | null;
-  onSelect: (character: Character) => void;
+  characters: Cat[];
+  selectedCharacter: Cat | null;
+  onSelect: (character: Cat) => void;
   mainCat: CharacterType;
 }
 

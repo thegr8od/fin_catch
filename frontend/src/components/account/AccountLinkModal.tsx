@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { bankLogo } from "../../utils/BankLogo";
 import { Account } from "../../types/Accounts/Account";
 import { useAccount } from "../../hooks/useAccount";
 
 interface AccountLinkModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onLinkAccount: (accountInfo: Account) => void;
 }
 
-const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAccount }) => {
+const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, onLinkAccount }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -16,31 +17,38 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
   const [selectError, setSelectError] = useState<string | null>(null);
   const { fetchAllAccount } = useAccount();
 
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        const response = await fetchAllAccount();
-        if (response?.data?.result?.accounts) {
-          setAccounts(response.data.result.accounts);
-        } else {
-          throw new Error("계좌 정보를 불러올 수 없습니다.");
-        }
-      } catch (error) {
-        setError("계좌 목록을 불러오는데 실패했습니다.");
-        console.error("계좌 목록 로딩 에러:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadAccounts = useCallback(async () => {
+    try {
+      const response = await fetchAllAccount();
+      console.log("API 응답:", response);
 
-    loadAccounts();
-  }, [fetchAllAccount]);
+      if (response?.data?.accounts) {
+        console.log("계좌 목록:", response.data.accounts);
+        setAccounts(response.data.accounts);
+      } else {
+        console.log("계좌 데이터 구조:", response?.data);
+        throw new Error("계좌 정보를 불러올 수 없습니다.");
+      }
+    } catch (error) {
+      console.error("계좌 목록 로딩 에러:", error);
+      setError("계좌 목록을 불러오는데 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      setError(null);
+      loadAccounts();
+    }
+  }, [isOpen]);
 
   const handleAccountSelect = async (account: Account) => {
     setSelectLoading(true);
     setSelectError(null);
     try {
-      // 임시 딜레이로 API 호출 시뮬레이션
       await new Promise((resolve) => setTimeout(resolve, 500));
       onLinkAccount(account);
       onClose();
@@ -59,6 +67,8 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ onClose, onLinkAcco
   const formatBalance = (balance: number) => {
     return new Intl.NumberFormat("ko-KR").format(balance);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm" onClick={onClose}>

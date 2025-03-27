@@ -4,7 +4,7 @@ import myPageBg from "../assets/mypage_bg.png";
 import { useUserInfo } from "../hooks/useUserInfo";
 import LoadingScreen from "../components/common/LoadingScreen";
 import { CharacterType } from "../components/game/constants/animations";
-import AccountLinkModal from "../components/mainpage/AccountLinkModal";
+import AccountLinkModal from "../components/account/AccountLinkModal";
 import NicknameChangeModal from "../components/mainpage/NicknameChangeModal";
 import { useCharacterManagement } from "../hooks/useCharacterManagement";
 import { useModalManagement } from "../hooks/useModalManagement";
@@ -16,8 +16,9 @@ import WrongAnswerAnalysis from "../components/analysis/WrongAnswerAnalysis";
 import CharacterChangeModal from "../components/profile/CharacterChangeModal";
 import { useNavigate } from "react-router-dom";
 import { useAnalyze } from "../hooks/useAnalyze";
-import { Category } from "../components/analysis/WrongAnswerAnalysis";
+import { Category } from "../types/analysis/Problem";
 import QuizResultSection from "../components/quiz/QuizResultSection";
+import { dummyQuizScores, dummyWeakPoints } from "../data/dummyData";
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -26,8 +27,7 @@ const MainPage = () => {
   const { showNicknameModal, showCharacterInfoModal, handleModalOpen, handleModalClose } = useModalManagement(user);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [mainAccount, setMainAccount] = useState<Account | null>(null);
-
-  const { analyzeWrongAnswer, loading: analyzeLoading, error } = useAnalyze();
+  const { categories } = useAnalyze();
 
   const handleAccountLink = (account: Account) => {
     setMainAccount(account);
@@ -60,56 +60,6 @@ const MainPage = () => {
     mainCat: user.mainCat as unknown as CharacterType,
   };
 
-  // 더미 오답 분석 데이터
-  const wrongAnswerCategories: Category[] = [
-    {
-      id: 1,
-      name: "금융통화위원회의 역할",
-      totalProblems: 5,
-      problems: [
-        {
-          id: 151, // API 호출에 사용할 ID
-          title: "금융통화위원회의 역할",
-          type: "객관식" as const,
-          wrongCount: 3,
-          correctCount: 2,
-          analysis: "",
-          attemptHistory: [
-            { date: "2024-02-01", isCorrect: false },
-            { date: "2024-02-03", isCorrect: true },
-            { date: "2024-02-05", isCorrect: false },
-          ],
-          weakPoints: [],
-          recommendations: [],
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "금융 범죄",
-      totalProblems: 30,
-      problems: [],
-    },
-    {
-      id: 3,
-      name: "금융 상품",
-      totalProblems: 30,
-      problems: [],
-    },
-    {
-      id: 4,
-      name: "투자",
-      totalProblems: 30,
-      problems: [],
-    },
-    {
-      id: 5,
-      name: "금융 지식",
-      totalProblems: 30,
-      problems: [],
-    },
-  ];
-
   return (
     <Background backgroundImage={myPageBg}>
       <div className="absolute inset-0 overflow-auto">
@@ -135,36 +85,13 @@ const MainPage = () => {
               />
 
               {/* 오답 분석 */}
-              <WrongAnswerAnalysis categories={wrongAnswerCategories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
+              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
 
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
 
               {/* AI 문제 풀기 */}
-              <QuizResultSection
-                scores={{
-                  average: 85,
-                  totalAttempts: 10,
-                  consecutiveDays: 3,
-                }}
-                weakPoints={[
-                  {
-                    id: 1,
-                    topic: "금융상품의 위험성 이해",
-                    level: "high",
-                  },
-                  {
-                    id: 2,
-                    topic: "투자 수익률 계산",
-                    level: "medium",
-                  },
-                  {
-                    id: 3,
-                    topic: "시장 위험 분석",
-                    level: "low",
-                  },
-                ]}
-              />
+              <QuizResultSection scores={dummyQuizScores} weakPoints={dummyWeakPoints} />
             </div>
           </div>
         </div>
@@ -173,7 +100,7 @@ const MainPage = () => {
       {/* 모달들 */}
       {showNicknameModal && <NicknameChangeModal onClose={() => handleModalClose("nickname")} currentNickname={profileData.nickname} onUpdateNickname={handleUpdateNickname} />}
 
-      {isAccountModalOpen && <AccountLinkModal onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} />}
+      <AccountLinkModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} />
 
       {showCharacterInfoModal && (
         <CharacterChangeModal

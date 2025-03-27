@@ -1,8 +1,8 @@
 import React from "react";
-import { Character } from "../../types/Character";
+import { Cat } from "../../types/profile/Cat";
 
 interface CharacterInfoModalProps {
-  character: Character | null;
+  character: Cat | null;
   onClose: () => void;
 }
 
