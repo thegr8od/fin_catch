@@ -11,7 +11,7 @@ const OneToOnePage: React.FC = () => {
   const roomIdParam = useParams<{ roomId: string }>().roomId
   const roomId = roomIdParam || ""
 
-  const { gameState, playerStatus, opponentStatus, handleAnimationComplete } = useGameState(roomId)
+  const { gameState, playerStatus, opponentStatus, handleAnimationComplete, handleAttack } = useGameState(roomId)
   const { resourcesLoaded } = useGameResources([playerStatus.characterType, opponentStatus.characterType])
 
   usePreventNavigation({
@@ -30,6 +30,7 @@ const OneToOnePage: React.FC = () => {
           questionText={gameState.currentQuestion}
           onPlayerAnimationComplete={(state) => handleAnimationComplete(playerStatus.id, state)}
           onOpponentAnimationComplete={(state) => handleAnimationComplete(opponentStatus.id, state)}
+          onAttack={handleAttack}
         />
       </div>
     </GameLayout>
