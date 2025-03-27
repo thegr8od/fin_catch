@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { bankLogo } from "../../utils/BankLogo";
-import { useAccount } from "../../hooks/useAccount";
 import { AccountDetail, AllConsumeHistory } from "../../types/Accounts/Account";
+import { formatDateToInput } from "../../utils/formatDate";
+import { formatBalance, formataccountNo } from "../../utils/formatAccount";
+import { useAccount } from "../../hooks/useAccount";
 
 interface MainAccount {
   bankCode: number;
@@ -13,9 +15,10 @@ interface MainAccount {
 interface AccountLinkSectionProps {
   onAccountLink: () => void;
   mainAccount: MainAccount | null;
+  error?: string | null;
 }
 
-const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, mainAccount }) => {
+const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, mainAccount, error }) => {
   const [showDetail, setShowDetail] = useState(false);
   const [accountDetail, setAccountDetail] = useState<AccountDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,23 +33,28 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
     transactionType: "A" as "A" | "M" | "D",
   });
 
-  const loadAccountDetail = useCallback(async () => {
-    if (!mainAccount) return;
+  // 상세정보 조회
+  const handleDetailClick = async () => {
+    const newShowDetail = !showDetail;
+    setShowDetail(newShowDetail);
 
-    setLoading(true);
-    try {
-      const response = await fetchAccountDetail(mainAccount.accountNo);
-      if (response?.data) {
-        setAccountDetail(response.data);
+    if (newShowDetail && mainAccount) {
+      setLoading(true);
+      try {
+        const response = await fetchAccountDetail(mainAccount.accountNo);
+        if (response?.data) {
+          setAccountDetail(response.data);
+        }
+      } catch (error) {
+        console.error("계좌 상세 조회 에러:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("계좌 상세 조회 에러:", error);
-    } finally {
-      setLoading(false);
     }
-  }, [mainAccount, fetchAccountDetail]);
+  };
 
-  const loadConsumeHistory = useCallback(async () => {
+  // 거래내역 조회
+  const fetchHistory = async () => {
     if (!mainAccount) return;
 
     setHistoryLoading(true);
@@ -60,49 +68,25 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
     } finally {
       setHistoryLoading(false);
     }
-  }, [mainAccount, historyFilter, fetchConsumeHistory]);
+  };
 
-  useEffect(() => {
-    if (showDetail) {
-      loadAccountDetail();
-    }
-  }, [showDetail]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // 최초 마운트 시 거래내역 조회
   useEffect(() => {
     if (mainAccount) {
-      loadConsumeHistory();
+      fetchHistory();
     }
-  }, [mainAccount, historyFilter]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const formataccountNo = (accountNo: number) => {
-    return accountNo.toString().replace(/(\d{4})(?=\d)/g, "$1-");
-  };
-
-  const formatBalance = (balance: number) => {
-    return new Intl.NumberFormat("ko-KR").format(balance);
-  };
-
-  const formatDateToInput = (dateString: string | undefined) => {
-    // 날짜가 없는 경우 처리
-    if (!dateString) return "-";
-
-    // YYYYMMDD -> YYYY-MM-DD
-    return `${dateString.slice(0, 4)}-${dateString.slice(4, 6)}-${dateString.slice(6, 8)}`;
-  };
-
-  const formatDateToApi = (dateString: string) => {
-    // YYYY-MM-DD -> YYYYMMDD
-    return dateString.replace(/-/g, "");
-  };
+  }, [mainAccount?.accountNo]); // 계좌가 변경될 때만 실행
 
   const handleFilterChange = (name: string, value: string) => {
     if (name === "startDate" || name === "endDate") {
-      value = formatDateToApi(value);
+      value = value.replace(/-/g, "");
     }
     setHistoryFilter((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // 필터 변경 시 거래내역 조회
+    fetchHistory();
   };
 
   return (
@@ -111,7 +95,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
         <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 주 거래 통장</h3>
         {mainAccount && (
           <div className="flex gap-2">
-            <button onClick={() => setShowDetail(!showDetail)} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-korean-pixel hover:bg-blue-100 transition-colors">
+            <button onClick={handleDetailClick} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-korean-pixel hover:bg-blue-100 transition-colors">
               {showDetail ? "상세정보 닫기" : "상세정보 보기"}
             </button>
             <button onClick={onAccountLink} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-korean-pixel hover:bg-gray-200 transition-colors">
@@ -265,7 +249,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
         </>
       ) : (
         <div className="bg-gray-50 rounded-xl p-6 text-center">
-          <p className="text-gray-600 mb-4 font-korean-pixel">아직 주 거래 통장이 설정되지 않았습니다</p>
+          <p className="text-gray-600 mb-4 font-korean-pixel">{error || "아직 주 거래 통장이 설정되지 않았습니다"}</p>
           <button
             onClick={onAccountLink}
             className="px-6 py-3 bg-gradient-to-r from-form-color to-button-color text-gray-700 rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300"
