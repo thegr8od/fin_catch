@@ -15,11 +15,30 @@ import lombok.Getter;
 @JsonPropertyOrder({"isSuccess", "code", "message", "result"})
 @Schema(hidden = true)
 public class BaseResponse<T> {//BaseResponse 객체를 사용할때 성공, 실패 경우
+
     @JsonProperty("isSuccess")
+    @Schema(
+        description = "요청 성공 여부",
+        example = "true"
+    )
     private final Boolean isSuccess;
+
+    @Schema(
+        description = "응답 메시지",
+        example = "요청에 성공하였습니다."
+    )
     private final String message;
+
+    @Schema(
+        description = "HTTP 응답 코드",
+        example = "200"
+    )
     private final int code;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(
+        description = "응답 데이터 객체 (실제 응답 내용)"
+    )
     private T result;
 
     // 기본 성공 응답 (결과값 포함)

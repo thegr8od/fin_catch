@@ -1,5 +1,6 @@
 package com.finbattle.domain.member.dto;
 
+import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.cat.entity.Cat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -32,8 +33,10 @@ public class MyInfoDto {
     @Schema(description = "사용자의 포인트", example = "500")
     private Long point; // 포인트 (기본값: 0)
 
+    private Long main_account;
+
     public MyInfoDto(String email, String nickname, List<Cat> Cats, String mainCat, Long exp,
-        Long point) {
+        Long point, FinanceMember financeMember) {
         this.email = email;
         this.nickname = nickname;
         this.cats = Cats.stream()
@@ -43,5 +46,6 @@ public class MyInfoDto {
         this.mainCat = mainCat;
         this.exp = exp;
         this.point = point;
+        this.main_account = financeMember.getMainaccount();
     }
 }
