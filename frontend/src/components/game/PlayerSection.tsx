@@ -70,7 +70,7 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
       {/* 캐릭터 컨테이너 */}
       <div className="relative" style={{ width: `${containerWidth}px`, height: `${containerHeight}px` }}>
         <div className="absolute inset-0 flex items-center justify-center">
-          <CharacterAnimation characterType={characterType} state={characterState} direction={direction} size={size}   loop={(() => {
+          <CharacterAnimation characterType={characterType} state={characterState} direction={direction} size={size} loop={(() => {
     console.log('PlayerSection loop prop:', shouldLoop);
     return shouldLoop;
   })()} onAnimationComplete={() => onAnimationComplete(characterState)} />
