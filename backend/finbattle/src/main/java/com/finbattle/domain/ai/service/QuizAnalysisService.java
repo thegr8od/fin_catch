@@ -4,6 +4,7 @@ import com.finbattle.domain.ai.dto.QuizAiRequestDto;
 import com.finbattle.domain.quiz.model.EssayQuiz;
 import com.finbattle.domain.quiz.model.MultipleChoiceQuiz;
 import com.finbattle.domain.quiz.model.Quiz;
+import com.finbattle.domain.quiz.model.QuizMode;
 import com.finbattle.domain.quiz.model.QuizOption;
 import com.finbattle.domain.quiz.model.ShortAnswerQuiz;
 import com.finbattle.domain.quiz.repository.EssayQuizRepository;

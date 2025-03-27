@@ -4,5 +4,8 @@ import lombok.Data;
 
 @Data
 public class QuizAiRequestDto {
+
     private Long quizId;
+    private String userAnswer;
+    private Long memberId;
 }
