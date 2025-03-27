@@ -5,6 +5,8 @@ import com.finbattle.domain.quiz.service.QuizService;
 import com.finbattle.global.common.Util.AuthenticationUtil;
 import com.finbattle.global.common.model.dto.BaseResponse;
 import com.finbattle.global.common.model.dto.BaseResponseStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +16,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/quiz")
 @RequiredArgsConstructor
+@Tag(name = "퀴즈 API", description = "퀴즈 기능을 제공하는 컨트롤러")
 public class QuizController {
 
     private final QuizService quizService;
     private final AuthenticationUtil authenticationUtil;
 
+    @Operation(
+            summary = "틀린 퀴즈 목록 조회",
+            description = "현재 로그인한 사용자의 최근 틀린 퀴즈 로그 목록을 반환합니다."
+    )
     @GetMapping("/wrong")
     public ResponseEntity<BaseResponse<List<WrongQuizLogDto>>> getWrongQuizLogs() {
         try {
