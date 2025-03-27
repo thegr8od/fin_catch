@@ -1,6 +1,6 @@
 package com.finbattle.domain.banking.model;
 
-import com.finbattle.domain.banking.dto.account.AccountApiResponseDto;
+import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -40,11 +40,19 @@ public class Account {
     @Column(name = "account_balance", nullable = false)
     private Long accountBalance;
 
-    public Account(AccountApiResponseDto dto, FinanceMember member) {
+    @Column(name = "account_type", nullable = false)
+    private int accountType;
+
+    public Account(AccountDetailDto dto, FinanceMember member) {
         this.financemember = member;
         this.accountNo = Long.parseLong(dto.getAccountNo());
         this.bankCode = Integer.parseInt(dto.getBankCode());
-        this.accountName = dto.getAccountTypeName();
+        this.accountName = dto.getAccountName();
         this.accountBalance = Long.parseLong(dto.getAccountBalance());
+        this.accountType = Integer.parseInt(dto.getAccountTypeCode());
+    }
+
+    public void changeAccountBalance(Long balance) {
+        this.accountBalance = balance;
     }
 }
