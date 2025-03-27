@@ -9,7 +9,6 @@ import com.finbattle.domain.game.model.GameData;
 import com.finbattle.domain.game.repository.RedisGameRepository;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
 import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
-import com.finbattle.domain.quiz.dto.QuizMode;
 import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;

@@ -1,7 +1,6 @@
 package com.finbattle.domain.ai.service;
 
 import com.finbattle.domain.ai.dto.QuizAiRequestDto;
-import com.finbattle.domain.quiz.dto.QuizMode;
 import com.finbattle.domain.quiz.model.EssayQuiz;
 import com.finbattle.domain.quiz.model.MultipleChoiceQuiz;
 import com.finbattle.domain.quiz.model.Quiz;
