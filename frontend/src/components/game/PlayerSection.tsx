@@ -14,9 +14,10 @@ interface PlayerSectionProps {
   size?: "small" | "large"
   bubble?: ChatMessage | null
   onAnimationComplete: (state: CharacterState) => void
+  shouldLoop?: boolean
 }
 
-const PlayerSection = React.memo(({ characterType, characterState, direction, name, health, maxHealth, size = "large", bubble, onAnimationComplete }: PlayerSectionProps) => {
+const PlayerSection = React.memo(({ characterType, characterState, direction, name, health, maxHealth, size = "large", bubble, shouldLoop = true, onAnimationComplete }: PlayerSectionProps) => {
   // size에 따른 컨테이너 크기 계산
   const containerWidth = size === "small" ? 150 : 200
   const containerHeight = size === "small" ? 100 : 150 // 높이만 50px 감소
@@ -69,7 +70,10 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
       {/* 캐릭터 컨테이너 */}
       <div className="relative" style={{ width: `${containerWidth}px`, height: `${containerHeight}px` }}>
         <div className="absolute inset-0 flex items-center justify-center">
-          <CharacterAnimation characterType={characterType} state={characterState} direction={direction} size={size} onAnimationComplete={() => onAnimationComplete(characterState)} />
+          <CharacterAnimation characterType={characterType} state={characterState} direction={direction} size={size} loop={(() => {
+    console.log('PlayerSection loop prop:', shouldLoop);
+    return shouldLoop;
+  })()} onAnimationComplete={() => onAnimationComplete(characterState)} />
         </div>
       </div>
     </div>

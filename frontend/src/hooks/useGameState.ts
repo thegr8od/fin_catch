@@ -2,21 +2,13 @@ import { useState } from "react"
 import { CharacterState, PlayerStatus } from "../components/game/types/character"
 import { useUserInfo } from "./useUserInfo"
 import { CharacterType } from "../components/game/constants/animations"
-
-interface GameState {
-  roomId: string | null
-  currentQuestion: string
-  remainingTime: number
-  gameStatus: "waiting" | "playing" | "finished"
-  correctAnswer?: string //정답
-  lastAnsweredId?: number //마지막으로 정답을 맞춘 사람
-}
+import { GameState } from "../components/game/types/game"
 
 export const useGameState = (roomId: string) => {
   const { user } = useUserInfo()
-  console.log("유저 정보: ", user)
+
   const userCat = (user?.mainCat || "classic") as CharacterType
-  console.log("대표 캐릭터: ", userCat)
+
   const [gameState, setGameState] = useState<GameState>({
     roomId: roomId || null,
     currentQuestion: "",
@@ -34,13 +26,37 @@ export const useGameState = (roomId: string) => {
   })
 
   const [opponentStatus, setOpponentStatus] = useState<PlayerStatus>({
-    id: 1,
+    id: 2,
     name: "참가자",
     characterType: userCat,
     health: 5,
     state: "idle",
     score: 0,
   })
+
+  const handleAttack = (playerId: number) => {
+    if (playerId === playerStatus.id) {
+      setPlayerStatus((prev) => ({
+        ...prev,
+        state: "attack"
+      }))
+      setOpponentStatus((prev) => ({
+        ...prev,
+        state: "damage",
+        health: prev.health - 1
+      }))
+    } else {
+      setOpponentStatus((prev) => ({
+        ...prev,
+        state: "attack"
+      }))
+      setPlayerStatus((prev) => ({
+        ...prev,
+        state: "damage",
+        health: prev.health - 1
+      }))
+    }
+  }
 
   const handleAnimationComplete = (playerId: number, currentState: CharacterState) => {
     if (currentState === "attack" || currentState === "damage") {
@@ -49,11 +65,23 @@ export const useGameState = (roomId: string) => {
           ...prev,
           state: prev.health <= 0 ? "dead" : "idle",
         }))
+        if (playerStatus.health < 1) {
+          setOpponentStatus((prev) => ({
+            ...prev,
+            state: "victory",
+          }))
+        }
       } else {
         setOpponentStatus((prev) => ({
           ...prev,
           state: prev.health <= 0 ? "dead" : "idle",
         }))
+        if (opponentStatus.health < 1) {
+          setPlayerStatus((prev) => ({
+            ...prev,
+            state: "victory",
+          }))
+        }
       }
     }
   }
@@ -65,6 +93,7 @@ export const useGameState = (roomId: string) => {
     setPlayerStatus,
     opponentStatus,
     setOpponentStatus,
+    handleAttack,
     handleAnimationComplete,
   }
 }

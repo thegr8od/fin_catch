@@ -240,7 +240,7 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
       animationRef.current = newAnimation;
 
       // 애니메이션 완료 이벤트 핸들러 설정
-      if (!loop && onAnimationComplete) {
+      if (onAnimationComplete) {
         newAnimation.onComplete = () => {
           if (mountedRef.current) {
             onAnimationComplete();
