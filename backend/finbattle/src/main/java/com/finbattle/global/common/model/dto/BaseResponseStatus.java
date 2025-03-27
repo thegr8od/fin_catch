@@ -39,9 +39,17 @@ public enum BaseResponseStatus {
     API_SERVICE_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3006, "API 서비스코드가 유효하지 않습니다."),
     INSTITUTION_TRANSACTION_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3010, "기관거래고유번호가 유효하지 않습니다."),
     INSTITUTION_TRANSACTION_NO_DUPLICATE(false, HttpStatus.BAD_REQUEST, 3007,
-        "기관거래고유번호가 중복된 값입니다."),
+            "기관거래고유번호가 중복된 값입니다."),
     API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
-    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다.");
+    USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다."),
+
+    // AI & Quiz Analysis (4001 ~ 4099)
+    QUIZ_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4001, "해당 퀴즈를 찾을 수 없습니다."),
+    QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4002, "해당 퀴즈에 대한 사용자 답변 기록이 없습니다."),
+    AI_ANALYSIS_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, 4003, "AI 분석에 실패하였습니다."),
+    INVALID_QUIZ_TYPE(false, HttpStatus.BAD_REQUEST, 4004, "유효하지 않은 퀴즈 유형입니다."),
+    OPENAI_API_ERROR(false, HttpStatus.INTERNAL_SERVER_ERROR, 4005, "OpenAI API 호출 중 오류가 발생했습니다."),
+    WRONG_QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4006, "틀린 퀴즈 로그가 없습니다.");
 
     private final boolean isSuccess;
     @JsonIgnore

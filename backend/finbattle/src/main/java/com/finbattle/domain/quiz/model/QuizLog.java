@@ -11,24 +11,27 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "quiz_log")
 public class QuizLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "quiz_log_id")
     private Long quizLogId;
 
-    @Column(nullable = false)
+    @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(nullable = false)
+    @Column(name = "quiz_id", nullable = false)
     private Long quizId;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "user_answer")
     private String userAnswer;
 
-    @Column(nullable = false)
+    @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
 
     @PrePersist
