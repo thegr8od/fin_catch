@@ -27,7 +27,7 @@ export const useAuth = () => {
     const initializeAuth = async () => {
       if (accessToken) {
         try {
-          const response = await axiosInstance.get("/api/member/info");
+          const response = await axiosInstance.get("/api/member/myinfo");
           if (response.data && response.data.isSuccess) {
             dispatch(setUser(response.data.result));
             setAuthState(accessToken);

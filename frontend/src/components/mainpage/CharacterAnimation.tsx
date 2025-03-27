@@ -1,12 +1,36 @@
 import React, { useState } from "react";
-import { getCharacterById } from "../../data/characters";
+import { CharacterType } from "../game/constants/animations";
 import smokeCatGif from "../../assets/characters/smoke_cat.gif";
+
+interface Character {
+  id: number;
+  name: string;
+  imagePath: string;
+  animationPath: string;
+  type: CharacterType;
+}
 
 interface CharacterAnimationProps {
   characterId: number;
   size?: "small" | "medium" | "large";
   useStaticImage?: boolean; // 정적 이미지 사용 여부
 }
+
+// 임시 캐릭터 데이터
+const characters: Character[] = [
+  {
+    id: 1,
+    name: "스모크 캣",
+    imagePath: "/cats_assets/classic/classic_cat_static.png",
+    animationPath: smokeCatGif,
+    type: "classic",
+  },
+  // 다른 캐릭터들도 필요하다면 여기에 추가
+];
+
+const getCharacterById = (id: number): Character | undefined => {
+  return characters.find((char) => char.id === id);
+};
 
 const CharacterAnimation: React.FC<CharacterAnimationProps> = ({ characterId, size = "medium", useStaticImage = false }) => {
   const [imageError, setImageError] = useState(false);

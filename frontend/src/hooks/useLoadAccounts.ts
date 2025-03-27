@@ -10,50 +10,6 @@ interface UseLoadAccountsReturn {
 }
 
 // 더미 데이터
-const dummyAccounts: Account[] = [
-  {
-    accountNo: 1234567890,
-    bankCode: "004",
-    accountName: "KB국민 ONE통장",
-    accountBalance: 1500000,
-    // isDefault: true,
-  },
-  {
-    accountNo: 2345678901,
-    bankCode: "088",
-    accountName: "신한 주거래 통장",
-    accountBalance: 2800000,
-    // isDefault: false,
-  },
-  {
-    accountNo: 3456789012,
-    bankCode: "011",
-    accountName: "NH농협 통장",
-    accountBalance: 950000,
-    // isDefault: false,
-  },
-  {
-    accountNo: 4567890123,
-    bankCode: "020",
-    accountName: "우리 급여통장",
-    accountBalance: 3200000,
-    // isDefault: false,
-  },
-  {
-    accountNo: 5678901234,
-    bankCode: "081",
-    accountName: "하나 월급통장",
-    accountBalance: 1800000,
-    // isDefault: false,
-  },
-  {
-    accountNo: 6789012345,
-    bankCode: "090",
-    accountName: "카카오뱅크 입출금통장",
-    accountBalance: 750000,
-    // isDefault: false,
-  },
-];
 
 export const useLoadAccounts = (): UseLoadAccountsReturn => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -72,7 +28,7 @@ export const useLoadAccounts = (): UseLoadAccountsReturn => {
       // 실제 API 호출 코드 (주석 처리)
       const response = await fetchAllAccount();
       if (response.success && response.data) {
-        setAccounts(response.data.accountList);
+        setAccounts(response.data.accounts);
       } else {
         setError("계좌 정보를 불러오는데 실패했습니다.");
       }
