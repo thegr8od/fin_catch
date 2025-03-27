@@ -11,6 +11,8 @@ public interface FinanceService {
 
     AccountDetailDto findAccountByNo(Long memberId, Long accountNo);
 
+    void changeAccount(Long memberId, Long accountNo);
+
     LoadAllTransactionResponseDto loadAllTransaction(Long memberId,
         LoadAllTransactionRequestDto dto);
 }

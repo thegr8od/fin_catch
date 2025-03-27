@@ -39,10 +39,11 @@ public enum BaseResponseStatus {
     API_SERVICE_CODE_INVALID(false, HttpStatus.BAD_REQUEST, 3006, "API 서비스코드가 유효하지 않습니다."),
     INSTITUTION_TRANSACTION_NO_INVALID(false, HttpStatus.BAD_REQUEST, 3010, "기관거래고유번호가 유효하지 않습니다."),
     INSTITUTION_TRANSACTION_NO_DUPLICATE(false, HttpStatus.BAD_REQUEST, 3007,
-            "기관거래고유번호가 중복된 값입니다."),
+        "기관거래고유번호가 중복된 값입니다."),
     API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
     USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다."),
     ACCOUNT_NOT_FOUND(false, HttpStatus.BAD_REQUEST, 3010, "일치하는 계좌번호가 없습니다."),
+    ACCOUNT_NOT_VALID(false, HttpStatus.BAD_REQUEST, 3011, "본인 계좌 번호가 아닙니다."),
 
     // Quiz (4000 ~ 4099)
     QUIZ_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4000, "해당 퀴즈를 찾을 수 없습니다."),

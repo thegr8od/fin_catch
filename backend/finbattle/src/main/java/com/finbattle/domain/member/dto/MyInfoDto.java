@@ -33,7 +33,7 @@ public class MyInfoDto {
     @Schema(description = "사용자의 포인트", example = "500")
     private Long point; // 포인트 (기본값: 0)
 
-    private FinanceMember financeMember;
+    private Long main_account;
 
     public MyInfoDto(String email, String nickname, List<Cat> Cats, String mainCat, Long exp,
         Long point, FinanceMember financeMember) {
@@ -46,6 +46,6 @@ public class MyInfoDto {
         this.mainCat = mainCat;
         this.exp = exp;
         this.point = point;
-        this.financeMember = financeMember;
+        this.main_account = financeMember.getMainaccount();
     }
 }

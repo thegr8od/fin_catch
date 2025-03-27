@@ -11,6 +11,7 @@ import com.finbattle.global.common.model.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +36,6 @@ public class FinanceController implements FinanceApi {
 
     @PostMapping("/account/detail")
     @Override
-    // 1. 금융망 유저 정보 조회
     public ResponseEntity<BaseResponse<AccountDetailDto>> findAccountDetail(
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestBody AccountRequestDto requestDto) {
@@ -43,6 +43,16 @@ public class FinanceController implements FinanceApi {
         return ResponseEntity.ok(
             new BaseResponse<>(financeService.findAccountByNo(detail.getMemberId(),
                 requestDto.accountNo())));
+    }
+
+    @PatchMapping("/account/change")
+    @Override
+    public ResponseEntity<BaseResponse<String>> changeMainAccount(
+        @AuthenticationPrincipal AuthenticatedUser detail,
+        @RequestBody AccountRequestDto requestDto) {
+        financeService.changeAccount(detail.getMemberId(), requestDto.accountNo());
+        return ResponseEntity.ok(
+            new BaseResponse<>("계좌 변경 성공!"));
     }
 
     @PostMapping("/account/transactions")
