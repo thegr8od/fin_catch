@@ -23,6 +23,7 @@ export const useUserInfo = (autoFetch: boolean = true) => {
       dispatch(setLoading(true));
       dispatch(setError(null));
 
+      // 사용자 정보 조회
       const response = await fetchUserInfoApi();
       console.log("사용자 정보 응답:", response);
 
