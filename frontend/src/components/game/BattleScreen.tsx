@@ -13,12 +13,16 @@ interface BattleScreenProps {
   questionText: string
   onPlayerAnimationComplete: (state: CharacterState) => void
   onOpponentAnimationComplete: (state: CharacterState) => void
+  onAttack: (playerId: number) => void
 }
 
-const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete }: BattleScreenProps) => {
+const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAttack }: BattleScreenProps) => {
   const { chatInput, chatMessages, playerBubble, handleChatInputChange, handleChatSubmit } = useChat({
     playerName: playerStatus.name,
   })
+
+  const playerShouldLoop = playerStatus.state === "idle" || playerStatus.state === "victory";
+  const opponentShouldLoop = opponentStatus.state === "idle" || opponentStatus.state === "victory";
 
   if (!resourcesLoaded) {
     return <div className="h-full w-full"></div>
@@ -46,7 +50,11 @@ const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus
             bubble={playerBubble}
             direction={true}
             onAnimationComplete={onPlayerAnimationComplete}
+            shouldLoop={playerShouldLoop}
           />
+        </div>
+        <div>
+          <button onClick={() => onAttack(playerStatus.id)}>공격</button>
         </div>
 
         {/* 오른쪽 플레이어 */}
@@ -60,8 +68,13 @@ const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus
             bubble={null}
             direction={false}
             onAnimationComplete={onOpponentAnimationComplete}
+            shouldLoop={opponentShouldLoop}
           />
         </div>
+        <div>
+          <button onClick={() => onAttack(opponentStatus.id)}>공격</button>
+        </div>
+
       </div>
 
       {/* 채팅 영역 - 중앙 하단에 배치 */}

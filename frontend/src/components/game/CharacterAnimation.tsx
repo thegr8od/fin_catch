@@ -18,6 +18,7 @@ const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
   onAnimationComplete,
   characterType,
   size = "small",
+  loop = true,
 }) => {
   
 
@@ -28,6 +29,7 @@ const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
     onAnimationComplete,
     characterType,
     size,
+    loop,
   });
 
   return (
