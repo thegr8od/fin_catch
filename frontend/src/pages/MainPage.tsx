@@ -4,7 +4,7 @@ import myPageBg from "../assets/mypage_bg.png";
 import { useUserInfo } from "../hooks/useUserInfo";
 import LoadingScreen from "../components/common/LoadingScreen";
 import { CharacterType } from "../components/game/constants/animations";
-import AccountLinkModal from "../components/mainpage/AccountLinkModal";
+import AccountLinkModal from "../components/account/AccountLinkModal";
 import NicknameChangeModal from "../components/mainpage/NicknameChangeModal";
 import { useCharacterManagement } from "../hooks/useCharacterManagement";
 import { useModalManagement } from "../hooks/useModalManagement";
@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useAnalyze } from "../hooks/useAnalyze";
 import { Category } from "../types/analysis/Problem";
 import QuizResultSection from "../components/quiz/QuizResultSection";
-import { dummyWrongAnswerCategories, dummyQuizScores, dummyWeakPoints } from "../data/dummyData";
+import { dummyQuizScores, dummyWeakPoints } from "../data/dummyData";
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -27,6 +27,7 @@ const MainPage = () => {
   const { showNicknameModal, showCharacterInfoModal, handleModalOpen, handleModalClose } = useModalManagement(user);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [mainAccount, setMainAccount] = useState<Account | null>(null);
+  const { categories } = useAnalyze();
 
   const handleAccountLink = (account: Account) => {
     setMainAccount(account);
@@ -84,7 +85,7 @@ const MainPage = () => {
               />
 
               {/* 오답 분석 */}
-              <WrongAnswerAnalysis categories={dummyWrongAnswerCategories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
+              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
 
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
@@ -99,7 +100,7 @@ const MainPage = () => {
       {/* 모달들 */}
       {showNicknameModal && <NicknameChangeModal onClose={() => handleModalClose("nickname")} currentNickname={profileData.nickname} onUpdateNickname={handleUpdateNickname} />}
 
-      {isAccountModalOpen && <AccountLinkModal onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} />}
+      <AccountLinkModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} />
 
       {showCharacterInfoModal && (
         <CharacterChangeModal
