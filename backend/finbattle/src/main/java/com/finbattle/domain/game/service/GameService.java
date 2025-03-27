@@ -10,6 +10,7 @@ import com.finbattle.domain.game.repository.RedisGameRepository;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
 import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
 import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
+import com.finbattle.domain.quiz.model.QuizMode;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import java.util.Map;
@@ -97,46 +98,7 @@ public class GameService {
             return;
         }
 
-        // 3) quizNum 증가 후 다시 Redis에 저장
-//        gameData.setQuizNum(quizNum + 1);
-//        redisGameRepository.save(gameData);
     }
-
-    /**
-     *  현재 활성 퀴즈 힌트 발행 → "topic/game/{roomId}"
-     *
-     *  퀴즈 힌트에 대한 디테일이 필요하다.
-     */
-
-//    public void publishQuizHint1(Long roomId) {
-//        ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
-//        if (quiz == null) {
-//            return;
-//        }
-//
-//        EventMessage<Map<String, Object>> message = new EventMessage<>(
-//            EventType.QUIZ_HINT,
-//            roomId,
-//            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
-//        );
-//
-//        publishToRoom(roomId, message);
-//    }
-//
-//    public void publishQuizHint2(Long roomId) {
-//        ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
-//        if (quiz == null) {
-//            return;
-//        }
-//
-//        EventMessage<Map<String, Object>> message = new EventMessage<>(
-//            EventType.QUIZ_HINT,
-//            roomId,
-//            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
-//        );
-//
-//        publishToRoom(roomId, message);
-//    }
 
     /**
      * 정답 체크 및 결과 발행 → "topic/game/{roomId}"

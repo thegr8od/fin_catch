@@ -11,6 +11,7 @@ import com.finbattle.domain.quiz.dto.EssayQuizDto;
 import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
 import com.finbattle.domain.quiz.dto.QuizDto;
 import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
+import com.finbattle.domain.quiz.model.QuizMode;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
 import java.util.Map;
