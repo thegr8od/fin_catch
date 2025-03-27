@@ -16,7 +16,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class QuizAnalysisService {
+public class QuizAiService {
 
     private final QuizRepository quizRepository;
     private final ShortAnswerQuizRepository shortAnswerQuizRepository;
@@ -45,40 +45,14 @@ public class QuizAnalysisService {
         Optional<ShortAnswerQuiz> shortOpt = shortAnswerQuizRepository.findById(quizId);
         if (shortOpt.isPresent()) {
             ShortAnswerQuiz q = shortOpt.get();
-            prompt = """
-                    문제: %s
-                    사용자 답변: %s
-
-                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
-                    [분석 내용]
-                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
-
-                    [취약점]
-                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
-
-                    [추천 학습]
-                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
-                    """.formatted(q.getShortQuestion(), userAnswer);
+            prompt = getPrompt(q.getShortQuestion(), userAnswer, null);
             return callOpenAi(prompt);
         }
 
         Optional<EssayQuiz> essayOpt = essayQuizRepository.findById(quizId);
         if (essayOpt.isPresent()) {
             EssayQuiz q = essayOpt.get();
-            prompt = """
-                    문제: %s
-                    사용자 답변: %s
-
-                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
-                    [분석 내용]
-                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
-
-                    [취약점]
-                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
-
-                    [추천 학습]
-                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
-                    """.formatted(q.getEssayQuestion(), userAnswer);
+            prompt = getPrompt(q.getEssayQuestion(), userAnswer, null);
             return callOpenAi(prompt);
         }
 
@@ -86,32 +60,31 @@ public class QuizAnalysisService {
         if (multipleOpt.isPresent()) {
             MultipleChoiceQuiz q = multipleOpt.get();
             List<QuizOption> options = quizOptionRepository.findByQuizId(quizId);
-
-            StringBuilder optionsText = new StringBuilder();
-            for (QuizOption option : options) {
-                optionsText.append("- ").append(option.getOptionText()).append("\n");
-            }
-
-            prompt = """
-                    문제: %s
-                    보기:
-                    %s
-                    사용자 답변: %s
-
-                    아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
-                    [분석 내용]
-                    문제에서 다루는 주요 개념이나 사실을 정리해줘.
-
-                    [취약점]
-                    사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
-
-                    [추천 학습]
-                    부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
-                    """.formatted(q.getMutipleQuestion(), optionsText, userAnswer);
+            String optionsText = options.stream().map(o -> "- " + o.getOptionText()).reduce("", (a, b) -> a + b + "\n");
+            prompt = getPrompt(q.getMultipleQuestion(), userAnswer, optionsText);
             return callOpenAi(prompt);
         }
 
         throw new RuntimeException("해당 퀴즈 ID로 문제 유형을 찾을 수 없습니다.");
+    }
+
+    private String getPrompt(String question, String userAnswer, String optionsText) {
+        return """
+                문제: %s
+                %s사용자 답변: %s
+
+                아래 항목을 포함해 분석해줘. 각 항목은 [항목명]으로 시작해줘.
+                [분석 내용]
+                문제에서 다루는 주요 개념이나 사실을 정리해줘.
+
+                [취약점]
+                사용자의 선택이 왜 맞거나 틀렸는지, 오해한 점이 있다면 설명해줘.
+
+                [추천 학습]
+                부족한 부분을 보완할 수 있는 학습 방향을 제안해줘.
+                """.formatted(question,
+                optionsText != null ? "보기:\n" + optionsText + "\n" : "",
+                userAnswer);
     }
 
     private QuizAiResponseDto callOpenAi(String prompt) {
@@ -119,11 +92,7 @@ public class QuizAnalysisService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(openaiApiKey);
 
-        Map<String, Object> message = Map.of(
-                "role", "user",
-                "content", prompt
-        );
-
+        Map<String, Object> message = Map.of("role", "user", "content", prompt);
         Map<String, Object> requestBody = Map.of(
                 "model", "gpt-3.5-turbo",
                 "messages", List.of(message),
@@ -131,13 +100,7 @@ public class QuizAnalysisService {
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                OPENAI_API_URL,
-                HttpMethod.POST,
-                entity,
-                Map.class
-        );
+        ResponseEntity<Map> response = restTemplate.exchange(OPENAI_API_URL, HttpMethod.POST, entity, Map.class);
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
         String content = (String) ((Map<String, Object>) choices.get(0).get("message")).get("content");
@@ -147,15 +110,12 @@ public class QuizAnalysisService {
 
     private QuizAiResponseDto parseFeedback(String content) {
         String[] sections = content.split("\\[.*?\\]");
-        List<String> parts = Arrays.stream(sections)
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .toList();
+        List<String> parts = Arrays.stream(sections).map(String::trim).filter(s -> !s.isBlank()).toList();
 
-        String analysis = parts.size() > 0 ? parts.get(0) : "";
-        String weakness = parts.size() > 1 ? parts.get(1) : "";
-        String recommendation = parts.size() > 2 ? parts.get(2) : "";
-
-        return new QuizAiResponseDto(analysis, weakness, recommendation);
+        return new QuizAiResponseDto(
+                parts.size() > 0 ? parts.get(0) : "",
+                parts.size() > 1 ? parts.get(1) : "",
+                parts.size() > 2 ? parts.get(2) : ""
+        );
     }
 }
