@@ -2,39 +2,9 @@ import React, { useState } from "react";
 import { Doughnut, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend, ChartOptions, Scale, CoreScaleOptions } from "chart.js";
 import { useAnalyze } from "../../hooks/useAnalyze";
+import { Problem, Category, AnalysisProps } from "../../types/analysis/Problem";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ArcElement, Tooltip, Legend);
-
-// 문제 타입 정의
-export interface Problem {
-  id: number;
-  title: string;
-  type: "객관식" | "주관식" | "서술형";
-  wrongCount: number;
-  correctCount: number;
-  analysis: string;
-  attemptHistory: {
-    date: string;
-    isCorrect: boolean;
-  }[];
-  weakPoints: string[];
-  recommendations: string[];
-}
-
-// 카테고리 타입 정의
-export interface Category {
-  id: number;
-  name: string;
-  problems: Problem[];
-  totalProblems?: number;
-}
-
-// 컴포넌트 props 타입 정의
-interface AnalysisProps {
-  onDetailView: () => void;
-  categories: Category[];
-  onStartGame?: () => void;
-}
 
 const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, onDetailView }) => {
   // 상태 관리
