@@ -4,18 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.EventMessage;
 import com.finbattle.domain.game.dto.EventType;
-import com.finbattle.domain.game.dto.MemberStatus;
-import com.finbattle.domain.quiz.model.QuizMode;
-import com.finbattle.domain.room.dto.RedisRoomMember;
-import com.finbattle.domain.room.dto.RoomStatus;
-import com.finbattle.domain.room.model.RedisRoom;
+import com.finbattle.domain.game.dto.GameMemberStatus;
+import com.finbattle.domain.game.model.GameData;
+import com.finbattle.domain.game.repository.RedisGameRepository;
+import com.finbattle.domain.quiz.dto.EssayQuizDto;
+import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
+import com.finbattle.domain.quiz.dto.QuizMode;
+import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
 import com.finbattle.global.common.redis.RedisPublisher;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.internal.util.stereotypes.Lazy;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -23,104 +23,225 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GameService {
 
+    private final RedisGameRepository redisGameRepository;
     private final RedisPublisher redisPublisher;
-    private final RedisTemplate<String, Object> redisTemplate;
-    @Lazy
-    private final QuizTimerService quizTimerService; // 퀴즈 타이머 호출용
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final QuizTimerService quizTimerService; // 타이머 서비스 주입
 
-    private static final String ROOM_DATA_KEY_PREFIX = "room:";
-    private static final String USER_FIELD = "users";
-    private static final int DEFAULT_LIFE = 3;
+    // 문제 제시
+    public void publishNextQuiz(Long roomId) {
+        // 1) GameData 가져오기
+        GameData gameData = redisGameRepository.findById(roomId)
+            .orElseThrow(() -> new RuntimeException("해당 roomId의 GameData가 존재하지 않습니다."));
 
-    public void startGame(String roomId, Long requesterId) {
-        String dataKey = ROOM_DATA_KEY_PREFIX + roomId;
-
-        RedisRoom redisRoom = getRoomDataFromRedis(dataKey);
-        if (redisRoom == null) {
-            log.warn("🚨 게임 시작 실패: room:{}에 방 데이터가 없습니다.", roomId);
-            sendError(roomId, "게임 시작 실패: 방 데이터가 존재하지 않습니다.");
-            return;
+        Integer quizNum = gameData.getQuizNum();
+        if (quizNum == null) {
+            quizNum = 1; // 또는 기본값
         }
 
-        if (redisRoom.getHost() == null || !redisRoom.getHost().getMemberId().equals(requesterId)) {
-            log.warn("🚨 게임 시작 실패: room:{}의 게임 시작은 방장만 가능합니다.", roomId);
-            sendError(roomId, "게임 시작 실패: 방장만 게임을 시작할 수 있습니다.");
-            return;
-        }
-
-        List<RedisRoomMember> roomMembers = redisRoom.getMembers();
-        if (roomMembers == null || roomMembers.isEmpty()) {
-            log.warn("🚨 게임 시작 실패: room:{}에 멤버 정보가 없습니다.", roomId);
-            sendError(roomId, "게임 시작 실패: 방 멤버 정보가 없습니다.");
-            return;
-        }
-        boolean allReady = roomMembers.stream()
-            .allMatch(member -> "READY".equalsIgnoreCase(member.getStatus()));
-        if (!allReady) {
-            log.warn("🚨 게임 시작 실패: room:{}의 모든 플레이어가 준비완료되어야 합니다.", roomId);
-            sendError(roomId, "모든 사용자가 준비완료가 되어야합니다.");
-            return;
-        }
-
-        List<MemberStatus> memberStatusList = new ArrayList<>();
-        for (RedisRoomMember member : roomMembers) {
-            memberStatusList.add(new MemberStatus(member.getMemberId(), DEFAULT_LIFE));
-        }
-        try {
-            String jsonArray = objectMapper.writeValueAsString(memberStatusList);
-            redisTemplate.opsForHash().put(dataKey, USER_FIELD, jsonArray);
-        } catch (JsonProcessingException e) {
-            log.error("❌ JSON 직렬화 실패: {}", e.getMessage());
-            sendError(roomId, "게임 시작 실패: 사용자 상태 저장 오류.");
-            return;
-        }
-
-        redisRoom.setStatus(RoomStatus.IN_PROGRESS);
-        updateRoomDataInRedis(dataKey, redisRoom);
-
-        publishUserStatus(roomId);
-
-        EventMessage<String> startMessage = new EventMessage<>(EventType.GAME_INFO, roomId,
-            "IN_PROGRESS");
-        publishToRoom(roomId, startMessage);
-        log.info("✅ 게임 시작: room:{}에서 방장 {}의 요청으로 게임을 시작합니다.", roomId, requesterId);
-
-        // 첫 퀴즈 시작 (SHORT_ANSWER로 가정)
-        quizTimerService.startQuizTimer(roomId, 1L, QuizMode.SHORT_ANSWER);
-    }
-
-    private void updateRoomDataInRedis(String roomKey, RedisRoom redisRoom) {
-        try {
-            String dataJson = objectMapper.writeValueAsString(redisRoom);
-            redisTemplate.opsForHash().put(roomKey, "data", dataJson);
-            log.info("Updated room data in Redis for key={}", roomKey);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to update room data in Redis: {}", e.getMessage());
-        }
-    }
-
-    public void publishUserStatus(String roomId) {
-        String dataKey = ROOM_DATA_KEY_PREFIX + roomId;
-        String jsonArray = (String) redisTemplate.opsForHash().get(dataKey, USER_FIELD);
-        if (jsonArray == null) {
-            log.warn("🚨 publishUserStatus: room:{}에 멤버 상태가 없습니다.", roomId);
-            return;
-        }
-        try {
-            List<MemberStatus> userList = objectMapper.readValue(jsonArray,
-                objectMapper.getTypeFactory()
-                    .constructCollectionType(List.class, MemberStatus.class));
-            EventMessage<List<MemberStatus>> message = new EventMessage<>(EventType.USER_STATUS,
-                roomId, userList);
+        // 2) quizNum에 따라 문제를 꺼내기
+        if (quizNum >= 1 && quizNum <= 5) {
+            // MultipleChoice
+            MultipleChoiceQuizDto quiz = gameData.getMultipleChoiceQuizList().get(quizNum - 1);
+            EventMessage<Map<String, Object>> message = new EventMessage<>(
+                EventType.MULTIPLE_QUIZ,
+                roomId,
+                Map.of(
+                    "quizId", quiz.getQuizId(),
+                    "question", quiz.getMultipleQuestion(), // MultipleChoice 내 질문
+                    "options", quiz.getQuizOptions()
+                )
+            );
             publishToRoom(roomId, message);
-            log.info("🚀 UserStatus 전송 -> {}", message);
-        } catch (JsonProcessingException e) {
-            log.error("❌ JSON 변환 실패: {}", e.getMessage());
+
+            // 필요 시 타이머 시작
+            quizTimerService.startQuizTimer(roomId, quiz.getQuizId(), QuizMode.MULTIPLE_CHOICE,
+                quiz);
+
+        } else if (quizNum >= 6 && quizNum <= 8) {
+            // ShortAnswer
+            int index = quizNum - 6; // 6->0, 7->1, 8->2
+            ShortAnswerQuizDto quiz = gameData.getShortAnswerQuizList().get(index);
+
+            EventMessage<Map<String, Object>> message = new EventMessage<>(
+                EventType.SHORT_QUIZ,
+                roomId,
+                Map.of(
+                    "quizId", quiz.getQuizId(),
+                    "question", quiz.getShortQuestion()
+                )
+            );
+            publishToRoom(roomId, message);
+
+            // 필요 시 타이머 시작
+            quizTimerService.startQuizTimer(roomId, quiz.getQuizId(), QuizMode.SHORT_ANSWER, quiz);
+
+        } else if (quizNum == 9) {
+            // Essay
+            EssayQuizDto quiz = gameData.getEssayQuiz();
+
+            EventMessage<Map<String, Object>> message = new EventMessage<>(
+                EventType.ESSAY_QUIZ,
+                roomId,
+                Map.of(
+                    "quizId", quiz.getQuizId(),
+                    "question", quiz.getEssayQuestion()
+                )
+            );
+            publishToRoom(roomId, message);
+
+            // 필요 시 타이머 시작
+            quizTimerService.startQuizTimer(roomId, quiz.getQuizId(), QuizMode.ESSAY, quiz);
+        } else {
+            // 이미 9번까지 끝났다면, 게임 종료 로직 or 다른 처리
+            log.info("이미 모든 퀴즈를 진행했습니다. (quizNum={})", quizNum);
+            return;
         }
+
+        // 3) quizNum 증가 후 다시 Redis에 저장
+//        gameData.setQuizNum(quizNum + 1);
+//        redisGameRepository.save(gameData);
     }
 
-    private void publishToRoom(String roomId, EventMessage<?> message) {
+    /**
+     *  현재 활성 퀴즈 힌트 발행 → "topic/game/{roomId}"
+     *
+     *  퀴즈 힌트에 대한 디테일이 필요하다.
+     */
+
+//    public void publishQuizHint1(Long roomId) {
+//        ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
+//        if (quiz == null) {
+//            return;
+//        }
+//
+//        EventMessage<Map<String, Object>> message = new EventMessage<>(
+//            EventType.QUIZ_HINT,
+//            roomId,
+//            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
+//        );
+//
+//        publishToRoom(roomId, message);
+//    }
+//
+//    public void publishQuizHint2(Long roomId) {
+//        ShortAnswerQuiz quiz = activeQuizMap.get(roomId);
+//        if (quiz == null) {
+//            return;
+//        }
+//
+//        EventMessage<Map<String, Object>> message = new EventMessage<>(
+//            EventType.QUIZ_HINT,
+//            roomId,
+//            Map.of("hint1", quiz.getShortFirstHint(), "hint2", quiz.getShortSecondHint())
+//        );
+//
+//        publishToRoom(roomId, message);
+//    }
+
+    /**
+     * 정답 체크 및 결과 발행 → "topic/game/{roomId}"
+     */
+    public void checkQuizAnswer(Long roomId, String userAnswer, Long memberId) {
+        // GameData 조회
+        GameData gameData = redisGameRepository.findById(roomId)
+            .orElseThrow(() -> new RuntimeException("해당 roomId의 GameData가 없습니다."));
+
+        int quizNum = gameData.getQuizNum() == null ? 1 : gameData.getQuizNum();
+
+        boolean isCorrect = false;
+        Long quizId = null;
+
+        // quizNum 범위별 퀴즈 찾아서 정답 검사
+        if (1 <= quizNum && quizNum <= 5) {
+            // MultipleChoice
+            MultipleChoiceQuizDto quiz = gameData.getMultipleChoiceQuizList().get(quizNum - 1);
+            quizId = quiz.getQuizId();
+            Integer ans = Integer.parseInt(userAnswer);
+            // 객관식은 '정답 선택지'가 isCorrect = true 인지? 혹은 텍스트 비교?
+            // 여기서는 간단히 "userAnswer와 맞는지" 비교한다고 가정
+            // (실제로는 QuizOption에서 isCorrect=true 인 optionText와 userAnswer를 비교할 수도)
+            isCorrect = quiz.getQuizOptions().stream()
+                .anyMatch(option -> option.getOptionNumber() == ans
+                    && option.isCorrect());
+
+        } else if (6 <= quizNum && quizNum <= 8) {
+            // ShortAnswer
+            int index = quizNum - 6;
+            ShortAnswerQuizDto quiz = gameData.getShortAnswerQuizList().get(index);
+            quizId = quiz.getQuizId();
+            isCorrect = quiz.getShortAnswer().equalsIgnoreCase(userAnswer.trim());
+
+        } else if (quizNum == 9) {
+            // Essay
+            EssayQuizDto quiz = gameData.getEssayQuiz();
+            quizId = quiz.getQuizId();
+            // 서술형은 정답 판별 로직이 다양할 수 있음
+            // 정답 로직은 따로
+        }
+
+        // 결과 메시지 발행
+        EventMessage<Map<String, Object>> resultMessage = new EventMessage<>(
+            EventType.QUIZ_RESULT,
+            roomId,
+            Map.of(
+                "quizId", quizId,
+                "result", isCorrect ? "정답입니다" : "오답입니다",
+                "memberId", memberId
+            )
+        );
+        publishToRoom(roomId, resultMessage);
+
+        // (2-1) 정답이면 quizNum++
+        if (isCorrect) {
+            quizTimerService.cancelQuizTasks(roomId);
+
+            gameData.setQuizNum(quizNum + 1);
+            redisGameRepository.save(gameData);
+        }
+
+        // (2-2) 라이프 업데이트
+        updateUserLives(gameData, memberId, isCorrect);
+    }
+
+    /**
+     * (4) 멤버들의 라이프 업데이트 → WebSocket으로 반영
+     */
+    private void updateUserLives(GameData gameData, Long correctMemberId, boolean isCorrect) {
+        List<GameMemberStatus> userList = gameData.getGameMemberStatusList();
+        if (userList == null) {
+            return;
+        }
+        if (isCorrect) {
+            // 정답자 외의 모든 유저 life-1
+            for (GameMemberStatus ms : userList) {
+                if (ms.getMemberId() != correctMemberId) {
+                    ms.setLife(ms.getLife() - 1);
+                }
+            }
+        } else {
+            // 오답이면 본인만 life-1 이라든지(규칙마다 다름)
+            // 예: 문제 설명 상 "첫 정답자 외 모든 사람 -1" 이었으면, 오답자도 -1
+            // 여기서는 간단히 "오답이면 아무 변화 없음"으로 가정
+            return;
+        }
+
+        // 변경사항 Redis 저장
+        gameData.setGameMemberStatusList(userList);
+        redisGameRepository.save(gameData);
+
+        // 업데이트된 사용자 상태를 WebSocket 전송
+        EventMessage<List<GameMemberStatus>> userStatusMessage = new EventMessage<>(
+            EventType.USER_STATUS, gameData.getRoomId(), userList
+        );
+
+        publishToRoom(gameData.getRoomId(), userStatusMessage);
+    }
+
+    /**
+     * (5) WebSocket + Redis를 통한 메시지 발행 → "topic/game/{roomId}"
+     */
+    private void publishToRoom(Long roomId, EventMessage<?> message) {
         try {
             String jsonMessage = objectMapper.writeValueAsString(message);
             redisPublisher.publish("game:" + roomId, jsonMessage);
@@ -128,36 +249,5 @@ public class GameService {
         } catch (JsonProcessingException e) {
             log.error("❌ JSON 변환 실패: {}", e.getMessage());
         }
-    }
-
-    private RedisRoom getRoomDataFromRedis(String roomKey) {
-        Object dataJson = redisTemplate.opsForHash().get(roomKey, "data");
-        if (dataJson == null) {
-            log.warn("🚨 Redis에서 room 데이터 없음: {}", roomKey);
-            return null;
-        }
-        try {
-            return objectMapper.readValue(dataJson.toString(), RedisRoom.class);
-        } catch (JsonProcessingException e) {
-            log.error("❌ JSON 변환 실패: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    private List<Long> extractMemberIdsFromRoom(RedisRoom room) {
-        List<Long> userIds = new ArrayList<>();
-        if (room.getMembers() != null) {
-            for (RedisRoomMember member : room.getMembers()) {
-                userIds.add(member.getMemberId());
-            }
-        }
-        return userIds;
-    }
-
-    private void sendError(String roomId, String errorMessage) {
-        EventMessage<String> message = new EventMessage<>(EventType.GAME_INFO, roomId,
-            errorMessage);
-        publishToRoom(roomId, message);
-        log.warn("게임 시작 에러 - room {}: {}", roomId, errorMessage);
     }
 }

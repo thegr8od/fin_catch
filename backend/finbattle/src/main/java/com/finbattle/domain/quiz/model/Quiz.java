@@ -1,5 +1,6 @@
 package com.finbattle.domain.quiz.model;
 
+import com.finbattle.domain.quiz.dto.QuizMode;
 import com.finbattle.global.common.model.enums.SubjectType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,7 +38,6 @@ public abstract class Quiz {
     @Enumerated(EnumType.STRING)
     @Column(name = "subject_type", nullable = false)
     private SubjectType subjectType;
-
 
     @Column(name = "created_at", nullable = false)
     private String createdAt; // timestamp → String으로 가정

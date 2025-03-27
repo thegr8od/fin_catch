@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class EventMessage<T> {
 
     private EventType event;
-    private String roomId;
+    private Long roomId;
     private T data;
 }
