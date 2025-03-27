@@ -1,9 +1,9 @@
 import React from "react";
-import { Character } from "../../types/Character";
+import { Cat } from "../../types/profile/Cat";
 import CharacterAnimation from "../game/CharacterAnimation";
 
 interface AnimatedCharacterDisplayProps {
-  character: Character;
+  character: Cat;
   state: "idle" | "attack" | "damage" | "dead" | "victory";
   scale?: number;
   resourcesLoaded: Record<string, boolean>;
