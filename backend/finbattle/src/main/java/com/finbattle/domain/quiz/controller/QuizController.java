@@ -30,11 +30,11 @@ public class QuizController {
             }
             return ResponseEntity.ok(new BaseResponse<>(wrongLogs));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(BaseResponseStatus.NOT_FOUND.getHttpStatus())
-                    .body(new BaseResponse<>(BaseResponseStatus.NOT_FOUND));
+            return ResponseEntity.status(BaseResponseStatus.QUIZ_LOG_NOT_FOUND.getHttpStatus())
+                    .body(new BaseResponse<>(BaseResponseStatus.QUIZ_LOG_NOT_FOUND));
         } catch (Exception e) {
-            return ResponseEntity.status(BaseResponseStatus.BAD_REQUEST.getHttpStatus())
-                    .body(new BaseResponse<>(BaseResponseStatus.BAD_REQUEST));
+            return ResponseEntity.status(BaseResponseStatus.INVALID_QUIZ_TYPE.getHttpStatus())
+                    .body(new BaseResponse<>(BaseResponseStatus.INVALID_QUIZ_TYPE));
         }
     }
 }

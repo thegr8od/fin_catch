@@ -43,14 +43,17 @@ public enum BaseResponseStatus {
     API_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3008, "API_KEY가 유효하지 않습니다."),
     USER_KEY_INVALID(false, HttpStatus.BAD_REQUEST, 3009, "USER_KEY가 유효하지 않습니다."),
 
-    // AI & Quiz Analysis (4001 ~ 4099)
-    QUIZ_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4001, "해당 퀴즈를 찾을 수 없습니다."),
-    QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4002, "해당 퀴즈에 대한 사용자 답변 기록이 없습니다."),
-    AI_ANALYSIS_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, 4003, "AI 분석에 실패하였습니다."),
-    INVALID_QUIZ_TYPE(false, HttpStatus.BAD_REQUEST, 4004, "유효하지 않은 퀴즈 유형입니다."),
-    OPENAI_API_ERROR(false, HttpStatus.INTERNAL_SERVER_ERROR, 4005, "OpenAI API 호출 중 오류가 발생했습니다."),
-    WRONG_QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4006, "틀린 퀴즈 로그가 없습니다.");
+    // Quiz (4000 ~ 4099)
+    QUIZ_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4000, "해당 퀴즈를 찾을 수 없습니다."),
+    QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4001, "해당 퀴즈에 대한 사용자 답변 기록이 없습니다."),
+    WRONG_QUIZ_LOG_NOT_FOUND(false, HttpStatus.NOT_FOUND, 4002, "틀린 퀴즈 로그가 없습니다."),
+    INVALID_QUIZ_TYPE(false, HttpStatus.BAD_REQUEST, 4003, "유효하지 않은 퀴즈 유형입니다."),
+    QUIZ_ALREADY_SOLVED(false, HttpStatus.BAD_REQUEST, 4004, "이미 풀이한 퀴즈입니다."), // 🔥 추가해도 유용한 예
 
+    // AI (4100 ~ 4199)
+    AI_ANALYSIS_FAILED(false, HttpStatus.INTERNAL_SERVER_ERROR, 4100, "AI 분석에 실패하였습니다."),
+    OPENAI_API_ERROR(false, HttpStatus.INTERNAL_SERVER_ERROR, 4101, "OpenAI API 호출 중 오류가 발생했습니다."),
+    AI_RESPONSE_INVALID(false, HttpStatus.BAD_REQUEST, 4102, "AI 응답이 유효하지 않습니다."); // 🔥 예외 대비 추가
     private final boolean isSuccess;
     @JsonIgnore
     private final HttpStatus httpStatus;
