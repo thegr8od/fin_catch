@@ -1,12 +1,12 @@
 export interface Account {
-  accountNo: number;
-  bankCode: number;
+  accountNo: string;
+  bankCode: string;
   accountName: string;
   accountBalance: number;
 }
 
 export interface AllAccount {
-  mainAccount: number;
+  mainAccount: string;
   accounts: Account[];
 }
 
@@ -28,7 +28,7 @@ export interface AccountDetail {
 }
 
 export interface ConsumeHistory {
-  transcationUniqueNo: number;
+  transcationUniqueNo: string;
   transcationDate: string;
   transcationTime: string;
   transcationType: string;
