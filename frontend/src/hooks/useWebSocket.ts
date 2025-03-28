@@ -20,37 +20,39 @@ export const SOCKET_TOPICS = {
  */
 export const MESSAGE_TYPES = {
   ROOM: {
-    KICK: "KICK",     // 방에서 유저 강퇴
-    JOIN: "JOIN",     // 방 입장
-    LEAVE: "LEAVE",   // 방 퇴장
-    UPDATE: "UPDATE", // 방 정보 업데이트
-    READY: "READY",   // 준비 상태 변경
-    START: "START",   // 게임 시작
+    CREATE: "CREATE", // 방 생성
+    READY: "READY", // 준비 완료
+    COUNT: "COUNT", // 인원 수 업데이트
+    JOIN_FAIL: "JOIN_FAIL", // 입장 실패
+    NOT_READY: "NOT_READY", // 준비 안됨
+    DELETE: "DELETE", // 방 삭제
+    LEAVE: "LEAVE", // 퇴장
+    KICK_FAIL: "KICK_FAIL", // 강퇴 실패
+    KICK: "KICK", // 강퇴
+    INFO: "INFO", // 방 정보
+    START: "START", // 게임 시작
+    UNREADY: "UNREADY", // 준비 해제
   },
   GAME: {
-    STATUS: {
-      ATTACK: "ATTACK", // 공격 액션
-      DAMAGE: "DAMAGE", // 데미지 받음
-      DEAD: "DEAD",     // 캐릭터 사망
-      END: "END",       // 게임 종료
-    },
-    PROBLEM: "PROBLEM", // 문제 전송/수신
-    ANSWER: "ANSWER",   // 답변 제출/결과
+    STATUS: "STATUS", // 게임 상태
+    PROBLEM: "PROBLEM", // 문제
+    ANSWER: "ANSWER", // 답변
+    RESULT: "RESULT", // 결과
+    END: "END", // 종료
   },
   CHAT: {
-    SEND: "SEND",       // 메시지 전송
-    RECEIVE: "RECEIVE",  // 메시지 수신 
+    MESSAGE: "MESSAGE", // 채팅 메시지
   },
 };
 
 /**
  * WebSocket 연결 및 관리를 위한 React 훅
- * 
+ *
  * 주요 기능:
  * - WebSocket 클라이언트 생성 및 연결 관리
  * - 토픽 구독 및 구독 해제
  * - 메시지 전송
- * 
+ *
  * @returns WebSocket 관련 상태 및 함수들
  */
 export const useWebSocket = () => {
@@ -90,7 +92,7 @@ export const useWebSocket = () => {
 
   /**
    * 토픽 구독 함수
-   * 
+   *
    * @param topic 구독할 토픽 경로
    * @param callback 메시지 수신 시 실행할 콜백 함수
    * @returns 구독 객체 또는 실패 시 null
@@ -118,47 +120,53 @@ export const useWebSocket = () => {
 
   /**
    * 토픽 구독 해제 함수
-   * 
+   *
    * @param topic 구독 해제할 토픽 경로
    */
-  const unsubscribe = useCallback((topic: string) => {
-    if (subscriptions[topic]) {
+  const unsubscribe = useCallback(
+    (topic: string) => {
+      if (subscriptions[topic]) {
         // 구독 객체 해제
         subscriptions[topic].unsubscribe();
         // 상태에서 제거
-        setSubscripitons(prev => {
-            const newSubs = { ...prev };
-            delete newSubs[topic];
-            return newSubs;
+        setSubscripitons((prev) => {
+          const newSubs = { ...prev };
+          delete newSubs[topic];
+          return newSubs;
         });
-    }
-  }, [subscriptions]);
+      }
+    },
+    [subscriptions]
+  );
 
   /**
    * 메시지 전송 함수
-   * 
+   *
    * @param destination 메시지를 전송할 대상 경로
    * @param body 전송할 메시지 본문 (객체)
    * @param headers 추가 헤더 (선택적)
    * @returns 전송 성공 여부
    */
-  const send = useCallback((destination: string, body: any, headers = {}) => {
-    // 클라이언트가 없거나 연결되지 않은 경우
-    if (!client || !connected) return false;
+  const send = useCallback(
+    (destination: string, body: any, headers = {}) => {
+      // 클라이언트가 없거나 연결되지 않은 경우
+      if (!client || !connected) return false;
 
-    // 메시지 전송
-    sendMessage(client, destination, body, headers);
-    return true;
-  }, [client, connected]);
+      // 메시지 전송
+      sendMessage(client, destination, body, headers);
+      return true;
+    },
+    [client, connected]
+  );
 
   // 훅에서 제공하는 기능과 상태 반환
   return {
-    client,        // STOMP 클라이언트 객체
-    connected,     // 연결 상태
-    subscribe,     // 구독 함수
-    unsubscribe,   // 구독 해제 함수
-    send,          // 메시지 전송 함수
-    topics: SOCKET_TOPICS,     // 토픽 정의 객체
+    client, // STOMP 클라이언트 객체
+    connected, // 연결 상태
+    subscribe, // 구독 함수
+    unsubscribe, // 구독 해제 함수
+    send, // 메시지 전송 함수
+    topics: SOCKET_TOPICS, // 토픽 정의 객체
     messageTypes: MESSAGE_TYPES, // 메시지 타입 정의 객체
   };
 };

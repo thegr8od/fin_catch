@@ -56,23 +56,23 @@ const RoomPreparePage: React.FC = () => {
     subscribe(topics.ROOM(roomId), (message) => {
       const data = JSON.parse(message.body);
       switch (data.event) {
-        case "INFO":
+        case messageTypes.ROOM.INFO:
           setRoomInfo(data.data);
           break;
-        case "READY":
-        case "UNREADY":
+        case messageTypes.ROOM.READY:
+        case messageTypes.ROOM.UNREADY:
           getRoomInfo(Number(roomId));
           break;
-        case "LEAVE":
+        case messageTypes.ROOM.LEAVE:
           getRoomInfo(Number(roomId));
           break;
-        case "KICK":
+        case messageTypes.ROOM.KICK:
           if (data.data === Number(localStorage.getItem("userId"))) {
             showCustomAlert("방에서 강퇴되었습니다.");
             navigate("/main");
           }
           break;
-        case "DELETE":
+        case messageTypes.ROOM.DELETE:
           showCustomAlert("방이 삭제되었습니다.");
           navigate("/main");
           break;
