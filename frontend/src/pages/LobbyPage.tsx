@@ -7,143 +7,131 @@ import oneVsOneImg from "../assets/one_vs_one.png";
 import multiImg from "../assets/multi.png";
 import mainBg from "../assets/main.gif";
 import { CustomAlert } from "../components/layout/CustomAlert";
-// 게임 모드 타입 정의
-type GameMode = "oneVsOne" | null;
+import { useRoom } from "../hooks/useRoom";
 
-// 방 인터페이스 정의
+/**
+ * 방 정보를 담는 인터페이스
+ * 서버의 Room 엔티티와 일치하는 구조
+ */
 interface Room {
-  id: string;
-  title: string;
-  mode: GameMode;
-  host: string;
-  players: number;
-  maxPlayers: number;
-  status: "waiting" | "playing";
-  category?: string;
-  createdAt: Date;
+  roomId: number; // 방 고유 ID
+  roomTitle: string; // 방 제목
+  password: string | null; // 비밀번호 (없을 수 있음)
+  maxPlayer: number; // 최대 플레이어 수
+  roomType: "ONE_ON_ONE" | "MULTI" | "AI_BATTLE"; // 방 타입
+  subjectType: "FIN_KNOWLEDGE" | "FIN_CRIME" | "FIN_POLICY" | "FIN_PRODUCT" | "FIN_INVESTMENT"; // 주제 타입
+  status: "OPEN" | "IN_PROGRESS" | "CLOSED"; // 방 상태
+  createdAt: string; // 생성 시간
+  memberId: number | null; // 방장 ID
+  currentPlayer?: number; // 현재 플레이어 수
 }
 
+/**
+ * 로비 페이지 컴포넌트
+ * 방 목록을 보여주고 방 생성/입장 기능을 제공
+ */
 const LobbyPage = () => {
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [roomTitle, setRoomTitle] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
 
+  // 상태 관리
+  const [rooms, setRooms] = useState<Room[]>([]); // 방 목록
+  const [showModal, setShowModal] = useState(false); // 방 생성 모달 표시 여부
+  const [roomTitle, setRoomTitle] = useState(""); // 새 방 제목
+  const [password, setPassword] = useState(""); // 새 방 비밀번호
+  const [maxPlayer, setMaxPlayer] = useState(2); // 새 방 최대 인원
+  const [roomType, setRoomType] = useState<Room["roomType"]>("ONE_ON_ONE"); // 새 방 타입
+  const [subjectType, setSubjectType] = useState<Room["subjectType"]>("FIN_KNOWLEDGE"); // 새 방 주제
+  const [showAlert, setShowAlert] = useState(false); // 알림 표시 여부
+  const [alertMessage, setAlertMessage] = useState(""); // 알림 메시지
+
+  // Room 관련 API 훅
+  const { createRoom, getAllRoom, searchByOpen } = useRoom();
+
+  /**
+   * 컴포넌트 마운트 시 방 목록 로드
+   */
   useEffect(() => {
-    // 로컬 스토리지에서 방 목록 불러오기
+    loadRooms();
+  }, []);
+
+  /**
+   * 열린 방 목록을 서버에서 가져오는 함수
+   */
+  const loadRooms = async () => {
     try {
-      const storedRooms = localStorage.getItem("rooms");
-      if (storedRooms) {
-        const parsedRooms: Room[] = JSON.parse(storedRooms);
-        setRooms(parsedRooms);
-        return;
+      const openRooms = await searchByOpen();
+      if (openRooms) {
+        setRooms(Array.isArray(openRooms) ? (openRooms as Room[]) : [openRooms as Room]);
+      } else {
+        setRooms([]);
       }
     } catch (error) {
       console.error("방 목록을 불러오는 중 오류 발생:", error);
+      showCustomAlert("방 목록을 불러오는데 실패했습니다.");
     }
-  }, []);
-
-  // 방 생성 처리
-  const handleCreateRoom = () => {
-    if (!roomTitle) return;
-
-    // 새 방 ID 생성 (실제로는 서버에서 생성)
-    const newRoomId = Date.now().toString();
-
-    // 새 방 객체 생성
-    const newRoom: Room = {
-      id: newRoomId,
-      title: roomTitle,
-      mode: "oneVsOne",
-      host: "현재 사용자", // 실제로는 로그인한 사용자 정보
-      players: 1,
-      maxPlayers: 2,
-      status: "waiting",
-      category: selectedCategory || undefined,
-      createdAt: new Date(),
-    };
-
-    // 방 목록에 추가 (실제로는 서버에 저장)
-    const updatedRooms = [...rooms, newRoom];
-    setRooms(updatedRooms);
-
-    // 로컬 스토리지에 방 정보 저장
-    try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
-    } catch (error) {
-      console.error("방 정보를 저장하는 중 오류 발생:", error);
-    }
-
-    // 모달 닫기 및 상태 초기화
-    setShowModal(false);
-    setRoomTitle("");
-    setSelectedCategory("");
-
-    // 준비 페이지로 이동
-    navigate(`/room/prepare/${newRoomId}`);
   };
 
-  // 방 입장 처리
-  const handleJoinRoom = (roomId: string) => {
-    // 방 정보 확인 (실제로는 서버에서 확인)
-    const room = rooms.find((r) => r.id === roomId);
-
-    if (!room) {
-      showCustomAlert("존재하지 않는 방입니다.");
+  /**
+   * 새로운 방을 생성하는 함수
+   */
+  const handleCreateRoom = async () => {
+    if (!roomTitle) {
+      showCustomAlert("방 제목을 입력해주세요.");
       return;
     }
 
-    if (room.status === "playing") {
-      showCustomAlert("이미 게임이 진행 중인 방입니다.");
-      return;
-    }
-
-    if (room.players >= room.maxPlayers) {
-      showCustomAlert("방이 가득 찼습니다.");
-      return;
-    }
-
-    // 방 입장 처리 (실제로는 서버에 요청)
-    const updatedRooms = rooms.map((r) => (r.id === roomId ? { ...r, players: r.players + 1 } : r));
-
-    setRooms(updatedRooms);
-
-    // 로컬 스토리지 업데이트
     try {
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms));
-    } catch (error) {
-      console.error("방 정보를 업데이트하는 중 오류 발생:", error);
-    }
+      const response = await createRoom(roomTitle, password, maxPlayer, roomType, subjectType);
+      if (!response?.roomId) {
+        throw new Error("방 생성 응답에 roomId가 없습니다.");
+      }
 
-    // 준비 페이지로 이동
+      // 모달 닫기 및 상태 초기화
+      setShowModal(false);
+      setRoomTitle("");
+      setPassword("");
+      setMaxPlayer(2);
+      setRoomType("ONE_ON_ONE");
+      setSubjectType("FIN_KNOWLEDGE");
+
+      // 준비 페이지로 이동
+      navigate(`/room/prepare/${response.roomId}`);
+    } catch (error) {
+      console.error("방 생성 중 오류 발생:", error);
+      showCustomAlert("방 생성에 실패했습니다.");
+    }
+  };
+
+  /**
+   * 특정 방에 입장하는 함수
+   */
+  const handleJoinRoom = (roomId: number) => {
     navigate(`/room/prepare/${roomId}`);
   };
 
-  // 카테고리 데이터
-  const categories = [
-    { id: "investment", name: "투자" },
-    { id: "economy", name: "정책" },
-    { id: "product", name: "상품" },
-    { id: "delivery", name: "범죄" },
-  ];
-
+  /**
+   * 알림 메시지를 표시하는 함수
+   */
   const showCustomAlert = (message: string) => {
     setAlertMessage(message);
     setShowAlert(true);
   };
 
+  // JSX 렌더링
   return (
     <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
         <div className="w-full max-w-6xl px-6">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl text-white font-bold tracking-wider text-shadow-lg">방 목록</h1>
-            <button onClick={() => setShowModal(true)} className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors">
-              방 생성하기
-            </button>
+            <div>
+              <button onClick={loadRooms} className="bg-blue-400 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-500 transition-colors mr-4">
+                새로고침
+              </button>
+              <button onClick={() => setShowModal(true)} className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold hover:bg-yellow-500 transition-colors">
+                방 생성하기
+              </button>
+            </div>
           </div>
 
           {/* 방 목록 테이블 */}
@@ -153,7 +141,7 @@ const LobbyPage = () => {
                 <tr className="bg-gray-200">
                   <th className="py-3 px-4 text-left">방 제목</th>
                   <th className="py-3 px-4 text-left">주제</th>
-                  <th className="py-3 px-4 text-left">방장</th>
+                  <th className="py-3 px-4 text-left">방 타입</th>
                   <th className="py-3 px-4 text-center">인원</th>
                   <th className="py-3 px-4 text-center">상태</th>
                   <th className="py-3 px-4 text-center">입장</th>
@@ -161,25 +149,28 @@ const LobbyPage = () => {
               </thead>
               <tbody>
                 {rooms.map((room) => (
-                  <tr key={room.id} className="border-t border-gray-300 hover:bg-gray-100">
-                    <td className="py-3 px-4">{room.title}</td>
-                    <td className="py-3 px-4">{room.category && `${room.category}`}</td>
-                    <td className="py-3 px-4">{room.host}</td>
+                  <tr key={room.roomId} className="border-t border-gray-300 hover:bg-gray-100">
+                    <td className="py-3 px-4">{room.roomTitle}</td>
+                    <td className="py-3 px-4">{room.subjectType}</td>
+                    <td className="py-3 px-4">{room.roomType}</td>
                     <td className="py-3 px-4 text-center">
-                      {room.players}/{room.maxPlayers}
+                      {/* 현재 인원은 서버에서 받아와야 함 */}
+                      0/{room.maxPlayer}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${room.status === "waiting" ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
-                        {room.status === "waiting" ? "대기중" : "게임중"}
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          room.status === "OPEN" ? "bg-green-200 text-green-800" : room.status === "IN_PROGRESS" ? "bg-yellow-200 text-yellow-800" : "bg-red-200 text-red-800"
+                        }`}
+                      >
+                        {room.status}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
-                        onClick={() => handleJoinRoom(room.id)}
-                        disabled={room.status === "playing" || room.players >= room.maxPlayers}
-                        className={`px-4 py-1 rounded ${
-                          room.status === "playing" || room.players >= room.maxPlayers ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
+                        onClick={() => handleJoinRoom(room.roomId)}
+                        disabled={room.status !== "OPEN"}
+                        className={`px-4 py-1 rounded ${room.status !== "OPEN" ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
                       >
                         입장
                       </button>
@@ -188,7 +179,7 @@ const LobbyPage = () => {
                 ))}
                 {rooms.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
                       생성된 방이 없습니다. 새로운 방을 만들어보세요!
                     </td>
                   </tr>
@@ -210,14 +201,32 @@ const LobbyPage = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2">주제 선택</label>
-                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full p-2 border border-gray-300 rounded">
-                  <option value="">주제를 선택하세요</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
+                <label className="block text-gray-700 mb-2">비밀번호 (선택)</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 border border-gray-300 rounded" placeholder="비밀번호를 입력하세요" />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">최대 인원</label>
+                <input type="number" value={maxPlayer} onChange={(e) => setMaxPlayer(Number(e.target.value))} min={2} max={4} className="w-full p-2 border border-gray-300 rounded" />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">방 타입</label>
+                <select value={roomType} onChange={(e) => setRoomType(e.target.value as Room["roomType"])} className="w-full p-2 border border-gray-300 rounded">
+                  <option value="ONE_ON_ONE">1대1</option>
+                  <option value="MULTI">다인전</option>
+                  <option value="AI_BATTLE">AI 대전</option>
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">주제</label>
+                <select value={subjectType} onChange={(e) => setSubjectType(e.target.value as Room["subjectType"])} className="w-full p-2 border border-gray-300 rounded">
+                  <option value="FIN_KNOWLEDGE">금융 지식</option>
+                  <option value="FIN_CRIME">금융 범죄</option>
+                  <option value="FIN_POLICY">금융 정책</option>
+                  <option value="FIN_PRODUCT">금융 상품</option>
+                  <option value="FIN_INVESTMENT">금융 투자</option>
                 </select>
               </div>
 
@@ -227,8 +236,8 @@ const LobbyPage = () => {
                 </button>
                 <button
                   onClick={handleCreateRoom}
-                  disabled={!roomTitle || !selectedCategory}
-                  className={`px-4 py-2 rounded ${!roomTitle || !selectedCategory ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
+                  disabled={!roomTitle}
+                  className={`px-4 py-2 rounded ${!roomTitle ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}
                 >
                   생성하기
                 </button>
