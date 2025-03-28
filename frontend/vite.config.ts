@@ -8,4 +8,7 @@ export default defineConfig({
     port: 3210,
     cors: true,
   },
+  define: {
+    global: "globalThis",
+  },
 });
