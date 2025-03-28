@@ -7,8 +7,8 @@ export const useAccount = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [error, setError] = useState<string | null>(null);
   const allAccountApi = useApi<AllAccount>("/api/finance/account/all", "POST");
-  const accountDetailApi = useApi<AccountDetail, { accountNo: number }>("/api/finance/account/detail", "POST");
-  const consumeHistoryApi = useApi<AllConsumeHistory, { accountNo: number; startDate: string; endDate: string; transactionType: string }>("/api/finance/account/transactions", "POST");
+  const accountDetailApi = useApi<AccountDetail, { accountNo: string }>("/api/finance/account/detail", "POST");
+  const consumeHistoryApi = useApi<AllConsumeHistory, { accountNo: string; startDate: string; endDate: string; transactionType: string }>("/api/finance/account/transactions", "POST");
   const { user } = useUserInfo(false); // autoFetch를 false로 설정하여 자동 조회 방지
 
   const fetchAllAccount = useCallback(async () => {
@@ -51,7 +51,7 @@ export const useAccount = () => {
   }, [user]);
 
   const fetchAccountDetail = useCallback(
-    async (accountNo: number) => {
+    async (accountNo: string) => {
       try {
         const response = await accountDetailApi.execute({ accountNo });
         return response;
@@ -64,7 +64,7 @@ export const useAccount = () => {
   );
 
   const fetchConsumeHistory = useCallback(
-    async (accountNo: number, startDate: string, endDate: string, transactionType: string) => {
+    async (accountNo: string, startDate: string, endDate: string, transactionType: string) => {
       try {
         const response = await consumeHistoryApi.execute({ accountNo, startDate, endDate, transactionType });
         return response;
