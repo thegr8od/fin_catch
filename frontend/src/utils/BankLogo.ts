@@ -17,7 +17,7 @@ export const bankLogo: BankLogo = {
   "037": "/bank-logos/gwangju.png", // 전북은행
   "039": "/bank-logos/bnk.png", // 경남은행
   "045": "/bank-logos/saemaul.png", // 새마을금고
-  "081": "/bank-logos/keb.png", // KEB하나은행
+  "081": "/bank-logos/hana.png", // 하나은행
   "088": "/bank-logos/shinhan.png", // 신한은행
   "090": "/bank-logos/kakao.png", // 카카오뱅크
   "999": "/bank-logos/ssafy.png", // 싸피은행
