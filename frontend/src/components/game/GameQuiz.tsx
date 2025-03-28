@@ -38,23 +38,35 @@ const GameQuiz = ({ timeLeft, isTimeUp, onShowResults, playerCat, opponentCat, q
         <div className="w-full flex flex-col items-center">
           {/* 고양이 대결 영역 - 고양이를 지면에 배치 */}
           <div className="w-full flex justify-between items-end mb-4">
-            {/* 플레이어 고양이 (왼쪽) - 배경과 어울리는 그림자 추가 */}
-            <div className="relative">
-              {/* 고양이 그림자 */}
-              <div className="pb-4 pl-4">
+            {/* 플레이어 고양이 (왼쪽) - 발판에 P1 표시 추가 */}
+            <div className="relative flex flex-col items-center">              
+              {/* 고양이 캐릭터 */}
+              <div className="relative">
                 <CharacterAnimation state={"idle"} direction={true} scale={3} size="large" />
+                
+                {/* 원형 발판 (P1 표시 포함) */}
+                <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600 rounded-full shadow-lg border-[3px] border-white -z-10">
+                  <span className="text-white font-bold text-sm z-10">P1</span>
+                </div>
               </div>
             </div>
 
             {/* 중앙 VS 텍스트 */}
             <div className="flex-grow flex justify-center items-center mb-16">
-              <div className="bg-transparent px-6 py-3 rounded-full border-4 border-white text-white font-extrabold text-2xl">VS</div>
+              <div className="bg-transparent px-6 py-3 rounded-full border-4 border-white text-white font-extrabold text-2xl shadow-lg">VS</div>
             </div>
 
-            {/* 상대방 고양이 (오른쪽 끝) - 배경과 어울리는 그림자 추가 */}
-            <div className="relative">
-              <div className="pb-4 pr-4">
+            {/* 상대방 고양이 (오른쪽 끝) - 발판에 P2 표시 추가 */}
+            <div className="relative flex flex-col items-center">
+              
+              {/* 고양이 캐릭터 */}
+              <div className="relative">
                 <CharacterAnimation state={"idle"} direction={false} scale={3} size="large" />
+                
+                {/* 원형 발판 (P2 표시 포함) */}
+                <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 flex items-center justify-center bg-gradient-to-r from-purple-400 to-purple-600 rounded-full shadow-lg border-[3px] border-white -z-10">
+                  <span className="text-white font-bold text-sm z-10">P2</span>
+                </div>
               </div>
             </div>
           </div>
