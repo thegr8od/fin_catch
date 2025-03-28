@@ -6,8 +6,8 @@ import { formatBalance, formataccountNo } from "../../utils/formatAccount";
 import { useAccount } from "../../hooks/useAccount";
 
 interface MainAccount {
-  bankCode: number;
-  accountNo: number;
+  bankCode: string;
+  accountNo: string;
   accountName: string;
   accountBalance: number;
 }
@@ -115,7 +115,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
                 </div>
                 <div>
                   <div className="text-lg font-korean-pixel text-gray-800">{mainAccount.accountName}</div>
-                  <div className="text-sm font-korean-pixel text-gray-600">{formataccountNo(mainAccount.accountNo)}</div>
+                  <div className="text-sm font-korean-pixel text-gray-600">{mainAccount.accountNo}</div>
                 </div>
               </div>
               <div className="text-right">

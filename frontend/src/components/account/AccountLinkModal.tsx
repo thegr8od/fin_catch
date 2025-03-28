@@ -107,7 +107,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
                     </div>
                     <div className="text-left">
                       <div className="text-lg font-korean-pixel text-gray-800">{account.accountName}</div>
-                      <div className="text-sm font-korean-pixel text-gray-600">{formataccountNo(account.accountNo)}</div>
+                      <div className="text-sm font-korean-pixel text-gray-600">{account.accountNo}</div>
                     </div>
                   </div>
                   <div className="text-right font-korean-pixel">
