@@ -5,7 +5,7 @@ export interface User {
   point: number;
   cats: Array<Cat>;
   mainCat: Cat;
-  main_account: number;
+  main_account: string;
 }
 
 interface Cat {
