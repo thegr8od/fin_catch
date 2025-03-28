@@ -38,7 +38,6 @@ public abstract class Quiz {
     @Column(name = "subject_type", nullable = false)
     private SubjectType subjectType;
 
-
     @Column(name = "created_at", nullable = false)
     private String createdAt; // timestamp → String으로 가정
 }

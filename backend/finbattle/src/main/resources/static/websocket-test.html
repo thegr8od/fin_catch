@@ -6,30 +6,124 @@
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #fff8f8; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none" stroke="%23ffcccc" stroke-width="1"><path d="M25,10 Q30,5 35,10 Q40,15 35,20 Q30,25 25,20 Q20,15 25,10 Z"/><circle cx="20" cy="40" r="3"/><circle cx="30" cy="40" r="3"/></svg>'); background-size: 100px 100px; }
-    .section { border: 2px solid #ffaaaa; padding: 15px; margin-bottom: 20px; border-radius: 10px; background-color: white; box-shadow: 0 3px 6px rgba(255, 170, 170, 0.2); position: relative; }
-    .section::after { content: "🐾"; position: absolute; bottom: 5px; right: 10px; opacity: 0.2; font-size: 20px; }
-    .logBox { border: 1px solid #ffcccc; padding: 10px; height: 100px; overflow-y: auto; margin-top: 10px; background: #fff9f9; border-radius: 8px; }
-    .statusBox { border: 1px solid #ffcccc; padding: 10px; height: 150px; overflow-y: auto; margin-top: 10px; background: #fff0f5; border-radius: 8px; }
-    .userItem { margin: 5px 0; padding: 3px 8px; border-radius: 6px; background-color: #fff5f5; }
-    button { padding: 5px 10px; margin: 0 5px; border-radius: 8px; cursor: pointer; background-color: #ff9999; border: none; color: white; transition: all 0.2s; }
-    button:hover { background-color: #ff7777; transform: translateY(-2px); }
-    input[type="text"], input[type="number"] { padding: 5px; border-radius: 6px; border: 1px solid #ffaaaa; background-color: #fffafa; }
-    h1 { color: #ff6b6b; text-align: center; }
-    h1::before, h1::after { content: "🐱"; margin: 0 10px; }
-    h2 { margin-top: 0; color: #ff6b6b; border-bottom: 2px dotted #ffdddd; padding-bottom: 5px; }
-    .game-buttons { text-align: center; margin-top: 20px; padding: 10px; background-color: #fff0f5; border-radius: 10px; border: 1px dashed #ffaaaa; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #fff8f8;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" fill="none" stroke="%23ffcccc" stroke-width="1"><path d="M25,10 Q30,5 35,10 Q40,15 35,20 Q30,25 25,20 Q20,15 25,10 Z"/><circle cx="20" cy="40" r="3"/><circle cx="30" cy="40" r="3"/></svg>');
+      background-size: 100px 100px;
+    }
+
+    .section {
+      border: 2px solid #ffaaaa;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      background-color: white;
+      box-shadow: 0 3px 6px rgba(255, 170, 170, 0.2);
+      position: relative;
+    }
+
+    .section::after {
+      content: "🐾";
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      opacity: 0.2;
+      font-size: 20px;
+    }
+
+    .logBox {
+      border: 1px solid #ffcccc;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      margin-top: 10px;
+      background: #fff9f9;
+      border-radius: 8px;
+    }
+
+    .statusBox {
+      border: 1px solid #ffcccc;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      margin-top: 10px;
+      background: #fff0f5;
+      border-radius: 8px;
+    }
+
+    .userItem {
+      margin: 5px 0;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background-color: #fff5f5;
+    }
+
+    button {
+      padding: 5px 10px;
+      margin: 0 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #ff9999;
+      border: none;
+      color: white;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: #ff7777;
+      transform: translateY(-2px);
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 5px;
+      border-radius: 6px;
+      border: 1px solid #ffaaaa;
+      background-color: #fffafa;
+    }
+
+    h1 {
+      color: #ff6b6b;
+      text-align: center;
+    }
+
+    h1::before, h1::after {
+      content: "🐱";
+      margin: 0 10px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #ff6b6b;
+      border-bottom: 2px dotted #ffdddd;
+      padding-bottom: 5px;
+    }
+
+    .game-buttons {
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff0f5;
+      border-radius: 10px;
+      border: 1px dashed #ffaaaa;
+    }
   </style>
 </head>
 <body>
 <h1>FinBattle - Chat, Game & Quiz Test</h1>
 
+<!-- 방 생성 및 접속 관련 섹션 (HTTP API 사용) -->
 <div class="section">
   <h2>방 생성</h2>
-  <label>생성자 ID:</label> <input type="number" id="creatorUserId" placeholder="Enter Creator's User ID"/><br/><br/>
-  <label>방 제목:</label> <input type="text" id="roomTitle" placeholder="방 제목 입력"/><br/><br/>
-  <label>비밀번호:</label> <input type="text" id="roomPassword" placeholder="비밀번호(옵션)"/><br/><br/>
-  <label>최대 인원 수:</label> <input type="number" id="maxPlayer" placeholder="예) 4"/><br/><br/>
+  <label>생성자 ID:</label>
+  <input type="number" id="creatorUserId" placeholder="Enter Creator's User ID"/><br/><br/>
+  <label>방 제목:</label>
+  <input type="text" id="roomTitle" placeholder="방 제목 입력"/><br/><br/>
+  <label>비밀번호:</label>
+  <input type="text" id="roomPassword" placeholder="비밀번호(옵션)"/><br/><br/>
+  <label>최대 인원 수:</label>
+  <input type="number" id="maxPlayer" placeholder="예) 4"/><br/><br/>
   <label>방 유형:</label>
   <select id="roomType">
     <option value="ONE_ON_ONE">1대1 방</option>
@@ -50,8 +144,10 @@
 
 <div class="section">
   <h2>방 접속</h2>
-  <label>Room ID: </label> <input type="text" id="roomId" placeholder="Enter Room ID"/>
-  <label>User ID: </label> <input type="text" id="userId" placeholder="Enter Your ID"/>
+  <label>Room ID: </label>
+  <input type="text" id="roomId" placeholder="Enter Room ID"/>
+  <label>User ID: </label>
+  <input type="text" id="userId" placeholder="Enter Your ID"/>
   <button onclick="connect()">Connect</button>
 </div>
 
@@ -74,25 +170,31 @@
 
 <div class="section">
   <h2>Room Controls</h2>
-  <label>Target User ID to kick: </label> <input type="text" id="kickUserId" placeholder="Enter target user ID"/>
-  <button onclick="kickUser()">Kick User</button><br/><br/>
+  <label>Target User ID to kick: </label>
+  <input type="text" id="kickUserId" placeholder="Enter target user ID"/>
+  <button onclick="kickUser()">Kick User</button>
+  <br/><br/>
   <button onclick="setReady()">I'm Ready</button>
   <div id="controlLog" class="logBox"></div>
 </div>
 
+<!-- 채팅 섹션 (WebSocket) -->
 <div class="section">
   <h2>Chat</h2>
-  <label>Message: </label> <input type="text" id="chatMessage" placeholder="Type your chat message"/>
+  <label>Message: </label>
+  <input type="text" id="chatMessage" placeholder="Type your chat message"/>
   <button onclick="sendChat()">Send Chat</button>
   <div id="chatLog" class="logBox"></div>
 </div>
 
+<!-- 게임/퀴즈 섹션 (WebSocket) -->
 <div class="section">
   <h2>Quiz</h2>
   <button onclick="getQuiz()">Get Quiz Question</button>
   <button onclick="requestQuizHint()">Get Quiz Hint</button>
   <div id="quizTimer" class="logBox"></div>
-  <div id="quizQuestion" class="logBox"></div><br/>
+  <div id="quizQuestion" class="logBox"></div>
+  <br/>
   <input type="text" id="quizAnswer" placeholder="Your Answer"/>
   <button onclick="submitQuizAnswer()">Submit Answer</button>
   <div id="quizResult" class="logBox"></div>
@@ -119,26 +221,28 @@
   let quizTimerInterval = null;
   let gameStarted = false;
   let userScores = {};
-  let currentPlayers = 0;    // 현재 방에 접속한 플레이어 수
-  // quizRoundActive가 true면 현재 퀴즈 라운드가 활성 상태임 (한 번만 다음 퀴즈 요청)
+  let currentPlayers = 0;
   let quizRoundActive = false;
 
   document.addEventListener('DOMContentLoaded', function () {
     const quizAnswerInput = document.getElementById('quizAnswer');
     if (quizAnswerInput) {
       quizAnswerInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') submitQuizAnswer();
+        if (event.key === 'Enter') {
+          submitQuizAnswer();
+        }
       });
     }
   });
 
+  // ===== 방 생성 및 접속 (HTTP API) =====
   function createRoom() {
     const creatorId = document.getElementById('creatorUserId').value;
     const title = document.getElementById('roomTitle').value;
     const password = document.getElementById('roomPassword').value;
     const maxPlayer = document.getElementById('maxPlayer').value;
     const roomType = document.getElementById('roomType').value;
-    const quizType = document.getElementById('quizType').value;
+    const subjectType = document.getElementById('quizType').value;
 
     if (!creatorId || !title || !maxPlayer || !roomType) {
       alert("생성자 ID, 방 제목, 최대 인원 수, 방 유형은 필수 항목입니다.");
@@ -146,52 +250,72 @@
     }
 
     const payload = {
-      memberId: parseInt(creatorId, 10),
+      memberId: creatorId,
       roomTitle: title,
       password: password,
-      maxPlayer: parseInt(maxPlayer, 10),
+      maxPlayer: maxPlayer,
       roomType: roomType,
-      quizType: quizType
+      subjectType: subjectType
     };
 
-    fetch('/api/room', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
-            .then(response => { if (!response.ok) throw new Error(`서버 응답 에러: ${response.status}`); return response.json(); })
-            .then(data => {
-              document.getElementById('createRoomResult').innerHTML = `
+    fetch('/api/room', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`서버 응답 에러: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      document.getElementById('createRoomResult').innerHTML = `
           <strong>방 생성 성공!</strong><br/>
-          Room ID: ${data.roomId}<br/>
-          Title: ${data.roomTitle}<br/>
-          Status: ${data.status}<br/>
-          RoomType: ${data.roomType}<br/>
-          QuizType: ${data.quizType}<br/>
-          MaxPlayer: ${data.maxPlayer}<br/>
-          CreatedAt: ${data.createdAt}`;
-              document.getElementById('roomId').value = data.roomId;
-              document.getElementById('userId').value = creatorId;
-              connect();
-            })
-            .catch(error => { console.error("방 생성 실패:", error); alert("방 생성 중 오류 발생. 콘솔 확인."); });
+          Room ID: ${data.result.roomId}<br/>
+          Title: ${data.result.roomTitle}<br/>
+          Status: ${data.result.status}<br/>
+          RoomType: ${data.result.roomType}<br/>
+          SubjectType: ${data.result.subjectType}<br/>
+          MaxPlayer: ${data.result.maxPlayer}<br/>
+          CreatedAt: ${data.result.createdAt}`;
+      document.getElementById('roomId').value = data.result.roomId;
+      document.getElementById('userId').value = creatorId;
+      connect();
+    })
+    .catch(error => {
+      console.error("방 생성 실패:", error);
+      alert("방 생성 중 오류 발생. 콘솔 확인.");
+    });
   }
 
   function loadOpenRooms() {
     fetch('/api/room/open')
-            .then(response => { if (!response.ok) throw new Error(`서버 오류: ${response.status}`); return response.json(); })
-            .then(rooms => {
-              const roomListDiv = document.getElementById('roomList');
-              roomListDiv.innerHTML = rooms.length === 0 ? '<p>현재 생성된 OPEN 방이 없습니다.</p>' : '';
-              rooms.forEach(room => {
-                const roomElement = document.createElement('div');
-                roomElement.classList.add('userItem');
-                roomElement.innerHTML = `
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`서버 오류: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(rooms => {
+      const roomListDiv = document.getElementById('roomList');
+      roomListDiv.innerHTML = rooms.result.length === 0 ? '<p>현재 생성된 OPEN 방이 없습니다.</p>' : '';
+      rooms.result.forEach(room => {
+        const roomElement = document.createElement('div');
+        roomElement.classList.add('userItem');
+        roomElement.innerHTML = `
             <strong>방 제목:</strong> ${room.roomTitle} <br/>
             <strong>방 ID:</strong> ${room.roomId} <br/>
-            <strong>인원:</strong> ${room.members ? room.members.length : 0} / ${room.maxPeople} <br/>
+            <strong>인원:</strong> ${room.members ? room.members.length : 0} / ${room.maxPlayer} <br/>
             <strong>상태:</strong> ${room.status} <br/>
             <button onclick="joinRoom(${room.roomId})">입장</button>`;
-                roomListDiv.appendChild(roomElement);
-              });
-            })
-            .catch(error => { console.error("방 목록 불러오기 실패:", error); alert("방 목록 불러오기 오류."); });
+        roomListDiv.appendChild(roomElement);
+      });
+    })
+    .catch(error => {
+      console.error("방 목록 불러오기 실패:", error);
+      alert("방 목록 불러오기 오류.");
+    });
   }
 
   function joinRoom(roomId) {
@@ -199,6 +323,7 @@
     connect();
   }
 
+  // ===== WebSocket 연결 및 게임/퀴즈/채팅 관련 =====
   function connect() {
     const socket = new SockJS('/ws/firechat');
     stompClient = Stomp.over(socket);
@@ -206,22 +331,32 @@
       console.log('✅ WebSocket Connected:', frame);
       const roomId = document.getElementById('roomId').value;
       currentUserId = document.getElementById('userId').value || 'Anonymous';
-      console.log(`🟢 구독 요청: /topic/room/${roomId}`);
+      console.log(`🟢 Subscribing to topics for room ${roomId}`);
 
+      // 채팅 구독
       stompClient.subscribe(`/topic/chat/${roomId}`, function (msg) {
         const chatMessage = JSON.parse(msg.body);
         appendLog('chatLog', `${chatMessage.sender}: ${chatMessage.content}`);
       });
 
+      // 방 관련 이벤트 구독 (강퇴, 준비, 정보 등)
       stompClient.subscribe(`/topic/room/${roomId}`, function (message) {
         const eventData = JSON.parse(message.body);
-        if (eventData.event === "KICK") appendLog('controlLog', `User ${eventData.targetUserId} was kicked from room ${eventData.roomId}`);
-        else if (eventData.event === "READY") appendLog('controlLog', `User ${eventData.userId} is ready!`);
-        else if (eventData.event === "LEAVE") appendLog('controlLog', `User ${eventData.userId} left the room`);
-        else if (eventData.event === "DELETE") appendLog('controlLog', `Room ${eventData.roomId} has been deleted`);
-        else if (eventData.event === "INFO") displayRoomInfo(eventData.roomData);
+        if (eventData.event === "KICK") {
+          appendLog('controlLog',
+              `User ${eventData.targetUserId} was kicked from room ${eventData.roomId}`);
+        } else if (eventData.event === "READY") {
+          appendLog('controlLog', `User ${eventData.userId} is ready!`);
+        } else if (eventData.event === "LEAVE") {
+          appendLog('controlLog', `User ${eventData.userId} left the room`);
+        } else if (eventData.event === "DELETE") {
+          appendLog('controlLog', `Room ${eventData.roomId} has been deleted`);
+        } else if (eventData.event === "INFO") {
+          displayRoomInfo(eventData.data);
+        }
       });
 
+      // 게임 관련 이벤트 구독 (퀴즈, 힌트, 정답, 사용자 상태, 게임 종료 등)
       stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
         const gameData = JSON.parse(message.body);
         console.log("Game Message Received:", gameData);
@@ -234,9 +369,8 @@
               document.getElementById('gameStatus').textContent = "게임이 시작되었습니다!";
               gameStarted = true;
               userScores = {};
-              // 첫 퀴즈 요청
               getQuiz();
-            } else if (Array.isArray(gameData.data)) { // 게임 종료 시 사용자 상태 수신
+            } else if (Array.isArray(gameData.data)) {
               displayGameResult(gameData.data);
               gameStarted = false;
             } else if (gameData.data !== "IN_PROGRESS") {
@@ -244,90 +378,199 @@
               gameStarted = false;
             }
             break;
-          case "QUIZ":
-            document.getElementById('quizQuestion').textContent = "Question: " + gameData.data.question;
+          case "MULTIPLE_QUIZ":
+            document.getElementById('quizQuestion').innerHTML = "Question: "
+                + gameData.data.question + '<br>';
+            gameData.data.options.forEach(option => {
+              document.getElementById('quizQuestion').innerHTML += option.optionNumber + '. '
+                  + option.optionText + '<br>';
+            })
             startQuizCountdown(20);
-            // 새 퀴즈 라운드 시작 시 quizRoundActive를 true로 설정
+            quizRoundActive = true;
+            break;
+          case "SHORT_QUIZ":
+            document.getElementById('quizQuestion').innerHTML = "Question: "
+                + gameData.data.question + '<br>';
+            startQuizCountdown(30);
+            quizRoundActive = true;
+            break;
+          case "ESSAY_QUIZ":
+            document.getElementById('quizQuestion').innerHTML = "Question: "
+                + gameData.data.question + '<br>';
+            startQuizCountdown(40);
             quizRoundActive = true;
             break;
           case "QUIZ_RESULT":
-            // gameData.data는 { memberId: result, ... } 형태
             let aggregatedResults = gameData.data;
-            let resultText = "Quiz Results:\n";
+            let resultText = "Quiz Results:";
             for (const [uid, status] of Object.entries(aggregatedResults)) {
-              resultText += `User ${uid}: ${status}\n`;
+              resultText += `User ${uid}: ${status}`;
               if (status === "정답입니다") {
                 userScores[uid] = (userScores[uid] || 0) + 1;
               }
             }
             document.getElementById('quizResult').textContent = resultText;
             updateUserStatusWithScores();
-            // 만약 모든 플레이어가 제출했거나(aggregatedResults 키 수가 currentPlayers와 같다면)
-            // 그리고 현재 라운드가 활성 상태이면 다음 퀴즈를 한 번만 요청
             if (quizRoundActive && Object.keys(aggregatedResults).length === currentPlayers) {
               quizRoundActive = false;
               setTimeout(() => getQuiz(), 2000);
             }
             break;
-          case "QUIZ_HINT":
-            document.getElementById('quizQuestion').textContent += ` HINT1: ${gameData.data.hint1} HINT2: ${gameData.data.hint2}`;
+            // case "QUIZ_HINT":
+            //   document.getElementById(
+            //       'quizQuestion').textContent += ` HINT1: ${gameData.data.hint1} HINT2: ${gameData.data.hint2}`;
+            //   break;
+
+          case "FIRST_HINT":
+            document.getElementById(
+                'quizQuestion').innerHTML += ` HINT1: ${gameData.data.hint} <br>`;
+            break;
+          case "SECOND_HINT":
+            document.getElementById(
+                'quizQuestion').innerHTML += ` HINT2: ${gameData.data.hint} <br>`;
             break;
           default:
             console.warn("Unknown Game Event:", gameData);
         }
       });
 
-      stompClient.onclose = function () { console.log("🔴 WebSocket 연결 끊어짐"); };
-      stompClient.send(`/app/room/${roomId}/join/${currentUserId}`, {}, {});
+      stompClient.onclose = function () {
+        console.log("🔴 WebSocket 연결 끊어짐");
+      };
+
+      // HTTP 요청: 방 입장
+      fetch(`/api/room/room/${roomId}/join/${currentUserId}`, {method: 'POST'})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Join error: ${response.status}`);
+        }
+        console.log("방에 성공적으로 입장했습니다.");
+      })
+      .catch(error => {
+        console.error("방 입장 오류:", error);
+      });
     });
   }
 
+  // ===== 채팅 전송 =====
   function sendChat() {
     const roomId = document.getElementById('roomId').value;
     const content = document.getElementById('chatMessage').value;
-    if (!roomId || !content || !currentUserId) return;
-    const msgObj = { sender: currentUserId, content: content, roomId: roomId };
+    if (!roomId || !content || !currentUserId) {
+      return;
+    }
+    const msgObj = {sender: currentUserId, content: content, roomId: roomId};
     stompClient.send(`/app/chat/${roomId}`, {}, JSON.stringify(msgObj));
     document.getElementById('chatMessage').value = '';
   }
 
-  function requestGameInfo() {
-    const roomId = document.getElementById('roomId').value;
-    if (!roomId) return;
-    stompClient.send(`/app/game/${roomId}/getInfo`, {}, {});
-    alert("게임 정보 요청이 전송되었습니다.");
-  }
-
-  function requestGameHint() {
-    const roomId = document.getElementById('roomId').value;
-    if (!roomId) return;
-    stompClient.send(`/app/game/${roomId}/hint`, {}, {});
-    alert("게임 힌트 요청이 전송되었습니다.");
-  }
-
+  // ===== 게임/퀴즈 관련 기능 =====
   function getQuiz() {
     const roomId = document.getElementById('roomId').value;
-    if (!roomId || !gameStarted) return;
+    console.log(roomId + " " + gameStarted)
+    if (!roomId || !gameStarted) {
+      return;
+    }
     stompClient.send(`/app/game/${roomId}/getQuiz`, {}, {});
   }
 
   function requestQuizHint() {
     const roomId = document.getElementById('roomId').value;
-    if (!roomId) return;
+    if (!roomId) {
+      return;
+    }
     stompClient.send(`/app/game/${roomId}/quizHint`, {}, {});
   }
 
   function submitQuizAnswer() {
     const roomId = document.getElementById('roomId').value;
     const answer = document.getElementById('quizAnswer').value;
-    if (!roomId || !answer || !currentUserId) return;
-    const payload = { userAnswer: answer, memberId: currentUserId };
+    if (!roomId || !answer || !currentUserId) {
+      return;
+    }
+    const payload = {userAnswer: answer, memberId: currentUserId};
     stompClient.send(`/app/game/${roomId}/checkAnswer`, {}, JSON.stringify(payload));
     document.getElementById('quizAnswer').value = '';
     clearInterval(quizTimerInterval);
     document.getElementById('quizTimer').textContent = "";
   }
 
+  // ===== HTTP 요청 (방 정보, 강퇴, 준비, 게임 시작) =====
+  function requestRoomInfo() {
+    const roomId = document.getElementById('roomId').value;
+    if (!roomId) {
+      alert("Room ID를 입력하세요!");
+      return;
+    }
+    fetch(`/api/room/room/${roomId}/info`, {method: 'POST'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Room info error: ${response.status}`);
+      }
+      alert("방 정보 요청이 전송되었습니다. (업데이트는 구독으로 수신)");
+    })
+    .catch(error => {
+      console.error("방 정보 요청 오류:", error);
+    });
+  }
+
+  function kickUser() {
+    const roomId = document.getElementById('roomId').value;
+    const targetUserId = document.getElementById('kickUserId').value;
+    if (!roomId || !targetUserId) {
+      alert("Room ID와 Kick 대상 User ID가 필요합니다.");
+      return;
+    }
+    // 현재 사용자가 방장으로 가정하여 currentUserId를 hostId로 사용
+    fetch(`/api/room/room/${roomId}/kick/${currentUserId}/${targetUserId}`, {method: 'POST'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Kick error: ${response.status}`);
+      }
+      alert(`User ${targetUserId} has been kicked.`);
+    })
+    .catch(error => {
+      console.error("강퇴 요청 오류:", error);
+    });
+  }
+
+  function setReady() {
+    const roomId = document.getElementById('roomId').value;
+    if (!roomId || !currentUserId) {
+      return;
+    }
+    fetch(`/api/room/room/${roomId}/ready/${currentUserId}`, {method: 'POST'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Ready error: ${response.status}`);
+      }
+      alert("준비 완료 처리되었습니다.");
+    })
+    .catch(error => {
+      console.error("준비 요청 오류:", error);
+    });
+  }
+
+  function startGame() {
+    const roomId = document.getElementById('roomId').value;
+    if (!roomId || !currentUserId) {
+      alert("Room ID와 User ID를 입력하세요!");
+      return;
+    }
+    fetch(`/api/room/start/${roomId}/${currentUserId}`, {method: 'PUT'})
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Start game error: ${response.status}`);
+      }
+      alert("게임 시작 요청이 전송되었습니다!");
+      gameStarted = true;
+    })
+    .catch(error => {
+      console.error("게임 시작 오류:", error);
+    });
+  }
+
+  // ===== 유틸리티 함수 =====
   function appendLog(elementId, message) {
     const logDiv = document.getElementById(elementId);
     const newLine = document.createElement('div');
@@ -336,44 +579,22 @@
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 
-  function requestRoomInfo() {
-    const roomId = document.getElementById('roomId').value;
-    if (!roomId) { alert("Room ID를 입력하세요!"); return; }
-    stompClient.send(`/app/room/${roomId}/info`, {}, {});
-  }
-
   function displayRoomInfo(roomData) {
     const infoBox = document.getElementById('roomInfo');
-    if (!roomData) { infoBox.innerHTML = "<strong>방 정보를 불러올 수 없습니다.</strong>"; return; }
+    if (!roomData) {
+      infoBox.innerHTML = "<strong>방 정보를 불러올 수 없습니다.</strong>";
+      return;
+    }
     let membersHTML = roomData.members && roomData.members.length > 0
-            ? roomData.members.map(m => `<div> - User: ${m.memberId}, State: ${m.status}</div>`).join('')
-            : "<div>(No members found)</div>";
+        ? roomData.members.map(m => `<div> - User: ${m.memberId}, State: ${m.status}</div>`).join(
+            '')
+        : "<div>(No members found)</div>";
     infoBox.innerHTML = `
       <div><strong>Room ID:</strong> ${roomData.roomId}</div>
       <div><strong>Max People:</strong> ${roomData.maxPeople}</div>
       <div><strong>Status:</strong> ${roomData.status}</div>
       <div><strong>Host:</strong> ${roomData.host ? roomData.host.memberId : 'None'}</div>
       <div><strong>Members:</strong> ${membersHTML}</div>`;
-  }
-
-  function kickUser() {
-    const roomId = document.getElementById('roomId').value;
-    const targetUserId = document.getElementById('kickUserId').value;
-    if (!roomId || !targetUserId) { alert("Room ID와 Kick 대상 User ID가 필요합니다."); return; }
-    stompClient.send(`/app/room/${roomId}/kick/${targetUserId}`, {}, {});
-  }
-
-  function setReady() {
-    const roomId = document.getElementById('roomId').value;
-    if (!roomId || !currentUserId) return;
-    stompClient.send(`/app/room/${roomId}/ready/${currentUserId}`, {}, {});
-  }
-
-  function startGame() {
-    const roomId = document.getElementById('roomId').value;
-    if (!roomId || !currentUserId) { alert("Room ID와 User ID를 입력하세요!"); return; }
-    stompClient.send(`/app/game/${roomId}/start/${currentUserId}`, {}, {});
-    alert("게임 시작 요청이 전송되었습니다!");
   }
 
   function displayUserStatus(userStatusList) {
@@ -384,7 +605,7 @@
     const userStatusBox = document.getElementById('userStatus');
     let statusHTML = "<h3>🔥 Current Player Status</h3>";
     if (userStatusList && userStatusList.length > 0) {
-      currentPlayers = userStatusList.length; // 현재 플레이어 수 업데이트
+      currentPlayers = userStatusList.length;
       userStatusList.forEach(user => {
         const score = userScores[user.memberId] || 0;
         statusHTML += `<div>🔹 User ID: ${user.memberId}, Life: ${user.life}, Score: ${score}</div>`;
@@ -430,14 +651,15 @@
   function startQuizCountdown(duration) {
     quizCountdown = duration;
     updateQuizTimerDisplay();
-    if (quizTimerInterval) clearInterval(quizTimerInterval);
+    if (quizTimerInterval) {
+      clearInterval(quizTimerInterval);
+    }
     quizTimerInterval = setInterval(function () {
       quizCountdown--;
       updateQuizTimerDisplay();
       if (quizCountdown <= 0) {
         clearInterval(quizTimerInterval);
         appendLog('quizResult', "Time's up!");
-        // 타이머 종료 시, 만약 현재 라운드가 활성 상태라면 한 번만 다음 퀴즈 요청
         if (quizRoundActive) {
           quizRoundActive = false;
           setTimeout(() => getQuiz(), 2000);

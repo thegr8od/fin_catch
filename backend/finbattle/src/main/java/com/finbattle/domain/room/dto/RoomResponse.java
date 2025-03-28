@@ -1,6 +1,7 @@
 package com.finbattle.domain.room.dto;
 
 import com.finbattle.domain.room.model.Room;
+import com.finbattle.global.common.model.enums.SubjectType;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -11,7 +12,7 @@ public class RoomResponse {
     private String roomTitle;
     private RoomStatus status;
     private RoomType roomType;
-    private QuizType quizType;
+    private SubjectType subjectType;
     private int maxPlayer;
     private Long memberId;
     private LocalDateTime createdAt;
@@ -23,7 +24,7 @@ public class RoomResponse {
         response.roomTitle = room.getRoomTitle();
         response.status = room.getStatus();
         response.roomType = room.getRoomType();
-        response.quizType = room.getQuizType();
+        response.subjectType = room.getSubjectType();
         response.maxPlayer = room.getMaxPlayer();
         response.memberId =
             room.getHostMember() != null ? room.getHostMember().getMemberId() : null;
