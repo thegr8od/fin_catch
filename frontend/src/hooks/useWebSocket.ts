@@ -8,7 +8,7 @@ import { createStompClient, sendMessage, subscribeToTopic } from "../service/sto
  * 백엔드와 협의 후 변경될 수 있음
  */
 export const SOCKET_TOPICS = {
-  ROOM: (roomId: string) => `/topic/room/${roomId}`,
+  ROOM: (roomId: string) => `/room/room/${roomId}`,
   CHAT: (roomId: string) => `/topic/chat/${roomId}`,
   GAME: (roomId: string) => `/topic/game/${roomId}`,
 };
