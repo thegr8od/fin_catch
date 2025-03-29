@@ -38,7 +38,7 @@ const RoomPreparePage: React.FC = () => {
   // 상태 관리
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null); // 방 정보
   const [chatInput, setChatInput] = useState(""); // 채팅 입력
-  const [chatMessages, setChatMessages] = useState<{ sender: string; content: string; roomId: string }[]>([]); // 채팅 메시지
+  const [chatMessages, setChatMessages] = useState<{ sender: string; message: string; timestamp: Date }[]>([]);
   const [showAlert, setShowAlert] = useState(false); // 알림 표시 여부
   const [alertMessage, setAlertMessage] = useState(""); // 알림 메시지
 
@@ -77,12 +77,6 @@ const RoomPreparePage: React.FC = () => {
           navigate("/main");
           break;
       }
-    });
-
-    // 채팅 구독
-    subscribe(topics.CHAT(roomId), (message) => {
-      const chatMessage = JSON.parse(message.body);
-      setChatMessages((prev) => [...prev, chatMessage]);
     });
 
     // 초기 방 정보 요청
@@ -155,17 +149,17 @@ const RoomPreparePage: React.FC = () => {
   /**
    * 채팅 메시지 전송 처리
    */
-  const handleSendChat = (e: React.FormEvent) => {
+  const sendChatMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || !roomId) return;
+    if (!chatInput.trim()) return;
 
-    const userId = localStorage.getItem("userId");
-    send(topics.CHAT(roomId), {
-      sender: userId,
-      content: chatInput,
-      roomId: roomId,
-    });
+    const newMessage = {
+      sender: "현재 사용자",
+      message: chatInput,
+      timestamp: new Date(),
+    };
 
+    setChatMessages([...chatMessages, newMessage]);
     setChatInput("");
   };
 
@@ -296,24 +290,26 @@ const RoomPreparePage: React.FC = () => {
                 ) : (
                   chatMessages.map((msg, index) => (
                     <div key={index} className="mb-2">
-                      <span className="font-bold">{msg.sender}:</span> {msg.content}
+                      <span className="font-bold">{msg.sender}:</span> {msg.message}
                     </div>
                   ))
                 )}
               </div>
 
-              <form onSubmit={handleSendChat} className="flex">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-1 min-w-0 p-2 mr-2 border border-gray-300 rounded-l"
-                  placeholder="메시지를 입력하세요..."
-                />
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 transition-colors whitespace-nowrap">
-                  전송
-                </button>
-              </form>
+              <div className="w-full">
+                <form onSubmit={sendChatMessage} className="flex">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    className="flex-1 min-w-0 p-2 mr-2 border border-gray-300 rounded-l"
+                    placeholder="메시지를 입력하세요..."
+                  />
+                  <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 transition-colors whitespace-nowrap">
+                    전송
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
