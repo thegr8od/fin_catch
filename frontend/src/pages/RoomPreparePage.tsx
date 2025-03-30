@@ -1,30 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Background from "../components/layout/Background";
 import mainBg from "../assets/main.gif";
 import { CustomAlert } from "../components/layout/CustomAlert";
-import { useRoom } from "../hooks/useRoom";
-import { useWebSocket } from "../hooks/useWebSocket";
+import { RoomManager } from "../manager/RoomManager";
+import { RoomInfo, UserStatus } from "../types/Room/Room";
 
 /**
- * 방 참가자 정보를 담는 인터페이스
+ * 채팅 메시지 인터페이스
  */
-interface RoomMember {
-  memberId: number; // 사용자 ID
-  nickname: string; // 닉네임
-  mainCat: string; // 대표 캐릭터
-  status: string; // 준비 상태
-}
-
-/**
- * 방 정보를 담는 인터페이스
- */
-interface RoomInfo {
-  roomId: number; // 방 ID
-  maxPeople: number; // 최대 인원
-  status: "OPEN" | "IN_PROGRESS" | "CLOSED"; // 방 상태
-  host: RoomMember; // 방장 정보
-  members: RoomMember[]; // 참가자 목록
+interface ChatMessage {
+  sender: string;
+  message: string;
+  timestamp: Date;
 }
 
 /**
@@ -34,145 +22,149 @@ interface RoomInfo {
 const RoomPreparePage: React.FC = () => {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
+  const currentUserId = Number(localStorage.getItem("userId"));
 
   // 상태 관리
-  const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null); // 방 정보
-  const [chatInput, setChatInput] = useState(""); // 채팅 입력
-  const [chatMessages, setChatMessages] = useState<{ sender: string; message: string; timestamp: Date }[]>([]);
-  const [showAlert, setShowAlert] = useState(false); // 알림 표시 여부
-  const [alertMessage, setAlertMessage] = useState(""); // 알림 메시지
+  const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // API 및 WebSocket 훅
-  const { getRoomInfo, setReady, setUnready, leaveRoom, kickUser, startRoom } = useRoom();
-  const { subscribe, unsubscribe, send, connected, topics, messageTypes } = useWebSocket();
+  // RoomManager 인스턴스
+  const roomManager = RoomManager.getInstance();
 
-  /**
-   * WebSocket 연결 및 이벤트 구독 설정
-   */
+  // 방 정보 가져오기
+  const fetchRoomInfo = useCallback(async () => {
+    if (!roomId) return;
+    try {
+      setIsLoading(true);
+      const info = roomManager.getRoomInfo();
+      if (info) {
+        setRoomInfo(info);
+      } else {
+        throw new Error("방 정보를 불러올 수 없습니다.");
+      }
+    } catch (error) {
+      console.error("방 정보 조회 실패:", error);
+      showCustomAlert("방 정보를 불러올 수 없습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [roomId, roomManager]);
+
+  // 이벤트 구독 설정
   useEffect(() => {
-    if (!connected || !roomId) return;
+    if (!roomId) return;
 
-    // 방 정보 구독
-    subscribe(topics.ROOM(roomId), (message) => {
-      const data = JSON.parse(message.body);
-      switch (data.event) {
-        case messageTypes.ROOM.INFO:
-          setRoomInfo(data.data);
-          break;
-        case messageTypes.ROOM.READY:
-        case messageTypes.ROOM.UNREADY:
-          getRoomInfo(Number(roomId));
-          break;
-        case messageTypes.ROOM.LEAVE:
-          getRoomInfo(Number(roomId));
-          break;
-        case messageTypes.ROOM.KICK:
-          if (data.data === Number(localStorage.getItem("userId"))) {
-            showCustomAlert("방에서 강퇴되었습니다.");
-            navigate("/main");
-          }
-          break;
-        case messageTypes.ROOM.DELETE:
-          showCustomAlert("방이 삭제되었습니다.");
-          navigate("/main");
-          break;
+    // 방 정보 업데이트 이벤트 구독
+    roomManager.subscribe("roomInfoUpdated", (info: RoomInfo) => {
+      setRoomInfo(info);
+    });
+
+    // 사용자 강퇴 이벤트 구독
+    roomManager.subscribe("userKicked", (userId: number) => {
+      if (userId === currentUserId) {
+        showCustomAlert("방에서 강퇴되었습니다.");
+        navigate("/main");
       }
     });
 
+    // 방 삭제 이벤트 구독
+    roomManager.subscribe("roomDeleted", () => {
+      showCustomAlert("방이 삭제되었습니다.");
+      navigate("/main");
+    });
+
     // 초기 방 정보 요청
-    getRoomInfo(Number(roomId));
+    fetchRoomInfo();
 
-    // 언마운트 시 구독 해제
     return () => {
-      unsubscribe(topics.ROOM(roomId));
-      unsubscribe(topics.CHAT(roomId));
+      roomManager.removeAllListeners();
     };
-  }, [connected, roomId]);
+  }, [roomId, currentUserId, navigate, fetchRoomInfo]);
 
-  /**
-   * 준비 상태 토글 처리
-   */
-  const handleReadyToggle = (memberId: number, currentStatus: string) => {
-    if (!roomId) return;
+  // 준비 상태 토글
+  const handleReadyToggle = useCallback(
+    async (memberId: number, currentStatus: string) => {
+      if (!roomId) return;
 
-    if (currentStatus === "READY") {
-      setUnready(Number(roomId), memberId);
-    } else {
-      setReady(Number(roomId), memberId);
-    }
-  };
+      try {
+        await roomManager.toggleReady(Number(roomId), memberId);
+      } catch (error) {
+        console.error("준비 상태 변경 실패:", error);
+        showCustomAlert("준비 상태를 변경할 수 없습니다.");
+      }
+    },
+    [roomId, roomManager]
+  );
 
-  /**
-   * 게임 시작 처리
-   */
-  const handleGameStart = async () => {
+  // 게임 시작
+  const handleGameStart = useCallback(async () => {
     if (!roomId || !roomInfo) return;
 
     try {
-      await startRoom(Number(roomId), roomInfo.host.memberId);
+      await roomManager.startGame(Number(roomId), roomInfo.host.memberId);
     } catch (error) {
-      console.error("게임 시작 중 오류 발생:", error);
+      console.error("게임 시작 실패:", error);
       showCustomAlert("게임을 시작할 수 없습니다.");
     }
-  };
+  }, [roomId, roomInfo, roomManager]);
 
-  /**
-   * 사용자 강퇴 처리
-   */
-  const handleKick = async (targetUserId: number) => {
-    if (!roomId || !roomInfo) return;
+  // 사용자 강퇴
+  const handleKick = useCallback(
+    async (targetUserId: number) => {
+      if (!roomId || !roomInfo) return;
 
-    try {
-      await kickUser(Number(roomId), roomInfo.host.memberId, targetUserId);
-    } catch (error) {
-      console.error("강퇴 중 오류 발생:", error);
-      showCustomAlert("강퇴할 수 없습니다.");
-    }
-  };
+      try {
+        await roomManager.kickUser(Number(roomId), roomInfo.host.memberId, targetUserId);
+      } catch (error) {
+        console.error("강퇴 실패:", error);
+        showCustomAlert("강퇴할 수 없습니다.");
+      }
+    },
+    [roomId, roomInfo, roomManager]
+  );
 
-  /**
-   * 방 나가기 처리
-   */
-  const handleLeave = async () => {
+  // 방 나가기
+  const handleLeave = useCallback(async () => {
     if (!roomId) return;
 
     try {
-      const userId = Number(localStorage.getItem("userId"));
-      await leaveRoom(Number(roomId), userId);
+      await roomManager.leaveRoom(Number(roomId), currentUserId);
       navigate("/main");
     } catch (error) {
-      console.error("방 나가기 중 오류 발생:", error);
+      console.error("방 나가기 실패:", error);
       showCustomAlert("방을 나갈 수 없습니다.");
     }
-  };
+  }, [roomId, currentUserId, roomManager, navigate]);
 
-  /**
-   * 채팅 메시지 전송 처리
-   */
-  const sendChatMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  // 채팅 메시지 전송
+  const sendChatMessage = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!chatInput.trim()) return;
 
-    const newMessage = {
-      sender: "현재 사용자",
-      message: chatInput,
-      timestamp: new Date(),
-    };
+      const newMessage = {
+        sender: "현재 사용자",
+        message: chatInput,
+        timestamp: new Date(),
+      };
 
-    setChatMessages([...chatMessages, newMessage]);
-    setChatInput("");
-  };
+      setChatMessages((prev) => [...prev, newMessage]);
+      setChatInput("");
+    },
+    [chatInput]
+  );
 
-  /**
-   * 알림 메시지 표시
-   */
-  const showCustomAlert = (message: string) => {
+  // 알림 표시
+  const showCustomAlert = useCallback((message: string) => {
     setAlertMessage(message);
     setShowAlert(true);
-  };
+  }, []);
 
-  // 로딩 중 표시
-  if (!roomInfo) {
+  if (isLoading) {
     return (
       <Background backgroundImage={mainBg}>
         <div className="w-full h-full flex items-center justify-center">
@@ -182,11 +174,19 @@ const RoomPreparePage: React.FC = () => {
     );
   }
 
-  // 현재 사용자 정보
-  const currentUserId = Number(localStorage.getItem("userId"));
-  const isHost = roomInfo.host.memberId === currentUserId;
+  if (!roomInfo) {
+    return (
+      <Background backgroundImage={mainBg}>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-white text-2xl">방 정보를 불러올 수 없습니다.</div>
+        </div>
+      </Background>
+    );
+  }
 
-  // JSX 렌더링
+  const isHost = roomInfo.host.memberId === currentUserId;
+  const currentMember = roomInfo.members.find((m) => m.memberId === currentUserId);
+
   return (
     <Background backgroundImage={mainBg}>
       <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
@@ -255,12 +255,12 @@ const RoomPreparePage: React.FC = () => {
               <div className="flex justify-between mt-6">
                 {currentUserId !== roomInfo.host.memberId && (
                   <button
-                    onClick={() => handleReadyToggle(currentUserId, roomInfo.members.find((m) => m.memberId === currentUserId)?.status || "")}
+                    onClick={() => handleReadyToggle(currentUserId, currentMember?.status || "")}
                     className={`px-6 py-3 rounded-lg font-bold ${
-                      roomInfo.members.find((m) => m.memberId === currentUserId)?.status === "READY" ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"
+                      currentMember?.status === "READY" ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"
                     } transition-colors`}
                   >
-                    {roomInfo.members.find((m) => m.memberId === currentUserId)?.status === "READY" ? "준비 취소" : "준비 완료"}
+                    {currentMember?.status === "READY" ? "준비 취소" : "준비 완료"}
                   </button>
                 )}
 
