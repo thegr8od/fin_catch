@@ -1,54 +1,8 @@
 import { Client, IMessage } from "@stomp/stompjs";
 import { useCallback, useEffect, useState } from "react";
 import { createStompClient, sendMessage, subscribeToTopic } from "../service/stompService";
-import { RoomInfo, RoomMember } from "../types/Room/Room";
-
-/**
- * WebSocket 토픽 정의
- * 각 도메인별(ROOM, CHAT, GAME)로 토픽을 구분하고 roomId를 파라미터로 받아 동적 토픽 생성
- * 백엔드와 협의 후 변경될 수 있음
- */
-export const SOCKET_TOPICS = {
-  ROOM: (roomId: string) => `/room/room/${roomId}`,
-  CHAT: (roomId: string) => `/topic/chat/${roomId}`,
-  GAME: (roomId: string) => `/topic/game/${roomId}`,
-};
-
-/**
- * WebSocket 메시지 타입 정의
- * 각 도메인별 가능한 액션 타입을 상수로 정의
- * 백엔드와 협의 후 변경될 수 있음
- */
-export const MESSAGE_TYPES = {
-  ROOM: {
-    CREATE: "CREATE", // 방 생성
-    READY: "READY", // 준비 완료
-    COUNT: "COUNT", // 인원 수 업데이트
-    JOIN_FAIL: "JOIN_FAIL", // 입장 실패
-    NOT_READY: "NOT_READY", // 준비 안됨
-    DELETE: "DELETE", // 방 삭제
-    LEAVE: "LEAVE", // 퇴장
-    KICK_FAIL: "KICK_FAIL", // 강퇴 실패
-    KICK: "KICK", // 강퇴
-    INFO: "INFO", // 방 정보
-    START: "START", // 게임 시작
-    UNREADY: "UNREADY", // 준비 해제
-    UPDATE: "UPDATE", // 방 정보 업데이트
-  },
-  GAME: {
-    STATUS: "STATUS", // 게임 상태
-    PROBLEM: "PROBLEM", // 문제
-    ANSWER: "ANSWER", // 답변
-    RESULT: "RESULT", // 결과
-    END: "END", // 종료
-  },
-  CHAT: {
-    MESSAGE: "MESSAGE", // 채팅 메시지
-    SEND: "SEND", // 메시지 전송
-    RECEIVE: "RECEIVE", // 메시지 수신
-  },
-} as const;
-
+import { MESSAGE_TYPES } from "../types/WebSocket/MessageTypes";
+import { SOCKET_TOPICS } from "../types/WebSocket/Topics";
 
 /**
  * WebSocket 연결 및 관리를 위한 React 훅

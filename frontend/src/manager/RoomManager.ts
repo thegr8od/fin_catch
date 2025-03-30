@@ -4,7 +4,7 @@ import { RoomInfo, UserStatus, RoomMember } from "../types/Room/Room";
 import { useRoom } from "../hooks/useRoom";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { RoomMessage } from "../types/Messages/RoomMessage";
-import { MESSAGE_TYPES } from "../hooks/useWebSocket";
+import { MESSAGE_TYPES } from "../types/WebSocket/MessageTypes";
 
 /**
  * 방 관리 클래스
