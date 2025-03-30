@@ -1,4 +1,4 @@
-import { Room } from "../types/Room/Room";
+import { Room, RoomInfo } from "../types/Room/Room";
 import { useApi } from "./useApi";
 
 /**
@@ -27,7 +27,7 @@ export const useRoom = () => {
 
   // 방 상태 관리 관련 API 엔드포인트
   const startRoomApi = useApi<void>("/api/room/start", "PUT");
-  const getRoomInfoApi = useApi<void>("/api/room/room", "POST");
+  const getRoomInfoApi = useApi<RoomInfo>("/api/room/room", "POST");
   const joinRoomApi = useApi<void>("/api/room/room/join", "POST");
   const getRoomUserCountApi = useApi<void>("/api/room/room/count", "POST");
   const leaveRoomApi = useApi<void>("/api/room/room/leave", "POST");

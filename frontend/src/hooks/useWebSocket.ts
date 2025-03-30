@@ -1,6 +1,7 @@
 import { Client, IMessage } from "@stomp/stompjs";
 import { useCallback, useEffect, useState } from "react";
 import { createStompClient, sendMessage, subscribeToTopic } from "../service/stompService";
+import { RoomInfo, RoomMember } from "../types/Room/Room";
 
 /**
  * WebSocket 토픽 정의
@@ -32,6 +33,7 @@ export const MESSAGE_TYPES = {
     INFO: "INFO", // 방 정보
     START: "START", // 게임 시작
     UNREADY: "UNREADY", // 준비 해제
+    UPDATE: "UPDATE", // 방 정보 업데이트
   },
   GAME: {
     STATUS: "STATUS", // 게임 상태
@@ -42,8 +44,11 @@ export const MESSAGE_TYPES = {
   },
   CHAT: {
     MESSAGE: "MESSAGE", // 채팅 메시지
+    SEND: "SEND", // 메시지 전송
+    RECEIVE: "RECEIVE", // 메시지 수신
   },
-};
+} as const;
+
 
 /**
  * WebSocket 연결 및 관리를 위한 React 훅
