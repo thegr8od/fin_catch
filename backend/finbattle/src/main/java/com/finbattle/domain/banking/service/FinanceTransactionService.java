@@ -35,8 +35,9 @@ public class FinanceTransactionService {
 
             AllTransactionApiRequestDto requestbody = toApiRequest(dto, header);
             log.info("Request Data: {}", requestbody.toString());
-            return financeApiClient.post("edu/demandDeposit/" + apiPath,
+            result = financeApiClient.post("edu/demandDeposit/" + apiPath,
                 requestbody, LoadAllTransactionResponseDto.class).getREC();
+            transactionRedisRepository.save(dto.getAccountNo(), result);
         } else {
             cacheMetrics.incrementHit();
         }
