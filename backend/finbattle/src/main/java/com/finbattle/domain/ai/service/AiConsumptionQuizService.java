@@ -152,4 +152,18 @@ public class AiConsumptionQuizService {
             return new AiConsumptionQuizDto(aiQuiz.getAiQuizId(), multipleQuiz.getQuestion(), optionDtos);
         }).collect(Collectors.toList());
     }
+
+    public List<AiOptionDto> getOptionsByQuizId(Long quizId) {
+        AiQuiz quiz = aiQuizRepository.findById(quizId)
+                .orElseThrow(() -> new BusinessException(BaseResponseStatus.QUIZ_NOT_FOUND));
+
+        AiMultipleChoiceQuiz multipleQuiz = multipleChoiceQuizRepository.findByAiQuiz(quiz)
+                .orElseThrow(() -> new BusinessException(BaseResponseStatus.QUIZ_NOT_FOUND));
+
+        List<AiOption> options = aiOptionRepository.findByMultipleChoiceQuiz(multipleQuiz);
+
+        return options.stream()
+                .map(opt -> new AiOptionDto(opt.getAiOptionId(), opt.getOptionText()))
+                .collect(Collectors.toList());
+    }
 }
