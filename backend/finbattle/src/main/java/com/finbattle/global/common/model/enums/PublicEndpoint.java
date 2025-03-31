@@ -22,7 +22,8 @@ public enum PublicEndpoint {
     ACTUATOR_HEALTH("/actuator/health"),
     ACTUATOR_PROMETHEUS("/actuator/prometheus"),
     GRAFANA("/grafana**"),
-    ACTUATOR("/actuator/**");
+    ACTUATOR("/actuator/**"),
+    WEBSOCKET("/ws/firechat/**");
 
     private final String url;
 
