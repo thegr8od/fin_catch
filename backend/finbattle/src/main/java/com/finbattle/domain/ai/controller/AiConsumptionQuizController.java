@@ -56,10 +56,4 @@ public class AiConsumptionQuizController {
         return ResponseEntity.ok(new BaseResponse<>(wrongNotes));
     }
 
-    @Operation(summary = "특정 AI퀴즈의 보기 목록 조회", description = "퀴즈 ID를 기반으로 객관식 보기(option)를 반환합니다.")
-    @GetMapping("/{quizId}/options")
-    public ResponseEntity<BaseResponse<List<AiOptionDto>>> getOptionsByQuizId(@PathVariable Long quizId) {
-        List<AiOptionDto> options = aiConsumptionQuizService.getOptionsByQuizId(quizId);
-        return ResponseEntity.ok(new BaseResponse<>(options));
-    }
 }
