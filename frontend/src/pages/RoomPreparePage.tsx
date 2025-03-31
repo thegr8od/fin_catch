@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Background from "../components/layout/Background";
 import mainBg from "../assets/main.gif";
 import { CustomAlert } from "../components/layout/CustomAlert";
 import { RoomManager } from "../manager/RoomManager";
-import { RoomInfo, UserStatus } from "../types/Room/Room";
+import { RoomInfo } from "../types/Room/Room";
+import { RoomPrepareErrorBoundary } from "../components/error/RoomPrepareErrorBoundary";
+import { useRoom } from "../hooks/useRoom";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 /**
  * 채팅 메시지 인터페이스
@@ -15,6 +18,13 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface ApiResponse<T> {
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  result: T;
+}
+
 /**
  * 방 준비 페이지 컴포넌트
  * 게임 시작 전 대기실 기능을 제공
@@ -22,123 +32,193 @@ interface ChatMessage {
 const RoomPreparePage: React.FC = () => {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
-  const currentUserId = Number(localStorage.getItem("userId"));
+  const roomApi = useRoom();
+  const webSocket = useWebSocket();
+
+  // RoomManager 상태 추가
+  const [roomManager, setRoomManager] = useState<RoomManager | null>(null);
 
   // 상태 관리
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
 
-  // RoomManager 인스턴스
-  const roomManager = RoomManager.getInstance();
+  // 알림 표시
+  const showCustomAlert = useCallback((message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  }, []);
 
-  // 방 정보 가져오기
-  const fetchRoomInfo = useCallback(async () => {
-    if (!roomId) return;
-    try {
-      setIsLoading(true);
-      const info = roomManager.getRoomInfo();
-      if (info) {
-        setRoomInfo(info);
-      } else {
-        throw new Error("방 정보를 불러올 수 없습니다.");
-      }
-    } catch (error) {
-      console.error("방 정보 조회 실패:", error);
-      showCustomAlert("방 정보를 불러올 수 없습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [roomId, roomManager]);
-
-  // 이벤트 구독 설정
+  // RoomManager 초기화
   useEffect(() => {
-    if (!roomId) return;
+    let isSubscribed = true;
 
-    // 방 정보 업데이트 이벤트 구독
-    roomManager.subscribe("roomInfoUpdated", (info: RoomInfo) => {
+    const initializeManager = async () => {
+      try {
+        console.log("initializeManager 시작", { roomId });
+        const manager = await RoomManager.initialize(roomApi, webSocket);
+        console.log("RoomManager 초기화 완료");
+
+        const isCreator = sessionStorage.getItem("isCreator") === "true";
+        console.log("isCreator:", isCreator);
+
+        if (isCreator) {
+          console.log("방장이므로 WebSocket 연결만 시도");
+          await manager.connectToRoom(Number(roomId));
+        } else {
+          console.log("일반 사용자이므로 방 참가 시도");
+          await manager.joinRoom(Number(roomId));
+        }
+        console.log("방 참가/연결 완료");
+
+        if (!isSubscribed) {
+          console.log("컴포넌트가 언마운트됨");
+          return;
+        }
+
+        setRoomManager(manager);
+        console.log("RoomManager 상태 설정 완료");
+
+        if (!isSubscribed) return;
+        setIsLoading(false);
+      } catch (error) {
+        console.error("방 참가 중 오류 발생:", error);
+        if (isSubscribed) {
+          setError(error instanceof Error ? error.message : "방 연결에 실패했습니다.");
+          showCustomAlert("방 연결에 실패했습니다.");
+          setIsLoading(false);
+          navigate("/lobby");
+        }
+      }
+    };
+
+    console.log("useEffect 실행");
+    if (roomId) {
+      initializeManager();
+    }
+
+    return () => {
+      console.log("cleanup 함수 실행");
+      isSubscribed = false;
+      if (roomManager && roomId) {
+        console.log("이벤트 리스너 제거");
+        roomManager.removeAllListeners();
+      }
+    };
+  }, [roomId, roomApi, webSocket, navigate, showCustomAlert]);
+
+  // WebSocket 이벤트 핸들러 설정
+  useEffect(() => {
+    if (!roomId || !roomManager) {
+      console.log("이벤트 핸들러 설정 건너뜀 - roomId 또는 roomManager가 없음");
+      return;
+    }
+
+    console.log("=== 이벤트 핸들러 설정 시작 ===");
+    const handleRoomInfo = (info: RoomInfo) => {
+      console.log("방 정보 업데이트 이벤트 수신:", info);
       setRoomInfo(info);
-    });
+      console.log("방 정보 상태 업데이트 완료");
+    };
 
-    // 사용자 강퇴 이벤트 구독
-    roomManager.subscribe("userKicked", (userId: number) => {
-      if (userId === currentUserId) {
+    const handleUserKicked = (userId: number) => {
+      console.log("사용자 강퇴 이벤트 수신:", userId);
+      if (userId === roomInfo?.host.memberId) {
         showCustomAlert("방에서 강퇴되었습니다.");
         navigate("/main");
       }
-    });
+    };
 
-    // 방 삭제 이벤트 구독
-    roomManager.subscribe("roomDeleted", () => {
+    const handleRoomDeleted = () => {
+      console.log("방 삭제 이벤트 수신");
       showCustomAlert("방이 삭제되었습니다.");
       navigate("/main");
-    });
-
-    // 초기 방 정보 요청
-    fetchRoomInfo();
-
-    return () => {
-      roomManager.removeAllListeners();
     };
-  }, [roomId, currentUserId, navigate, fetchRoomInfo]);
+
+    const handleError = (error: Error) => {
+      console.log("에러 이벤트 수신:", error);
+      setError(error.message);
+      showCustomAlert(error.message);
+    };
+
+    // 초기 방 정보 설정
+    const initialRoomInfo = roomManager.getRoomInfo();
+    if (initialRoomInfo) {
+      console.log("초기 방 정보 설정:", initialRoomInfo);
+      setRoomInfo(initialRoomInfo);
+    }
+
+    // 이벤트 구독
+    console.log("이벤트 구독 시작");
+    roomManager.subscribe("roomInfoUpdated", handleRoomInfo);
+    roomManager.subscribe("userKicked", handleUserKicked);
+    roomManager.subscribe("roomDeleted", handleRoomDeleted);
+    roomManager.subscribe("error", handleError);
+    console.log("이벤트 구독 완료");
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => {
+      console.log("=== 이벤트 핸들러 정리 시작 ===");
+      console.log("모든 이벤트 리스너 제거");
+      roomManager.removeAllListeners();
+      console.log("=== 이벤트 핸들러 정리 완료 ===");
+    };
+  }, [roomId, roomManager, navigate, showCustomAlert]);
 
   // 준비 상태 토글
-  const handleReadyToggle = useCallback(
-    async (memberId: number, currentStatus: string) => {
-      if (!roomId) return;
-
-      try {
-        await roomManager.toggleReady(Number(roomId), memberId);
-      } catch (error) {
-        console.error("준비 상태 변경 실패:", error);
-        showCustomAlert("준비 상태를 변경할 수 없습니다.");
-      }
-    },
-    [roomId, roomManager]
-  );
+  // const handleReadyToggle = useCallback(
+  //   async (memberId: number, currentStatus: string) => {
+  //     if (!roomId || !roomManager) return;
+  //     try {
+  //       await roomManager.toggleReady(Number(roomId));
+  //     } catch (error) {
+  //       console.error("준비 상태 변경 실패:", error);
+  //       showCustomAlert("준비 상태를 변경할 수 없습니다.");
+  //     }
+  //   },
+  //   [roomId, roomManager, showCustomAlert]
+  // );
 
   // 게임 시작
   const handleGameStart = useCallback(async () => {
-    if (!roomId || !roomInfo) return;
-
+    if (!roomId || !roomInfo || !roomManager) return;
     try {
-      await roomManager.startGame(Number(roomId), roomInfo.host.memberId);
+      await roomManager.startGame(Number(roomId), roomInfo.host.nickname);
     } catch (error) {
       console.error("게임 시작 실패:", error);
       showCustomAlert("게임을 시작할 수 없습니다.");
     }
-  }, [roomId, roomInfo, roomManager]);
+  }, [roomId, roomInfo, roomManager, showCustomAlert]);
 
   // 사용자 강퇴
-  const handleKick = useCallback(
-    async (targetUserId: number) => {
-      if (!roomId || !roomInfo) return;
-
-      try {
-        await roomManager.kickUser(Number(roomId), roomInfo.host.memberId, targetUserId);
-      } catch (error) {
-        console.error("강퇴 실패:", error);
-        showCustomAlert("강퇴할 수 없습니다.");
-      }
-    },
-    [roomId, roomInfo, roomManager]
-  );
+  // const handleKick = useCallback(
+  //   async (targetUserId: number) => {
+  //     if (!roomId || !roomInfo || !roomManager) return;
+  //     try {
+  //       await roomManager.kickUser(Number(roomId), roomInfo.host.nickname);
+  //     } catch (error) {
+  //       console.error("강퇴 실패:", error);
+  //       showCustomAlert("강퇴할 수 없습니다.");
+  //     }
+  //   },
+  //   [roomId, roomInfo, roomManager, showCustomAlert]
+  // );
 
   // 방 나가기
   const handleLeave = useCallback(async () => {
-    if (!roomId) return;
-
+    if (!roomId || !roomManager) return;
     try {
-      await roomManager.leaveRoom(Number(roomId), currentUserId);
+      await roomManager.leaveRoom(Number(roomId));
       navigate("/main");
     } catch (error) {
       console.error("방 나가기 실패:", error);
       showCustomAlert("방을 나갈 수 없습니다.");
     }
-  }, [roomId, currentUserId, roomManager, navigate]);
+  }, [roomId, roomManager, navigate, showCustomAlert]);
 
   // 채팅 메시지 전송
   const sendChatMessage = useCallback(
@@ -158,12 +238,23 @@ const RoomPreparePage: React.FC = () => {
     [chatInput]
   );
 
-  // 알림 표시
-  const showCustomAlert = useCallback((message: string) => {
-    setAlertMessage(message);
-    setShowAlert(true);
-  }, []);
+  const users = roomManager?.getUsers() || [];
+  const hostUser = users.find((u) => u.isHost);
+  const isHost = roomInfo?.host.nickname === hostUser?.nickname;
+  const currentMember = roomInfo?.members.find((m) => m.nickname === hostUser?.nickname);
 
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <Background backgroundImage={mainBg}>
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-white text-2xl">{error}</div>
+        </div>
+      </Background>
+    );
+  }
+
+  // 로딩 상태 표시
   if (isLoading) {
     return (
       <Background backgroundImage={mainBg}>
@@ -174,6 +265,7 @@ const RoomPreparePage: React.FC = () => {
     );
   }
 
+  // 방 정보가 없는 경우
   if (!roomInfo) {
     return (
       <Background backgroundImage={mainBg}>
@@ -183,9 +275,6 @@ const RoomPreparePage: React.FC = () => {
       </Background>
     );
   }
-
-  const isHost = roomInfo.host.memberId === currentUserId;
-  const currentMember = roomInfo.members.find((m) => m.memberId === currentUserId);
 
   return (
     <Background backgroundImage={mainBg}>
@@ -229,23 +318,23 @@ const RoomPreparePage: React.FC = () => {
                   </thead>
                   <tbody>
                     {roomInfo.members.map((member) => (
-                      <tr key={member.memberId} className="border-t border-gray-300">
+                      <tr key={member.nickname} className="border-t border-gray-300">
                         <td className="py-3 px-4">{member.nickname}</td>
                         <td className="py-3 px-4 text-center">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${member.status === "READY" ? "bg-green-200 text-green-800" : "bg-yellow-200 text-yellow-800"}`}>
                             {member.status === "READY" ? "준비 완료" : "대기 중"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center">{member.memberId === roomInfo.host.memberId ? "방장" : "참가자"}</td>
-                        {isHost && (
-                          <td className="py-3 px-4 text-center">
-                            {member.memberId !== currentUserId && (
-                              <button onClick={() => handleKick(member.memberId)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                강퇴
-                              </button>
-                            )}
-                          </td>
-                        )}
+                        <td className="py-3 px-4 text-center">{member.nickname === roomInfo.host.nickname ? "방장" : "참가자"}</td>
+                        {/* {isHost && (
+                          // <td className="py-3 px-4 text-center">
+                          //   {member.nickname !== roomInfo.host.nickname && (
+                          //     // <button onClick={() => handleKick(member.nickname)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                          //     //   강퇴
+                          //     // </button>
+                          //   )}
+                          // </td>
+                        )} */}
                       </tr>
                     ))}
                   </tbody>
@@ -253,23 +342,23 @@ const RoomPreparePage: React.FC = () => {
               </div>
 
               <div className="flex justify-between mt-6">
-                {currentUserId !== roomInfo.host.memberId && (
+                {/* {currentMember && (
                   <button
-                    onClick={() => handleReadyToggle(currentUserId, currentMember?.status || "")}
+                    onClick={() => handleReadyToggle(currentMember.nickname, currentMember.status)}
                     className={`px-6 py-3 rounded-lg font-bold ${
-                      currentMember?.status === "READY" ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"
+                      currentMember.status === "READY" ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"
                     } transition-colors`}
                   >
-                    {currentMember?.status === "READY" ? "준비 취소" : "준비 완료"}
+                    {currentMember.status === "READY" ? "준비 취소" : "준비 완료"}
                   </button>
-                )}
+                )} */}
 
                 {isHost && (
                   <button
                     onClick={handleGameStart}
-                    disabled={!roomInfo.members.every((member) => member.status === "READY" || member.memberId === roomInfo.host.memberId)}
+                    disabled={!roomInfo.members.every((member) => member.status === "READY" || member.nickname === roomInfo.host.nickname)}
                     className={`px-6 py-3 rounded-lg font-bold ${
-                      !roomInfo.members.every((member) => member.status === "READY" || member.memberId === roomInfo.host.memberId)
+                      !roomInfo.members.every((member) => member.status === "READY" || member.nickname === roomInfo.host.nickname)
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-green-500 text-white hover:bg-green-600"
                     } transition-colors`}
@@ -319,4 +408,13 @@ const RoomPreparePage: React.FC = () => {
   );
 };
 
-export default RoomPreparePage;
+/**
+ * 에러 경계와 함께 렌더링되는 RoomPreparePage
+ */
+export default function RoomPrepareWithErrorBoundary() {
+  return (
+    <RoomPrepareErrorBoundary>
+      <RoomPreparePage />
+    </RoomPrepareErrorBoundary>
+  );
+}
