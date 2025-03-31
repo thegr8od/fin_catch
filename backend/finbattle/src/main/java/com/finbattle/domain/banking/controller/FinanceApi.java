@@ -4,7 +4,7 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
-import com.finbattle.domain.banking.dto.transaction.TransactionList;
+import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.model.dto.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;

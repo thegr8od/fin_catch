@@ -1,5 +1,6 @@
-package com.finbattle.domain.banking.dto.transaction;
+package com.finbattle.domain.banking.model;
 
+import com.finbattle.domain.banking.dto.transaction.TransactionRecordDto;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

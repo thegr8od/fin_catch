@@ -3,7 +3,7 @@ package com.finbattle.domain.banking.service;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
-import com.finbattle.domain.banking.dto.transaction.TransactionList;
+import com.finbattle.domain.banking.model.TransactionList;
 
 public interface FinanceService {
 
