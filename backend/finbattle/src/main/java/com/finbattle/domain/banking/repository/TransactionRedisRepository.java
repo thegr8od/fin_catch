@@ -17,12 +17,10 @@ public class TransactionRedisRepository {
         return "account:" + accountNo;
     }
 
-    // 게임 저장
     public void save(String accountNo, TransactionList transactions) {
         redisTemplate.opsForValue().set(getDatakey(accountNo), transactions, 1, TimeUnit.HOURS);
     }
 
-    // 게임 조회
     public Optional<TransactionList> findById(String accountNo) {
         Object value = redisTemplate.opsForValue().get(getDatakey(accountNo));
         if (value instanceof TransactionList list) {
@@ -31,7 +29,6 @@ public class TransactionRedisRepository {
         return Optional.empty();
     }
 
-    // 게임 삭제
     public void delete(String accountNo) {
         redisTemplate.delete(getDatakey(accountNo));
     }
