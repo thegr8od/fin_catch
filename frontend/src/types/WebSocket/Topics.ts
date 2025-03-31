@@ -4,12 +4,12 @@
  * 백엔드와 협의 후 변경될 수 있음
  */
 export const SOCKET_TOPICS = {
-  ROOM: (roomId: string) => `/room/room/${roomId}`,
-  CHAT: (roomId: string) => `/topic/chat/${roomId}`,
-  GAME: (roomId: string) => `/topic/game/${roomId}`,
+  ROOM: "/topic/room/",
+  CONNECT: "/topic/connect",
+  DISCONNECT: "/topic/disconnect",
 } as const;
 
 /**
  * 토픽 타입 추론을 위한 유틸리티 타입
  */
-export type TopicType = ReturnType<(typeof SOCKET_TOPICS)[keyof typeof SOCKET_TOPICS]>;
+export type TopicType = (typeof SOCKET_TOPICS)[keyof typeof SOCKET_TOPICS];
