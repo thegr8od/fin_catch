@@ -1,6 +1,6 @@
 import { Client, IMessage } from "@stomp/stompjs";
 import { useCallback, useEffect, useState } from "react";
-import { createStompClient, sendMessage, subscribeToTopic } from "../service/stompService";
+import { createStompClient, sendMessage } from "../service/stompService";
 import { MESSAGE_TYPES } from "../types/WebSocket/MessageTypes";
 import { SOCKET_TOPICS } from "../types/WebSocket/Topics";
 /**
@@ -19,31 +19,38 @@ export const useWebSocket = () => {
   // 연결 상태
   const [connected, setConnected] = useState(false);
   // 활성 구독 목록 (토픽별로 관리)
-  const [subscriptions, setSubscripitons] = useState<Record<string, any>>({});
+  const [subscriptions, setSubscriptions] = useState<Record<string, any>>({});
 
   // 컴포넌트 마운트 시 WebSocket 클라이언트 초기화
   useEffect(() => {
-    // stompService에서 STOMP 클라이언트 생성
-    const stompClient = createStompClient();
+    let mounted = true;
 
-    // 연결 성공 이벤트 핸들러
-    stompClient.onConnect = () => {
-      setConnected(true);
+    const initializeWebSocket = async () => {
+      try {
+        console.log("WebSocket 연결 시도");
+        const stompClient = await createStompClient();
+
+        if (mounted) {
+          console.log("STOMP 클라이언트 생성 및 연결 완료");
+          setClient(stompClient);
+          setConnected(true);
+        }
+      } catch (error) {
+        console.error("WebSocket 초기화 실패:", error);
+        if (mounted) {
+          setConnected(false);
+        }
+      }
     };
 
-    // 연결 해제 이벤트 핸들러
-    stompClient.onDisconnect = () => {
-      setConnected(false);
-    };
+    initializeWebSocket();
 
-    // 클라이언트 활성화 (연결 시작)
-    stompClient.activate();
-    setClient(stompClient);
-
-    // 컴포넌트 언마운트 시 정리 함수
     return () => {
-      if (stompClient.active) {
-        stompClient.deactivate();
+      mounted = false;
+      if (client) {
+        console.log("WebSocket 연결 해제");
+        Object.values(subscriptions).forEach((sub) => sub.unsubscribe());
+        client.deactivate();
       }
     };
   }, []);
@@ -57,74 +64,80 @@ export const useWebSocket = () => {
    */
   const subscribe = useCallback(
     (topic: string, callback: (message: IMessage) => void) => {
-      // 클라이언트가 없거나 연결되지 않은 경우
-      if (!client || !connected) return null;
+      console.log("[WebSocket] subscribe 호출됨:", { topic, hasClient: !!client, connected });
 
-      // 토픽 구독 수행
-      const subscribtion = subscribeToTopic(client, topic, callback);
-
-      // 구독 성공 시 상태에 추가
-      if (subscribtion) {
-        setSubscripitons((prev) => ({
-          ...prev,
-          [topic]: subscribtion,
-        }));
+      if (!client) {
+        console.error("[WebSocket] STOMP client가 없습니다.");
+        return null;
       }
 
-      return subscribtion;
-    },
-    [client, connected]
-  );
+      if (!connected) {
+        console.error("[WebSocket] WebSocket이 연결되지 않았습니다.");
+        return null;
+      }
 
-  /**
-   * 토픽 구독 해제 함수
-   *
-   * @param topic 구독 해제할 토픽 경로
-   */
-  const unsubscribe = useCallback(
-    (topic: string) => {
-      if (subscriptions[topic]) {
-        // 구독 객체 해제
-        subscriptions[topic].unsubscribe();
-        // 상태에서 제거
-        setSubscripitons((prev) => {
-          const newSubs = { ...prev };
-          delete newSubs[topic];
-          return newSubs;
+      try {
+        console.log("[WebSocket] 구독 시도:", { topic, clientConnected: client.connected });
+
+        // 이미 구독 중인 경우 기존 구독 해제
+        if (subscriptions[topic]) {
+          console.log("[WebSocket] 기존 구독 해제:", topic);
+          subscriptions[topic].unsubscribe();
+        }
+
+        const subscription = client.subscribe(topic, (message) => {
+          console.log(`[STOMP] 메시지 수신 (${topic}):`, message);
+          console.log(`[STOMP] 메시지 body:`, message.body);
+          try {
+            const parsedBody = JSON.parse(message.body);
+            console.log(`[STOMP] 파싱된 메시지:`, parsedBody);
+            callback(message);
+          } catch (e) {
+            console.error(`[STOMP] 메시지 파싱 실패:`, e);
+            callback(message);
+          }
         });
+
+        console.log(`[WebSocket] 구독 성공: ${topic}, subscription ID: ${subscription.id}`);
+
+        setSubscriptions((prev) => ({
+          ...prev,
+          [topic]: subscription,
+        }));
+
+        return subscription;
+      } catch (error) {
+        console.error("[WebSocket] 구독 중 에러 발생:", error);
+        return null;
       }
     },
-    [subscriptions]
+    [client, connected, subscriptions]
   );
 
-  /**
-   * 메시지 전송 함수
-   *
-   * @param destination 메시지를 전송할 대상 경로
-   * @param body 전송할 메시지 본문 (객체)
-   * @param headers 추가 헤더 (선택적)
-   * @returns 전송 성공 여부
-   */
   const send = useCallback(
     (destination: string, body: any, headers = {}) => {
-      // 클라이언트가 없거나 연결되지 않은 경우
-      if (!client || !connected) return false;
+      if (!client || !connected) {
+        console.error("[WebSocket] 메시지 전송 실패: 연결되지 않음");
+        return false;
+      }
 
-      // 메시지 전송
-      sendMessage(client, destination, body, headers);
-      return true;
+      try {
+        sendMessage(client, destination, body, headers);
+        console.log(`[WebSocket] 메시지 전송 성공: ${destination}`);
+        return true;
+      } catch (error) {
+        console.error("[WebSocket] 메시지 전송 실패:", error);
+        return false;
+      }
     },
     [client, connected]
   );
 
-  // 훅에서 제공하는 기능과 상태 반환
   return {
-    client, // STOMP 클라이언트 객체
-    connected, // 연결 상태
-    subscribe, // 구독 함수
-    unsubscribe, // 구독 해제 함수
-    send, // 메시지 전송 함수
-    topics: SOCKET_TOPICS, // 토픽 정의 객체
-    messageTypes: MESSAGE_TYPES, // 메시지 타입 정의 객체
+    client,
+    connected,
+    subscriptions,
+    subscribe,
+    send,
   };
 };
