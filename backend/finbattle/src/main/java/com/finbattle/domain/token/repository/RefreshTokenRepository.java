@@ -1,8 +1,6 @@
 package com.finbattle.domain.token.repository;
 
 import com.finbattle.domain.token.dto.TokenData;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Repository;
 public class RefreshTokenRepository {
 
     private final RedisTemplate redisTemplate;
-    private final MeterRegistry meterRegistry;
 
     @Value("${spring.jwt.refresh-token-validity}")
     private long refreshTokenValidity;
@@ -46,9 +43,4 @@ public class RefreshTokenRepository {
         return redisTemplate.keys("refresh_token:*").size();
     }
 
-    public void registerActiveUsersGauge() {
-        Gauge.builder("current_active_users", this, RefreshTokenRepository::countActiveUsers)
-            .description("현재 동시 접속자 수")
-            .register(meterRegistry);
-    }
 }
