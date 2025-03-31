@@ -46,7 +46,7 @@ export const useRoom = () => {
       roomType,
       subjectType,
     });
-    return response.data;
+    return response.result;
   };
 
   /**
@@ -54,7 +54,7 @@ export const useRoom = () => {
    */
   const getAllRoom = async () => {
     const response = await getAllRoomApi.execute();
-    return response.data;
+    return response.result;
   };
 
   /**
@@ -62,7 +62,7 @@ export const useRoom = () => {
    */
   const searchRoom = async (roomId: string) => {
     const response = await searchRoomApi.execute(undefined, { params: { roomId } });
-    return response.data;
+    return response.result;
   };
 
   /**
@@ -70,7 +70,7 @@ export const useRoom = () => {
    */
   const deleteRoom = async (roomId: string) => {
     const response = await deleteRoomApi.execute(undefined, { params: { roomId } });
-    return response.data;
+    return response.result;
   };
 
   /**
@@ -78,7 +78,7 @@ export const useRoom = () => {
    */
   const searchByType = async (roomType: string) => {
     const response = await searchByTypeApi.execute(undefined, { params: { roomType } });
-    return response.data;
+    return response.result;
   };
 
   /**
@@ -86,7 +86,7 @@ export const useRoom = () => {
    */
   const searchByOpen = async () => {
     const response = await searchByOpenApi.execute();
-    return response.data;
+    return response.result;
   };
 
   /**
