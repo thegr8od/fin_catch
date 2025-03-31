@@ -63,17 +63,8 @@ const RoomPreparePage: React.FC = () => {
         const manager = await RoomManager.initialize(roomApi, webSocket);
         console.log("RoomManager 초기화 완료");
 
-        const isCreator = sessionStorage.getItem("isCreator") === "true";
-        console.log("isCreator:", isCreator);
-
-        if (isCreator) {
-          console.log("방장이므로 WebSocket 연결만 시도");
-          await manager.connectToRoom(Number(roomId));
-        } else {
-          console.log("일반 사용자이므로 방 참가 시도");
-          await manager.joinRoom(Number(roomId));
-        }
-        console.log("방 참가/연결 완료");
+        // WebSocket 연결만 수행
+        await manager.connectToRoom(Number(roomId));
 
         if (!isSubscribed) {
           console.log("컴포넌트가 언마운트됨");

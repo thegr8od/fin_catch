@@ -120,7 +120,7 @@ const LobbyPage = () => {
 
       setIsLoading(false);
       setShowModal(false);
-      navigate(`/room/prepare/${roomId}?isCreator=true`);
+      navigate(`/room/prepare/${roomId}`);
     } catch (error) {
       setIsLoading(false);
       console.error("방 생성 중 오류 발생:", error);

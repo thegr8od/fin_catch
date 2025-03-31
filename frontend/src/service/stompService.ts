@@ -76,7 +76,7 @@ export const sendMessage = (client: Client, destination: string, body: any, head
       body: JSON.stringify(body),
       headers: {
         ...headers,
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     });
     console.log("메시지 전송 완료");
