@@ -16,8 +16,7 @@ export interface Problem {
 
 // 카테고리 타입 정의
 export interface Category {
-  id: string | number;
-  tag: string;
+  id: number;
   name: string;
   problems: Problem[];
   totalProblems?: number;

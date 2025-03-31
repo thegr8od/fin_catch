@@ -6,40 +6,20 @@ import GameResult from "../components/game/GameResult";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
 import { usePreventNavigation } from "../hooks/usePreventNavigation";
-import { useAiQuiz } from "../hooks/useAiQuiz";
+// import { useGameResources } from "../hooks/useGameResources"
 
-type GameState = "quiz" | "goodResult" | "badResult" | "finalResult";
-
-interface QuizOption {
-  optionId: number;
-  optionText: string;
-  isCorrect: boolean;
-}
-
-interface QuizItem {
-  quizId: number;
-  question: string;
-  options: QuizOption[];
-}
+type GameState = "quiz" | "goodResult" | "badResult";
 
 const AiQuizPage = () => {
   const navigate = useNavigate();
   const { user } = useUserInfo();
-  const [timeLeft, setTimeLeft] = useState<number>(60); // 60초 타이머
+  const [timeLeft, setTimeLeft] = useState<number>(10);
   const [gameState, setGameState] = useState<GameState>("quiz");
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
-  const [score, setScore] = useState<number>(0);
+  const [score] = useState<number>(50);
   const [randomCat, setRandomCat] = useState<CharacterType>("classic");
-  const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
-  const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [answeredQuestions, setAnsweredQuestions] = useState<number>(0);
-  const [correctAnswers, setCorrectAnswers] = useState<number>(0);
-  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
-  
-  // AI 퀴즈 훅 사용
-  const { loading, getLatestQuizContent } = useAiQuiz();
+  const [quiz, setQuiz] = useState<string>("");
+  const [answer, setAnswer] = useState<string>("");
 
   usePreventNavigation({
     roomId: null,
@@ -49,95 +29,19 @@ const AiQuizPage = () => {
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
     const catTypes: CharacterType[] = ["classic", "batman", "slave", "master", "unique_rabbit"];
+    // 현재 유저의 메인 캣이 아닌 다른 캣을 선택
     const userMainCat = (user?.mainCat as unknown as CharacterType) || "classic";
     const availableCats = catTypes.filter((cat) => cat !== userMainCat);
     const randomIndex = Math.floor(Math.random() * availableCats.length);
     return availableCats[randomIndex];
   }, [user]);
 
-  // 퀴즈 데이터 가져오기
-  const fetchQuizzes = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await getLatestQuizContent();
-      console.log("퀴즈 데이터 응답:", response);
-      
-      // 응답 구조에 맞게 체크 - API 응답 구조는 { isSuccess, code, message, result: [...] }
-      if (response && response.success && response.data) {
-        // result 배열을 직접 사용
-        if (Array.isArray(response.data.result)) {
-          setQuizzes(response.data.result);
-        } else if (Array.isArray(response.data)) {
-          // 혹은 data 자체가 배열인 경우
-          setQuizzes(response.data);
-        }
-        
-        setTimeLeft(60);
-        setIsTimeUp(false);
-        setSelectedOption(null);
-        setCurrentQuizIndex(0);
-        setAnsweredQuestions(0);
-        setCorrectAnswers(0);
-        setScore(0);
-        setLastAnswerCorrect(null);
-      } else {
-        console.error("퀴즈를 가져오는데 실패했습니다:", response?.error || "알 수 없는 오류");
-      }
-    } catch (error) {
-      console.error("퀴즈 API 호출 중 오류 발생:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getLatestQuizContent]);
-
-  // 정답 제출 처리 - API 호출 없이 로컬에서 정답 확인
-  const handleSubmitAnswer = useCallback(() => {
-    if (selectedOption === null || quizzes.length === 0) return;
-    
-    const currentQuiz = quizzes[currentQuizIndex];
-    // 선택한 옵션이 정답인지 직접 확인
-    const selectedOptionData = currentQuiz.options[selectedOption];
-    const isCorrect = selectedOptionData && selectedOptionData.isCorrect === true;
-    
-    setLastAnswerCorrect(isCorrect);
-    setAnsweredQuestions(prev => prev + 1);
-    
-    if (isCorrect) {
-      // 정답인 경우 점수 증가
-      setCorrectAnswers(prev => prev + 1);
-      setScore(prev => prev + 50);
-      setGameState("goodResult");
-    } else {
-      // 오답인 경우
-      setGameState("badResult");
-    }
-  }, [selectedOption, quizzes, currentQuizIndex]);
-
-  // 다음 문제로 이동
-  const moveToNextQuestion = useCallback(() => {
-    if (currentQuizIndex < quizzes.length - 1) {
-      setCurrentQuizIndex(prevIndex => prevIndex + 1);
-      setSelectedOption(null);
-      setTimeLeft(60);
-      setIsTimeUp(false);
-      setGameState("quiz");
-      setLastAnswerCorrect(null);
-    } else {
-      // 모든 문제 완료
-      setGameState("finalResult");
-    }
-  }, [currentQuizIndex, quizzes.length]);
-
-  // 컴포넌트 마운트 시 초기화
   useEffect(() => {
+    // 컴포넌트 마운트 시 랜덤 고양이 선택
     setRandomCat(selectRandomCat());
-    fetchQuizzes();
-  }, [selectRandomCat, fetchQuizzes]);
+  }, [selectRandomCat]);
 
-  // 타이머 설정
   useEffect(() => {
-    if (isLoading || gameState !== "quiz") return;
-
     if (timeLeft <= 0) {
       setIsTimeUp(true);
       return;
@@ -148,27 +52,7 @@ const AiQuizPage = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timeLeft, isLoading, gameState]);
-
-  // 현재 퀴즈 가져오기
-  const getCurrentQuiz = () => {
-    if (quizzes.length === 0 || currentQuizIndex >= quizzes.length) {
-      return { question: "퀴즈를 불러오는 중입니다...", options: [] };
-    }
-    return quizzes[currentQuizIndex];
-  };
-
-  const currentQuiz = getCurrentQuiz();
-  const options = currentQuiz.options ? currentQuiz.options.map((opt) => opt.optionText) : [];
-
-  // 결과 화면에서 계속하기 버튼 클릭 시 처리
-  const handleContinue = () => {
-    if (gameState === "goodResult" || gameState === "badResult") {
-      moveToNextQuestion();
-    } else if (gameState === "finalResult") {
-      navigate("/main");
-    }
-  };
+  }, [timeLeft]);
 
   return (
     <div
@@ -178,67 +62,27 @@ const AiQuizPage = () => {
       }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-10"></div>
-      
-      {/* 퀴즈 진행 상태 표시 */}
-      <div className="w-[85%] mt-4 mb-2 bg-white bg-opacity-75 rounded-lg p-2 flex justify-between items-center z-10">
-        <div className="text-gray-700 font-semibold">
-          문제 {currentQuizIndex + 1} / {quizzes.length}
-        </div>
-        <div className="text-blue-600 font-semibold">
-          점수: {score}점
-        </div>
-        <div className="text-green-600 font-semibold">
-          정답: {correctAnswers} / {answeredQuestions}
-        </div>
-      </div>
-      
       {gameState === "quiz" ? (
         <GameQuiz
           timeLeft={timeLeft}
           isTimeUp={isTimeUp}
-          onShowResults={handleSubmitAnswer}
+          onShowResults={() => setGameState("goodResult")}
           playerCat={(user?.mainCat as unknown as CharacterType) || "classic"}
           opponentCat={randomCat}
-          quiz={currentQuiz.question || ""}
-          answer=""
-          selectedOption={selectedOption}
-          onOptionSelect={setSelectedOption}
-          options={options}
+          quiz={quiz}
+          answer={answer}
         />
-      ) : gameState === "finalResult" ? (
-        <div className="w-[85.5%] relative z-10 md:w-[76.5%] lg:w-[72%] mx-auto pb-7">
-          <div className="w-full py-4 text-center">
-            <h1 className="text-[1.75rem] font-bold text-white shadow-md bg-black bg-opacity-30 inline-block px-6 py-1 rounded-2xl">
-              모든 퀴즈 완료!
-            </h1>
-          </div>
-
-          <div className="w-[50%] mx-auto bg-white p-5 mt-4 border-2 border-primary border-opacity-40 rounded-2xl shadow-xl max-h-[72vh] overflow-y-auto lg:w-[60%] md:w-[70%] sm:w-[85%]">
-            <div className="flex flex-col items-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-4">퀴즈 결과</h2>
-              
-              <div className="w-full bg-blue-50 p-4 rounded-xl mb-6">
-                <p className="text-lg font-medium">총 문제: <span className="font-bold">{quizzes.length}문제</span></p>
-                <p className="text-lg font-medium">맞힌 문제: <span className="font-bold text-green-600">{correctAnswers}문제</span></p>
-                <p className="text-lg font-medium">정답률: <span className="font-bold text-blue-600">{Math.round((correctAnswers / quizzes.length) * 100)}%</span></p>
-                <p className="text-lg font-medium mt-2">최종 점수: <span className="font-bold text-purple-600">{score}점</span></p>
-              </div>
-              
-              <button 
-                onClick={handleContinue} 
-                className="bg-primary text-white px-8 py-3 text-[1.1rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-primary hover:bg-opacity-90 rounded-lg shadow-lg hover:-translate-y-1"
-                style={{ boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)' }}
-              >
-                메인으로 돌아가기
-              </button>
-            </div>
-          </div>
-        </div>
       ) : (
         <GameResult
           type={gameState === "goodResult" ? "good" : "bad"}
-          score={gameState === "goodResult" ? 50 : 0}
-          onContinue={handleContinue}
+          score={score}
+          onContinue={() => {
+            if (gameState === "goodResult") {
+              setGameState("badResult");
+            } else {
+              navigate("/main");
+            }
+          }}
         />
       )}
     </div>
