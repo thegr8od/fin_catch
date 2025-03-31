@@ -3,8 +3,10 @@ package com.finbattle.domain.banking.service;
 import com.finbattle.domain.banking.dto.transaction.AllTransactionApiRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionResponseDto;
+import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.model.CommonRequestHeader;
 import com.finbattle.domain.banking.model.FinanceMember;
+import com.finbattle.domain.banking.repository.TransactionRedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,18 +17,25 @@ import org.springframework.stereotype.Service;
 public class FinanceTransactionService {
 
     private final FinanceApiClient financeApiClient;
+    private final TransactionRedisRepository transactionRedisRepository;
 
-    public LoadAllTransactionResponseDto loadAllTransaction(LoadAllTransactionRequestDto dto,
+    public TransactionList loadAllTransaction(LoadAllTransactionRequestDto dto,
         String financeKey, FinanceMember member) {
 
-        String apiPath = "inquireTransactionHistoryList";
-        CommonRequestHeader header = new CommonRequestHeader(apiPath, financeKey,
-            member.getFinanceKey());
+        TransactionList result = transactionRedisRepository.findById(dto.getAccountNo())
+            .orElse(null);
 
-        AllTransactionApiRequestDto requestbody = toApiRequest(dto, header);
-        log.info("Request Data: {}", requestbody.toString());
-        return financeApiClient.post("edu/demandDeposit/" + apiPath,
-            requestbody, LoadAllTransactionResponseDto.class);
+        if (result == null) {
+            String apiPath = "inquireTransactionHistoryList";
+            CommonRequestHeader header = new CommonRequestHeader(apiPath, financeKey,
+                member.getFinanceKey());
+
+            AllTransactionApiRequestDto requestbody = toApiRequest(dto, header);
+            log.info("Request Data: {}", requestbody.toString());
+            return financeApiClient.post("edu/demandDeposit/" + apiPath,
+                requestbody, LoadAllTransactionResponseDto.class).getREC();
+        }
+        return result;
     }
 
     private AllTransactionApiRequestDto toApiRequest(LoadAllTransactionRequestDto req,

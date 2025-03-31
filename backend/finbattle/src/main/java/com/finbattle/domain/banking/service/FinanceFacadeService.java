@@ -6,7 +6,7 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountResponseDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
-import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionResponseDto;
+import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.global.common.exception.exception.BusinessException;
 import jakarta.transaction.Transactional;
@@ -76,7 +76,7 @@ public class FinanceFacadeService implements FinanceService {
     }
 
     @Override
-    public LoadAllTransactionResponseDto loadAllTransaction(Long memberId,
+    public TransactionList loadAllTransaction(Long memberId,
         LoadAllTransactionRequestDto dto) {
         FinanceMember member = financeMemberService.loadOrRegister(memberId, financeKey);
         return financeTransactionService.loadAllTransaction(dto, financeKey, member);

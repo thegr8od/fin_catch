@@ -4,7 +4,7 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
-import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionResponseDto;
+import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.service.FinanceService;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.model.dto.BaseResponse;
@@ -67,7 +67,7 @@ public class FinanceController implements FinanceApi {
 
     @PostMapping("/account/transactions")
     @Override
-    public ResponseEntity<BaseResponse<LoadAllTransactionResponseDto>> findAlltransactionByNo(
+    public ResponseEntity<BaseResponse<TransactionList>> findAlltransactionByNo(
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestBody LoadAllTransactionRequestDto requestDto) {
 
