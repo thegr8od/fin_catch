@@ -4,74 +4,72 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
-import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionResponseDto;
+import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.service.FinanceService;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.model.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/finance")
 @RequiredArgsConstructor
+@Slf4j
 public class FinanceController implements FinanceApi {
 
     private final FinanceService financeService;
 
-    @PostMapping("/account/all")
     @Override
-    // 1. 금융망 유저 정보 조회
     public ResponseEntity<BaseResponse<FindAllAccountResponseDto>> findAllAccount(
-        @AuthenticationPrincipal AuthenticatedUser detail) {
-
+        AuthenticatedUser detail) {
         FindAllAccountResponseDto res = financeService.findAllAccount(detail.getMemberId());
+        log.info("모든 금융 계좌 조회, 사용자 ID: {}, 계좌 개수: {}", detail.getMemberId(),
+            res.getAccounts().size());
         return ResponseEntity.ok(new BaseResponse<>(res));
     }
 
-    @PatchMapping("/account/all")
     @Override
-    // 1. 금융망 유저 정보 조회
     public ResponseEntity<BaseResponse<FindAllAccountResponseDto>> updateAllAccount(
-        @AuthenticationPrincipal AuthenticatedUser detail) {
-
+        AuthenticatedUser detail) {
         FindAllAccountResponseDto res = financeService.updateAllAccount(detail.getMemberId());
+        log.info("모든 금융 계좌 갱신, 사용자 ID: {}", detail.getMemberId());
         return ResponseEntity.ok(new BaseResponse<>(res));
     }
 
-    @PostMapping("/account/detail")
     @Override
     public ResponseEntity<BaseResponse<AccountDetailDto>> findAccountDetail(
-        @AuthenticationPrincipal AuthenticatedUser detail,
-        @RequestBody AccountRequestDto requestDto) {
-
-        return ResponseEntity.ok(
-            new BaseResponse<>(financeService.findAccountByNo(detail.getMemberId(),
-                requestDto.accountNo())));
+        AuthenticatedUser detail,
+        AccountRequestDto requestDto
+    ) {
+        AccountDetailDto accountDetail = financeService.findAccountByNo(
+            detail.getMemberId(),
+            requestDto.accountNo()
+        );
+        log.info("계좌 상세 조회, 사용자 ID: {}, 계좌번호: {}", detail.getMemberId(), requestDto.accountNo());
+        return ResponseEntity.ok(new BaseResponse<>(accountDetail));
     }
 
-    @PatchMapping("/account/change")
     @Override
     public ResponseEntity<BaseResponse<String>> changeMainAccount(
-        @AuthenticationPrincipal AuthenticatedUser detail,
-        @RequestBody AccountRequestDto requestDto) {
+        AuthenticatedUser detail,
+        AccountRequestDto requestDto
+    ) {
         financeService.changeAccount(detail.getMemberId(), requestDto.accountNo());
-        return ResponseEntity.ok(
-            new BaseResponse<>("계좌 변경 성공!"));
+        log.info("주 거래 계좌 변경, 사용자 ID: {}, 계좌번호: {}", detail.getMemberId(), requestDto.accountNo());
+        return ResponseEntity.ok(new BaseResponse<>("계좌 변경 성공!"));
     }
 
-    @PostMapping("/account/transactions")
     @Override
-    public ResponseEntity<BaseResponse<LoadAllTransactionResponseDto>> findAlltransactionByNo(
-        @AuthenticationPrincipal AuthenticatedUser detail,
-        @RequestBody LoadAllTransactionRequestDto requestDto) {
-
-        return ResponseEntity.ok(new BaseResponse<>(
-            financeService.loadAllTransaction(detail.getMemberId(), requestDto)));
+    public ResponseEntity<BaseResponse<TransactionList>> findAllTransactionByNo(
+        AuthenticatedUser detail,
+        LoadAllTransactionRequestDto requestDto
+    ) {
+        TransactionList transactionList = financeService.loadAllTransaction(
+            detail.getMemberId(),
+            requestDto
+        );
+        log.info("거래 내역 조회, 사용자 ID: {}, 조회계좌: {}", detail.getMemberId(), requestDto.getAccountNo());
+        return ResponseEntity.ok(new BaseResponse<>(transactionList));
     }
 }
