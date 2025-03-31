@@ -25,8 +25,8 @@ public class TransactionRedisRepository {
     // 게임 조회
     public Optional<TransactionList> findById(String accountNo) {
         Object value = redisTemplate.opsForValue().get(getDatakey(accountNo));
-        if (value instanceof TransactionList game) {
-            return Optional.of(game);
+        if (value instanceof TransactionList list) {
+            return Optional.of(list);
         }
         return Optional.empty();
     }
