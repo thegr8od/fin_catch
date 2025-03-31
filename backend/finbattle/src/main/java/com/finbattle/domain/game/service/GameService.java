@@ -123,6 +123,10 @@ public class GameService {
         GameData gameData = redisGameRepository.findById(roomId)
             .orElseThrow(() -> new RuntimeException("해당 roomId의 GameData가 없습니다."));
 
+        String nickname = gameData.getGameMemberStatusList().stream()
+            .filter(member -> member.getMemberId() == memberId).map(GameMemberStatus::getNickname)
+            .findFirst().orElse(null);
+
         int quizNum = gameData.getCurrentQuizNum();
         boolean isCorrect = false;
         Long quizId = null;
@@ -153,7 +157,7 @@ public class GameService {
             Map<String, Object> essayResult = Map.of(
                 "quizId", quizId,
                 "score", score,
-                "memberId", memberId
+                "sender", nickname
             );
             EventMessage<Map<String, Object>> essayResultMessage = new EventMessage<>(
                 EventType.QUIZ_RESULT,
@@ -178,7 +182,7 @@ public class GameService {
             Map.of(
                 "quizId", quizId,
                 "result", isCorrect ? "정답입니다" : "오답입니다",
-                "memberId", memberId
+                "sender", nickname
             )
         );
         publishToRoom(roomId, resultMessage);
