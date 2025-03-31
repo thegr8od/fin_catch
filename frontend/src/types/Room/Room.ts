@@ -46,9 +46,6 @@ export interface RoomMember {
  * 사용자 상태 인터페이스
  */
 export interface UserStatus {
-  memberId: number;
-  nickname: string;
   isReady: boolean;
   isHost: boolean;
-  mainCat?: string;
 }
