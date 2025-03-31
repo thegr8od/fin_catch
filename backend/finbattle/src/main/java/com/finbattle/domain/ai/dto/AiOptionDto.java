@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class AiOptionDto {
     private Long optionId;
     private String optionText;
+    private Boolean isCorrect;
 }

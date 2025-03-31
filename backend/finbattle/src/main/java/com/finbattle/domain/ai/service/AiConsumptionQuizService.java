@@ -142,14 +142,21 @@ public class AiConsumptionQuizService {
     public List<AiConsumptionQuizDto> getLatestConsumptionQuizzes(Long memberId) {
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
         List<AiQuiz> aiQuizzes = aiQuizRepository.findByMemberIdAndIsDeletedFalse(memberId, pageable);
+
         return aiQuizzes.stream().map(aiQuiz -> {
             AiMultipleChoiceQuiz multipleQuiz = multipleChoiceQuizRepository.findByAiQuiz(aiQuiz)
                     .orElseThrow(() -> new BusinessException(BaseResponseStatus.QUIZ_NOT_FOUND));
             List<AiOption> options = aiOptionRepository.findByMultipleChoiceQuiz(multipleQuiz);
             List<AiOptionDto> optionDtos = options.stream()
-                    .map(opt -> new AiOptionDto(opt.getAiOptionId(), opt.getOptionText()))
+                    .map(opt -> new AiOptionDto(
+                            opt.getAiOptionId(),
+                            opt.getOptionText(),
+                            opt.isCorrect() // ✅ 여기도 추가
+                    ))
                     .collect(Collectors.toList());
             return new AiConsumptionQuizDto(aiQuiz.getAiQuizId(), multipleQuiz.getQuestion(), optionDtos);
         }).collect(Collectors.toList());
     }
+
+
 }

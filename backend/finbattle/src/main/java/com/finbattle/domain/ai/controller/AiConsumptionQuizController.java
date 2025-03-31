@@ -2,6 +2,7 @@ package com.finbattle.domain.ai.controller;
 
 import com.finbattle.domain.ai.dto.AiConsumptionQuizAnswerDto;
 import com.finbattle.domain.ai.dto.AiConsumptionQuizDto;
+import com.finbattle.domain.ai.dto.AiOptionDto;
 import com.finbattle.domain.ai.dto.AiQuizWrongNoteDto;
 import com.finbattle.domain.ai.service.AiConsumptionQuizService;
 import com.finbattle.domain.ai.service.AiQuizLogService;
@@ -41,10 +42,10 @@ public class AiConsumptionQuizController {
 
     @Operation(summary = "소비내역 기반 AI퀴즈 정답 제출", description = "소비내역 기반 AI퀴즈의 정답을 제출하고, ai_quiz_log에 저장합니다.")
     @PostMapping("/submit")
-    public ResponseEntity<BaseResponse<String>> submitConsumptionQuizAnswer(@RequestBody AiConsumptionQuizAnswerDto answerDto) {
+    public ResponseEntity<BaseResponse<Boolean>> submitConsumptionQuizAnswer(@RequestBody AiConsumptionQuizAnswerDto answerDto) {
         Long memberId = authenticationUtil.getMemberId();
-        aiQuizLogService.submitAnswer(answerDto.getQuizId(), memberId, answerDto.getSelectedIndex());
-        return ResponseEntity.ok(new BaseResponse<>("정답 제출 완료"));
+        boolean isCorrect = aiQuizLogService.submitAnswer(answerDto.getQuizId(), memberId, answerDto.getSelectedIndex());
+        return ResponseEntity.ok(new BaseResponse<>(isCorrect));
     }
 
     @Operation(summary = "소비내역 기반 AI퀴즈 오답 노트 조회", description = "현재 로그인한 사용자의 소비내역 기반 AI퀴즈 오답 노트를 조회합니다.")
@@ -54,4 +55,5 @@ public class AiConsumptionQuizController {
         List<AiQuizWrongNoteDto> wrongNotes = aiQuizLogService.getWrongQuizLogsByMember(memberId);
         return ResponseEntity.ok(new BaseResponse<>(wrongNotes));
     }
+
 }

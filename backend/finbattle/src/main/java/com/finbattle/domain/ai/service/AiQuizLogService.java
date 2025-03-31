@@ -28,7 +28,7 @@ public class AiQuizLogService {
     /**
      * AI퀴즈 정답 제출 (객관식 기준)
      */
-    public void submitAnswer(Long quizId, Long memberId, int selectedIndex) {
+    public boolean submitAnswer(Long quizId, Long memberId, int selectedIndex) {
         AiQuiz quiz = aiQuizRepository.findById(quizId)
                 .orElseThrow(() -> new BusinessException(BaseResponseStatus.QUIZ_NOT_FOUND));
         AiMultipleChoiceQuiz multipleQuiz = multipleChoiceQuizRepository.findByAiQuiz(quiz)
@@ -46,6 +46,7 @@ public class AiQuizLogService {
                 .isCorrect(isCorrect)
                 .build();
         aiQuizLogRepository.save(log);
+        return isCorrect;
     }
 
     /**
