@@ -3,9 +3,9 @@ package com.finbattle.domain.banking.service;
 import com.finbattle.domain.banking.dto.transaction.AllTransactionApiRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionResponseDto;
-import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.model.CommonRequestHeader;
 import com.finbattle.domain.banking.model.FinanceMember;
+import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.banking.repository.TransactionRedisRepository;
 import com.finbattle.global.common.metrics.CacheMetrics;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +35,9 @@ public class FinanceTransactionService {
 
             AllTransactionApiRequestDto requestbody = toApiRequest(dto, header);
             log.info("Request Data: {}", requestbody.toString());
-            return financeApiClient.post("edu/demandDeposit/" + apiPath,
+            result = financeApiClient.post("edu/demandDeposit/" + apiPath,
                 requestbody, LoadAllTransactionResponseDto.class).getREC();
+            transactionRedisRepository.save(dto.getAccountNo(), result);
         } else {
             cacheMetrics.incrementHit();
         }

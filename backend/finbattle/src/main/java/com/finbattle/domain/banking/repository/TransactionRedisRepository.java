@@ -1,6 +1,6 @@
 package com.finbattle.domain.banking.repository;
 
-import com.finbattle.domain.banking.dto.transaction.TransactionList;
+import com.finbattle.domain.banking.model.TransactionList;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
