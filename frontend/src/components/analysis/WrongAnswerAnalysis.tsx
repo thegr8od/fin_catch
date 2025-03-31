@@ -27,23 +27,16 @@ interface RegularWrongAnswer {
   createdAt: string;
 }
 
-// 인터페이스 추가
-interface GroupedQuestion {
-  quizId: number;
-  question: string;
-  correctAnswer: string;
-  wrongCount: number;
-  attempts: {
-    userAnswer: string;
-    createdAt: string;
-  }[];
-  quizMode?: string;
-  quizSubject?: string;
+interface ApiResponse<T> {
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  result: T | null;
 }
 
 const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame, onDetailView }) => {
   // 기존 상태 관리
-  const [selectedCategory, setSelectedCategory] = useState<number | string>(categories.length > 0 ? categories[0]?.tag : "consumption");
+  const [selectedCategory, setSelectedCategory] = useState<number | string>(categories.length > 0 ? categories[0]?.id : "consumption");
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
   const [analyzingProblemId, setAnalyzingProblemId] = useState<number | null>(null);
   
@@ -63,8 +56,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
   const { analyzeWrongAnswer, loading, error } = useAnalyze();
   
   // API 훅
-  const { loading: consumptionLoading, error: consumptionError, execute: fetchConsumptionWrong } = useApi<any>("/api/ai/consumption/wrong", "GET");
-  const { loading: regularLoading, error: regularError, execute: fetchRegularWrong } = useApi<any>("/api/ai/analysis/regular/wrong", "GET");
+  const { loading: consumptionLoading, error: consumptionError, execute: fetchConsumptionWrong } = useApi<ApiResponse<ConsumptionWrongAnswer[]>>("/api/ai/consumption/wrong", "GET");
+  const { loading: regularLoading, error: regularError, execute: fetchRegularWrong } = useApi<ApiResponse<RegularWrongAnswer[]>>("/api/ai/analysis/regular/wrong", "GET");
 
   // 컴포넌트 마운트 시 오답 데이터 가져오기
   useEffect(() => {
@@ -72,16 +65,25 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
       try {
         // 1. AI 소비 퀴즈 오답 데이터 가져오기
         const consumptionResponse = await fetchConsumptionWrong();
-        if (consumptionResponse.success && consumptionResponse.data) {
-          console.log("AI 소비 퀴즈 오답 데이터:", consumptionResponse.data);
-          setConsumptionWrongAnswers(consumptionResponse.data);
+        if (consumptionResponse.isSuccess && consumptionResponse.result) {
+          const wrongAnswers = consumptionResponse.result as unknown as ConsumptionWrongAnswer[];
+          console.log("AI 소비 퀴즈 오답 데이터:", wrongAnswers);
+          setConsumptionWrongAnswers(wrongAnswers);
           
           // AI 소비 퀴즈 오답 데이터를 Category 형식으로 변환하고 중복 문제 합치기
-          if (consumptionResponse.data.length > 0) {
+          if (wrongAnswers.length > 0) {
             // 중복 문제를 그룹화
-            const groupedByQuestion: Record<number, GroupedQuestion> = {};
+            const groupedByQuestion: { [key: number]: {
+              quizId: number;
+              question: string;
+              correctAnswer: string;
+              wrongCount: number;
+              quizMode?: string;
+              quizSubject?: string;
+              attempts: Array<{ userAnswer: string; createdAt: string; }>;
+            }} = {};
             
-            consumptionResponse.data.forEach((item: ConsumptionWrongAnswer) => {
+            wrongAnswers.forEach((item: ConsumptionWrongAnswer) => {
               if (!groupedByQuestion[item.quizId]) {
                 groupedByQuestion[item.quizId] = {
                   quizId: item.quizId,
@@ -105,7 +107,13 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
             });
             
             // 그룹화된 데이터를 배열로 변환
-            const mergedProblems = Object.values(groupedByQuestion).map((item: GroupedQuestion) => ({
+            const mergedProblems = Object.values(groupedByQuestion).map((item: {
+              quizId: number;
+              question: string;
+              correctAnswer: string;
+              wrongCount: number;
+              attempts: Array<{ userAnswer: string; createdAt: string; }>;
+            }) => ({
               id: item.quizId,
               title: item.question,
               type: "객관식" as const,
@@ -114,13 +122,14 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
               analysis: `정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`,
               weakPoints: ["AI 소비 퀴즈에서 오답 발생"],
               recommendations: ["소비 패턴 복습하기", "관련 금융 개념 학습하기"],
-              attemptHistory: item.attempts.map(attempt => ({
+              attemptHistory: item.attempts.map((attempt: { userAnswer: string; createdAt: string }) => ({
                 date: attempt.createdAt.substring(0, 10),
                 isCorrect: false
               }))
             }));
             
             const consumptionCat: Category = {
+              id: "consumption",
               tag: "consumption",
               name: "소비 퀴즈 오답",
               totalProblems: mergedProblems.length,
@@ -131,6 +140,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
           } else {
             // 소비 퀴즈 오답이 없는 경우 빈 카테고리 생성
             setConsumptionCategory({
+              id: "consumption",
               tag: "consumption",
               name: "소비 퀴즈 오답",
               totalProblems: 0,
@@ -146,16 +156,24 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
         
         // 2. 일반 퀴즈 오답 데이터 가져오기
         const regularResponse = await fetchRegularWrong();
-        if (regularResponse.success) {
-          console.log("일반 퀴즈 오답 데이터:", regularResponse.data);
-          setRegularWrongAnswers(regularResponse.data || []);
+        if (regularResponse.isSuccess) {
+          console.log("일반 퀴즈 오답 데이터:", regularResponse.result);
+          setRegularWrongAnswers(regularResponse.result?.result || []);
           
           // 일반 퀴즈 오답 데이터를 Category 형식으로 변환하고 중복 문제 합치기
-          if (regularResponse.data && regularResponse.data.length > 0) {
+          if (regularResponse.result?.result && regularResponse.result?.result.length > 0) {
             // 중복 문제를 그룹화
-            const groupedByQuestion: Record<number, GroupedQuestion> = {};
+            const groupedByQuestion: { [key: number]: {
+              quizId: number;
+              question: string;
+              correctAnswer: string;
+              wrongCount: number;
+              quizMode?: string;
+              quizSubject?: string;
+              attempts: Array<{ userAnswer: string; createdAt: string; }>;
+            }} = {};
             
-            regularResponse.data.forEach((item: RegularWrongAnswer) => {
+            regularResponse.result?.result?.forEach((item: RegularWrongAnswer) => {
               if (!groupedByQuestion[item.quizId]) {
                 groupedByQuestion[item.quizId] = {
                   quizId: item.quizId,
@@ -181,22 +199,31 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
             });
             
             // 그룹화된 데이터를 배열로 변환
-            const mergedProblems = Object.values(groupedByQuestion).map((item: GroupedQuestion) => ({
+            const mergedProblems = Object.values(groupedByQuestion).map((item: {
+              quizId: number;
+              question: string;
+              correctAnswer: string;
+              wrongCount: number;
+              quizMode?: string;
+              quizSubject?: string;
+              attempts: Array<{ userAnswer: string; createdAt: string; }>;
+            }) => ({
               id: item.quizId,
               title: item.question,
-              type: "객관식" as const,
+              type: (item.quizMode === "MULTIPLE_CHOICE" ? "객관식" : "주관식") as "객관식" | "주관식" | "서술형",
               wrongCount: item.wrongCount,
               correctCount: 0,
               analysis: `주제: ${item.quizSubject}, 정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`,
               weakPoints: ["일반 퀴즈에서 오답 발생"],
               recommendations: ["관련 금융 개념 학습하기"],
-              attemptHistory: item.attempts.map(attempt => ({
+              attemptHistory: item.attempts.map((attempt: { userAnswer: string; createdAt: string }) => ({
                 date: attempt.createdAt.substring(0, 10),
                 isCorrect: false
               }))
             }));
             
             const regularCat: Category = {
+              id: "regular",
               tag: "regular",
               name: "문제 오답",
               totalProblems: mergedProblems.length,
@@ -207,6 +234,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
           } else {
             // 일반 퀴즈 오답이 없는 경우 빈 카테고리 생성
             setRegularCategory({
+              id: "regular",
               tag: "regular",
               name: "문제 오답",
               totalProblems: 0,
@@ -225,6 +253,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
         
         // 오류 발생 시에도 빈 카테고리 생성
         setRegularCategory({
+          id: "regular",
           tag: "regular",
           name: "문제 오답",
           totalProblems: 0,
@@ -232,6 +261,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
         });
         
         setConsumptionCategory({
+          id: "consumption",
           tag: "consumption",
           name: "소비 퀴즈 오답",
           totalProblems: 0,
@@ -241,7 +271,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
     };
     
     loadWrongAnswers();
-  }, [fetchConsumptionWrong, fetchRegularWrong]);
+  }, [fetchConsumptionWrong, fetchRegularWrong, selectedCategory]);
   
   // 카테고리나 페이지 변경 시 선택된 문제 초기화
   useEffect(() => {
@@ -273,7 +303,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
     } else if (selectedCategory === "regular") {
       return regularCategory;
     }
-    return allCategories.find((cat) => cat.tag === selectedCategory);
+    return allCategories.find((cat) => cat.id === selectedCategory);
   }, [allCategories, selectedCategory, consumptionCategory, regularCategory]);
   
   const hasProblems = currentCategory?.problems && currentCategory.problems.length > 0;
@@ -310,8 +340,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
       try {
         const result = await analyzeWrongAnswer(problem.id);
         console.log("API 응답 데이터:", result);
-        if (result.success && result.data) {
-          const analysisData = result.data;
+        if (result.isSuccess && result.result) {
+          const analysisData = result.result;
           console.log("분석 데이터:", analysisData);
           // 분석 데이터 업데이트
           setSelectedProblem((prev) => {
@@ -542,12 +572,12 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame,
         {/* 기존 카테고리 버튼들 */}
         {categories.map((category) => (
           <button
-            key={category.tag}
+            key={category.id}
             onClick={() => {
-              setSelectedCategory(category.tag);
+              setSelectedCategory(category.id);
               setSelectedProblem(null);
             }}
-            className={`px-4 py-2 rounded-lg font-korean-pixel transition-colors ${selectedCategory === category.tag ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+            className={`px-4 py-2 rounded-lg font-korean-pixel transition-colors ${selectedCategory === category.id ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
           >
             {category.name}
             {category.totalProblems && (

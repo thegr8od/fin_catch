@@ -64,8 +64,8 @@ const NicknameChangeModal: React.FC<NicknameChangeModalProps> = ({ onClose, curr
     try {
       const result = await checkNicknameAvailability(nickname);
 
-      if (result.success) {
-        const isDuplicated = result.data;
+      if (result.isSuccess) {
+        const isDuplicated = result.result;
 
         if (isDuplicated) {
           setMessage({ text: "이미 사용 중인 닉네임입니다.", type: "error" });
