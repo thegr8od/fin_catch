@@ -53,6 +53,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests((auth) -> auth
                 .requestMatchers(PublicEndpoint.getAll().toArray(new String[0])).permitAll()
+                .requestMatchers("/websocket-test.html").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
@@ -77,8 +78,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        //config.addAllowedOriginPattern("*");
-        config.setAllowedOrigins(Arrays.asList(baseUrl, clientUrl)); // 프론트엔드 주소
+        config.addAllowedOriginPattern("*");
+//        config.setAllowedOrigins(Arrays.asList(baseUrl, clientUrl)); // 프론트엔드 주소
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
