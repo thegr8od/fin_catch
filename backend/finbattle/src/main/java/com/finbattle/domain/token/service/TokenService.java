@@ -5,7 +5,6 @@ import com.finbattle.domain.token.repository.RefreshTokenRepository;
 import com.finbattle.global.common.Util.JWTUtil;
 import com.finbattle.global.common.exception.exception.BusinessException;
 import com.finbattle.global.common.model.dto.BaseResponseStatus;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +17,6 @@ public class TokenService {
 
     private final JWTUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    @PostConstruct
-    public void initMetrics() {
-        refreshTokenRepository.registerActiveUsersGauge();
-    }
 
     public String createAccessToken(String providerId, Long memberId) {
         return jwtUtil.createAccessToken(providerId, memberId);

@@ -7,6 +7,7 @@ import com.finbattle.domain.banking.dto.transaction.TransactionList;
 import com.finbattle.domain.banking.model.CommonRequestHeader;
 import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.banking.repository.TransactionRedisRepository;
+import com.finbattle.global.common.metrics.CacheMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class FinanceTransactionService {
 
     private final FinanceApiClient financeApiClient;
     private final TransactionRedisRepository transactionRedisRepository;
+    private final CacheMetrics cacheMetrics;
 
     public TransactionList loadAllTransaction(LoadAllTransactionRequestDto dto,
         String financeKey, FinanceMember member) {
@@ -26,6 +28,7 @@ public class FinanceTransactionService {
             .orElse(null);
 
         if (result == null) {
+            cacheMetrics.incrementMiss();
             String apiPath = "inquireTransactionHistoryList";
             CommonRequestHeader header = new CommonRequestHeader(apiPath, financeKey,
                 member.getFinanceKey());
@@ -34,6 +37,8 @@ public class FinanceTransactionService {
             log.info("Request Data: {}", requestbody.toString());
             return financeApiClient.post("edu/demandDeposit/" + apiPath,
                 requestbody, LoadAllTransactionResponseDto.class).getREC();
+        } else {
+            cacheMetrics.incrementHit();
         }
         return result;
     }
