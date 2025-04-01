@@ -1,5 +1,5 @@
 import { useApi } from "./useApi";
-import { AllAccount, AccountDetail, AllConsumeHistory, ConsumeHistoryResponse, ConsumeHistoryHeader, ConsumeHistoryREC, Account } from "../types/Accounts/Account";
+import { AllAccount, AccountDetail, AllConsumeHistory, ConsumeHistoryList, Account } from "../types/Accounts/Account";
 import { useCallback, useState, useEffect } from "react";
 import { useUserInfo } from "./useUserInfo";
 
@@ -9,7 +9,7 @@ export const useAccount = () => {
   const allAccountApi = useApi<AllAccount>("/api/finance/account/all", "POST");
   const patchAccountApi = useApi<AllAccount>("/api/finance/account/all", "PATCH");
   const accountDetailApi = useApi<AccountDetail, { accountNo: string }>("/api/finance/account/detail", "POST");
-  const consumeHistoryApi = useApi<ConsumeHistoryResponse, { accountNo: string; startDate: string; endDate: string; transactionType: string }>("/api/finance/account/transactions", "POST");
+  const consumeHistoryApi = useApi<ConsumeHistoryList, { accountNo: string; startDate: string; endDate: string; transactionType: string }>("/api/finance/account/transactions", "POST");
 
   const changeAccountApi = useApi<string, { accountNo: string }>("/api/finance/account/change", "PATCH");
   const { user } = useUserInfo(false); // autoFetch를 false로 설정하여 자동 조회 방지
@@ -76,7 +76,7 @@ export const useAccount = () => {
 
         if (response.isSuccess && response.result) {
           // API 응답이 이미 ConsumeHistoryResponse 형식과 일치하는 경우
-          if (response.result.Header && response.result.REC) {
+          if (response.result && response.result.list) {
             return {
               isSuccess: true,
               code: 200,
@@ -86,33 +86,12 @@ export const useAccount = () => {
           }
 
           // API 응답을 ConsumeHistoryResponse 형식으로 변환
-          const header: ConsumeHistoryHeader = {
-            responseCode: "H0000",
-            responseMessage: "정상처리 되었습니다.",
-            apiName: "inquireTransactionHistoryList",
-            transmissionDate: startDate,
-            transmissionTime: new Date().toTimeString().slice(0, 6).replace(/:/g, ""),
-            institutionCode: "00100",
-            apiKey: "d51c7ced1310451093c130348f1167e9",
-            apiServiceCode: "inquireTransactionHistoryList",
-            institutionTransactionUniqueNo: `${startDate}${new Date().toTimeString().slice(0, 6).replace(/:/g, "")}733173`,
-          };
-
-          const rec: ConsumeHistoryREC = {
-            totalCount: String(response.result.REC?.totalCount || 0),
-            list: Array.isArray(response.result.REC?.list) ? response.result.REC.list : [],
-          };
-
-          const transformedResult: ConsumeHistoryResponse = {
-            Header: header,
-            REC: rec,
-          };
 
           return {
             isSuccess: true,
             code: 200,
             message: "요청에 성공하였습니다.",
-            result: transformedResult,
+            result: response.result,
           };
         }
 

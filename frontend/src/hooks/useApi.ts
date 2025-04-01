@@ -8,7 +8,7 @@ interface CustomConfig {
   params?: Record<string, any>;
 }
 
-export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "POST" | "DELETE" = "GET") => {
+export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | "POST" | "DELETE" | "PUT" = "GET") => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
@@ -26,7 +26,7 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
 
         switch (method) {
           case "GET":
-            response = await axiosInstance.get<Response<T>>(url, { headers });
+            response = await axiosInstance.get<Response<T>>(url, { headers, params });
             break;
           case "PATCH":
             response = await axiosInstance.patch<Response<T>>(url, payload, { headers, params });
@@ -42,6 +42,9 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
             response = await axiosInstance.post<Response<T>>(url, payload, {
               headers,
             });
+            break;
+          case "PUT":
+            response = await axiosInstance.put<Response<T>>(url, payload, { headers, params });
             break;
         }
 

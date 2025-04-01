@@ -59,25 +59,26 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
 
     setHistoryLoading(true);
     try {
+      console.log("API 요청 전 현재 필터:", historyFilter); // 디버깅용 로그 추가
       const response = await fetchConsumeHistory(mainAccount.accountNo, historyFilter.startDate, historyFilter.endDate, historyFilter.transactionType);
       console.log("거래내역 응답 (AccountLinkSection):", JSON.stringify(response, null, 2));
 
       if (response?.isSuccess && response.result) {
         console.log("거래내역 데이터 구조:", {
-          Header: response.result.Header,
-          REC: response.result.REC,
+          list: response.result.list,
+          totalCount: response.result.totalCount,
           rawResponse: response,
         });
 
         // 응답 구조 검증
-        if (!response.result.REC?.list) {
+        if (!response.result.list) {
           console.error("거래내역 데이터 구조가 올바르지 않습니다:", response.result);
           return;
         }
 
         // 거래내역 데이터 출력
-        console.log("거래내역 목록:", response.result.REC.list);
-        console.log("거래내역 총 개수:", response.result.REC.totalCount);
+        console.log("거래내역 목록:", response.result.list);
+        console.log("거래내역 총 개수:", response.result.totalCount);
 
         setConsumeHistory(response);
       } else {
@@ -106,12 +107,11 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
         ...prev,
         [name]: value,
       };
-      // 필터 업데이트 후 즉시 조회
-      setTimeout(() => {
-        fetchHistory();
-      }, 0);
+      console.log("새로운 필터:", newFilter); // 디버깅용 로그 추가
       return newFilter;
     });
+    // 상태 업데이트 후 즉시 조회
+    fetchHistory();
   };
 
   const handleAccountLinkClick = async () => {
@@ -251,7 +251,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
               <div className="flex justify-center items-center h-40">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
               </div>
-            ) : consumeHistory?.result?.REC?.list && consumeHistory.result.REC.list.length > 0 ? (
+            ) : consumeHistory?.result?.list && consumeHistory.result.list.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className="bg-gray-50">
@@ -263,7 +263,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
                     </tr>
                   </thead>
                   <tbody>
-                    {consumeHistory.result.REC.list.map((transaction: ConsumeHistory) => (
+                    {consumeHistory.result.list.map((transaction: ConsumeHistory) => (
                       <tr key={transaction.transactionUniqueNo} className="border-b border-gray-100">
                         <td className="px-6 py-4 text-sm font-korean-pixel text-gray-500">
                           {`${transaction.transactionDate.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")} ${transaction.transactionTime.replace(/(\d{2})(\d{2})(\d{2})/, "$1:$2:$3")}`}
