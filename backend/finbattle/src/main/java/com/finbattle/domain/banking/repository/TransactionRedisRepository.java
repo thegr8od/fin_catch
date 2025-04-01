@@ -13,26 +13,24 @@ public class TransactionRedisRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private String getDatakey(String accountNo) {
-        return "account:" + accountNo;
+    private String getDatakey(String accountNo, String date) {
+        return "account:" + accountNo + ":date:" + date.substring(0, 6);
     }
 
-    // 게임 저장
-    public void save(String accountNo, TransactionList transactions) {
-        redisTemplate.opsForValue().set(getDatakey(accountNo), transactions, 1, TimeUnit.HOURS);
+    public void save(String accountNo, TransactionList transactions, String date) {
+        redisTemplate.opsForValue()
+            .set(getDatakey(accountNo, date), transactions, 5, TimeUnit.MINUTES);
     }
 
-    // 게임 조회
-    public Optional<TransactionList> findById(String accountNo) {
-        Object value = redisTemplate.opsForValue().get(getDatakey(accountNo));
+    public Optional<TransactionList> findById(String accountNo, String date) {
+        Object value = redisTemplate.opsForValue().get(getDatakey(accountNo, date));
         if (value instanceof TransactionList list) {
             return Optional.of(list);
         }
         return Optional.empty();
     }
 
-    // 게임 삭제
-    public void delete(String accountNo) {
-        redisTemplate.delete(getDatakey(accountNo));
+    public void delete(String accountNo, String date) {
+        redisTemplate.delete(getDatakey(accountNo, date));
     }
 }

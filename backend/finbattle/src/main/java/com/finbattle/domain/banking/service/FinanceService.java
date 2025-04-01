@@ -1,5 +1,6 @@
 package com.finbattle.domain.banking.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
@@ -17,4 +18,6 @@ public interface FinanceService {
 
     TransactionList loadAllTransaction(Long memberId,
         LoadAllTransactionRequestDto dto);
+
+    String AnalysisSpend(Long memberId, Integer year, Integer month) throws JsonProcessingException;
 }
