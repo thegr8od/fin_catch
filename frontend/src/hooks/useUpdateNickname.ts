@@ -16,6 +16,7 @@ export const useCheckNickname = () => {
   const checkNicknameAvailability = async (nickname: string) => {
     return await checkNickname(undefined, {
       url: `api/member/public/nickname`,
+      params: { nickname },
     });
   };
 

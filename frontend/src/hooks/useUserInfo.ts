@@ -32,7 +32,7 @@ export const useUserInfo = (autoFetch: boolean = true) => {
         dispatch(setUser(response.result));
       } else {
         console.error("사용자 정보 요청 실패:", response.error);
-        dispatch(setError(response.error));
+        dispatch(setError(response?.error || "사용자 정보를 가져오는데 실패했습니다."));
         dispatch(clearUser());
       }
     } catch (err: any) {
