@@ -43,7 +43,13 @@ export class RoomManager {
   private handleWebSocketMessage = async (message: IMessage) => {
     console.log("=== WebSocket 메시지 수신 시작 ===");
     try {
-      const data = JSON.parse(message.body);
+      console.log("message.body:", message.body);
+      // 첫 번째 파싱
+      const firstParse = typeof message.body === "string" ? JSON.parse(message.body) : message.body;
+      // 만약 결과가 문자열이면 한 번 더 파싱
+      const data = typeof firstParse === "string" ? JSON.parse(firstParse) : firstParse;
+
+      console.log("파싱된 데이터:", data.event);
       console.log("이벤트 타입:", data.event, "데이터:", data);
 
       // COUNT 이벤트는 무시 (불필요한 업데이트 방지)
@@ -257,10 +263,12 @@ export class RoomManager {
    */
   private convertMembersToUserStatus(members: RoomMember[]): UserStatus[] {
     return members.map((member) => ({
+      memberId: member.memberId,
       isReady: member.status === "READY",
       isHost: member.nickname === this.roomInfo?.host?.nickname,
       nickname: member.nickname,
       mainCat: member.mainCat,
+      status: member.status,
     }));
   }
 

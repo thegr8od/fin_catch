@@ -8,6 +8,8 @@ import { RoomInfo, UserStatus } from "../types/Room/Room";
 import { RoomPrepareErrorBoundary } from "../components/error/RoomPrepareErrorBoundary";
 import { useRoom } from "../hooks/useRoom";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { UserList } from "../components/room/UserList";
+import { RoomInfoComponent } from "../components/room/RoomInfoComponent";
 
 /**
  * 채팅 메시지 인터페이스
@@ -293,71 +295,12 @@ const RoomPreparePage: React.FC = () => {
           </div>
 
           <div className="flex flex-1 gap-6">
-            {/* 왼쪽: 방 정보 및 플레이어 목록 */}
             <div className="w-2/3 bg-white bg-opacity-80 rounded-lg p-6 flex flex-col">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4">방 정보</h2>
-                <div className="space-y-2">
-                  <p>
-                    <span className="font-semibold">최대 인원:</span> {roomInfo.maxPeople}명
-                  </p>
-                  <p>
-                    <span className="font-semibold">상태:</span> {roomInfo.status}
-                  </p>
-                  <p>
-                    <span className="font-semibold">방장:</span> {roomInfo.host.nickname}
-                  </p>
-                </div>
-              </div>
-
+              <RoomInfoComponent roomInfo={roomInfo} />
               <h3 className="text-xl font-bold mb-3">플레이어 목록</h3>
-              <div className="flex-1 overflow-y-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="py-2 px-4 text-left">닉네임</th>
-                      <th className="py-2 px-4 text-center">상태</th>
-                      <th className="py-2 px-4 text-center">역할</th>
-                      {isHost && <th className="py-2 px-4 text-center">액션</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.nickname} className="border-t border-gray-300">
-                        <td className="py-3 px-4">{user.nickname}</td>
-                        <td className="py-3 px-4 text-center">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${user.isReady ? "bg-green-200 text-green-800" : "bg-yellow-200 text-yellow-800"}`}>
-                            {user.isReady ? "준비 완료" : "대기 중"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-center">{user.isHost ? "방장" : "참가자"}</td>
-                        {isHost && (
-                          <td className="py-3 px-4 text-center">
-                            {!user.isHost && (
-                              <button onClick={() => handleKick(user.memberId)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                강퇴
-                              </button>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <UserList users={users} isHost={isHost} onKick={handleKick} />
 
               <div className="flex justify-between mt-6">
-                {/* {currentMember && (
-                  <button
-                    onClick={() => handleReadyToggle(currentMember.nickname, currentMember.status)}
-                    className={`px-6 py-3 rounded-lg font-bold ${
-                      currentMember.status === "READY" ? "bg-yellow-400 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"
-                    } transition-colors`}
-                  >
-                    {currentMember.status === "READY" ? "준비 취소" : "준비 완료"}
-                  </button>
-                )} */}
-
                 {isHost && (
                   <button
                     onClick={handleGameStart}
