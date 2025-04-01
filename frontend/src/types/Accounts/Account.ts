@@ -40,7 +40,7 @@ export interface ConsumeHistory {
   transactionMemo: string | null;
 }
 
-export interface ConsumeHistoryREC {
+export interface ConsumeHistoryList {
   totalCount: string;
   list: ConsumeHistory[];
 }
@@ -57,14 +57,9 @@ export interface ConsumeHistoryHeader {
   institutionTransactionUniqueNo: string;
 }
 
-export interface ConsumeHistoryResponse {
-  Header: ConsumeHistoryHeader;
-  REC: ConsumeHistoryREC;
-}
-
 export interface AllConsumeHistory {
   isSuccess: boolean;
   code: number;
   message: string;
-  result: ConsumeHistoryResponse;
+  result: ConsumeHistoryList;
 }
