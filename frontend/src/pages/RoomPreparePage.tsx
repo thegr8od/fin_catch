@@ -305,7 +305,7 @@ const RoomPreparePage: React.FC = () => {
 
   // 준비 상태 토글
   const handleToggleReady = async () => {
-    if (!roomId || !memberId) return;
+    if (!roomId) return;
 
     try {
       if (isReady) {
@@ -438,7 +438,7 @@ const RoomPreparePage: React.FC = () => {
   }
 
   // 현재 사용자의 준비 상태 확인
-  const currentMember = redisRoom.members.find((member) => member.memberId === memberId);
+  const currentMember = redisRoom.members.find((member) => member.nickname === user?.nickname);
   const currentIsReady = currentMember?.status === "READY";
 
   const isLoading = readyLoading || unreadyLoading || startLoading || leaveLoading;
@@ -529,7 +529,7 @@ const RoomPreparePage: React.FC = () => {
                     <button
                       onClick={handleToggleReady}
                       disabled={readyLoading || unreadyLoading}
-                      className={`px-6 py-3 rounded-lg font-bold ${currentIsReady ? "bg-yellow text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"} transition-colors`}
+                      className={`px-6 py-3 rounded-lg font-bold ${currentIsReady ? "bg-yellow-500 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"} transition-colors`}
                     >
                       {readyLoading || unreadyLoading ? "처리 중..." : currentIsReady ? "준비 취소" : "준비 완료"}
                     </button>
