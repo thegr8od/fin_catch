@@ -101,12 +101,12 @@ const RoomPreparePage: React.FC = () => {
   const { client, connected, subscribe, unsubscribe, send, topics, messageTypes } = useWebSocket();
   const { user } = useUserInfo();
   // 사용자 정보 로드 (실제로는 로그인 정보에서 가져옴)
-  useEffect(() => {
-    // 임시 사용자 ID (실제로는 로그인한 사용자 정보)
-    // 예시를 위해 로컬 스토리지에서 가져오는 방식 사용
-    const userIdFromStorage = parseInt(localStorage.getItem("userId") || "1");
-    setMemberId(userIdFromStorage);
-  }, []);
+  // useEffect(() => {
+  //   // 임시 사용자 ID (실제로는 로그인한 사용자 정보)
+  //   // 예시를 위해 로컬 스토리지에서 가져오는 방식 사용
+  //   const userIdFromStorage = parseInt(localStorage.getItem("userId") || "1");
+  //   setMemberId(userIdFromStorage);
+  // }, []);
 
   // 방 정보 로드
   useEffect(() => {
@@ -276,11 +276,11 @@ const RoomPreparePage: React.FC = () => {
     const chatTopic = topics.CHAT(roomId);
     const handleChatMessage = (message: IMessage) => {
       try {
-        const chatData: ChatMessage = JSON.parse(message.body);
+        const chatData = JSON.parse(message.body);
         setChatMessages((prev) => [
           ...prev,
           {
-            sender: chatData.nickname || "알 수 없음",
+            sender: chatData.sender, // 이미 nickname이 들어있음
             message: chatData.content,
             timestamp: new Date(),
           },
@@ -386,12 +386,21 @@ const RoomPreparePage: React.FC = () => {
   // 채팅 메시지 전송
   const sendChatMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || !roomId || !client || !connected) return;
+    if (!chatInput.trim() || !roomId || !client || !connected || !redisRoom) return;
+
+    // redisRoom에서 현재 사용자의 정보 찾기
+    const currentMember = redisRoom.members.find((member) => member.nickname === user?.nickname);
+
+    if (!currentMember) {
+      showCustomAlert("사용자 정보를 찾을 수 없습니다.");
+      return;
+    }
 
     const chatTopic = `/app/chat/${roomId}`;
     const chatData = {
-      content: chatInput,
       roomId: parseInt(roomId),
+      sender: currentMember.memberId, // memberId를 sender로 보냄
+      content: chatInput,
     };
 
     send(chatTopic, chatData);

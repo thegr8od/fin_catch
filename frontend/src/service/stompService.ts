@@ -1,4 +1,4 @@
-import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
+import { Client, IMessage, StompHeaders, StompSubscription } from "@stomp/stompjs";
 
 /**
  * WebSocket 서버 연결 URL
@@ -88,11 +88,15 @@ export const sendMessage = (client: Client, destination: string, body: unknown, 
   // 클라이언트 연결 상태 확인
   if (client.connected) {
     try {
+      const token = localStorage.getItem("accessToken");
       // 메시지 발행(publish)
       client.publish({
         destination, // 메시지 대상 경로
         body: JSON.stringify(body), // 메시지 내용을 JSON 문자열로 변환
-        headers, // 추가 헤더
+        headers: {
+          ...headers,
+          Authorization: token ? `Bearer ${token}` : "",
+        }, // 추가 헤더
       });
 
       console.log("STOMP 메시지 전송 완료!");
