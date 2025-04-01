@@ -40,34 +40,80 @@ export class RoomManager {
   /**
    * WebSocket 메시지 처리
    */
-  private handleWebSocketMessage = (message: IMessage) => {
+  private handleWebSocketMessage = async (message: IMessage) => {
     console.log("=== WebSocket 메시지 수신 시작 ===");
-    console.log("원본 메시지:", message);
-    console.log("메시지 body:", message.body);
     try {
       const data = JSON.parse(message.body);
-      console.log("파싱된 데이터:", data);
-      console.log("이벤트 타입:", data.event);
-      console.log("방 데이터:", data.data);
+      console.log("이벤트 타입:", data.event, "데이터:", data);
 
-      if (data.event === "CREATE" || data.event === "UPDATE" || data.event === "JOIN" || data.event === "INFO") {
-        console.log("방 정보 업데이트 시도");
-        if (data.data) {
-          console.log("setRoomInfo 호출 전 roomInfo:", this.roomInfo);
-          this.setRoomInfo(data.data);
-          console.log("setRoomInfo 호출 후 roomInfo:", this.roomInfo);
-          console.log("roomInfoUpdated 이벤트 발생 시도");
-          this.eventEmitter.emit("roomInfoUpdated", data.data);
-          console.log("roomInfoUpdated 이벤트 발생 완료");
-        } else {
-          console.log("data.data가 없음");
-        }
-      } else {
-        console.log("처리되지 않은 이벤트 타입:", data.event);
+      // COUNT 이벤트는 무시 (불필요한 업데이트 방지)
+      if (data.event === "COUNT") {
+        console.log("COUNT 이벤트 무시");
+        return;
+      }
+
+      switch (data.event) {
+        case "CREATE":
+        case "UPDATE":
+        case "INFO":
+          console.log(`${data.event} 이벤트 처리 시작`);
+          if (data.data) {
+            // 방 정보 업데이트
+            this.setRoomInfo(data.data);
+            console.log("방 정보 업데이트 완료:", data.data);
+
+            // 사용자 목록 업데이트
+            if (data.data.members) {
+              const updatedUsers = data.data.members.map((member: any) => ({
+                memberId: member.memberId,
+                isReady: member.status === "READY",
+                isHost: data.data.host && member.memberId === data.data.host.memberId,
+                nickname: member.nickname,
+                mainCat: member.mainCat,
+                status: member.status,
+              }));
+
+              console.log("업데이트할 사용자 목록:", updatedUsers);
+              this.updateUsers(updatedUsers);
+
+              // roomInfoUpdated 이벤트 발생
+              this.eventEmitter.emit("roomInfoUpdated", {
+                ...data.data,
+                users: updatedUsers,
+              });
+            }
+
+            console.log(`${data.event} 이벤트 처리 완료`);
+          }
+          break;
+
+        case "JOIN_FAIL":
+          console.log("JOIN_FAIL 이벤트 수신:", data);
+          if (data.data?.message === "방 정원이 초과되었습니다.") {
+            console.log("방 정원 초과 메시지 수신");
+            this.eventEmitter.emit("roomCapacityExceeded", data.roomId);
+          } else {
+            this.eventEmitter.emit("error", new Error(data.data?.message || "입장에 실패했습니다."));
+          }
+          break;
+
+        case "READY":
+          console.log("READY 이벤트 수신 - 새로운 사용자 입장");
+          // INFO 이벤트가 자동으로 전송되므로 추가 처리 필요 없음
+          break;
+
+        case "UNREADY":
+        case "KICK":
+        case "LEAVE":
+          console.log(`${data.event} 이벤트 수신. 상태 변화 감지`);
+          // INFO 이벤트가 자동으로 전송되므로 추가 처리 필요 없음
+          break;
+
+        default:
+          console.log("처리되지 않은 이벤트 타입:", data.event);
       }
     } catch (error) {
       console.error("WebSocket 메시지 처리 실패:", error);
-      console.error("에러 상세:", error);
     }
     console.log("=== WebSocket 메시지 수신 완료 ===");
   };
@@ -93,6 +139,9 @@ export class RoomManager {
         console.error("WebSocket이 연결되어 있지 않습니다.");
         return false;
       }
+
+      // 기존 구독 해제
+      this.disconnectWebSocket();
 
       // 구독할 토픽 설정
       const roomTopic = `/topic/room/${roomId}`;
@@ -173,24 +222,31 @@ export class RoomManager {
 
     console.log("멤버 정보 변환 시작");
     try {
-      this.users = roomInfo.members.map((member) => {
-        const userStatus = {
-          isReady: member.status === "READY",
-          isHost: member.nickname === roomInfo.host?.nickname,
-          nickname: member.nickname,
-          mainCat: member.mainCat,
-        };
-        console.log(`멤버 변환 결과 (${member.nickname}):`, userStatus);
-        return userStatus;
+      const updatedUsers = roomInfo.members.map((member) => ({
+        memberId: member.memberId,
+        isReady: member.status === "READY",
+        isHost: roomInfo.host && member.memberId === roomInfo.host.memberId,
+        nickname: member.nickname,
+        mainCat: member.mainCat,
+        status: member.status,
+      }));
+
+      console.log("최종 users 배열:", updatedUsers);
+      this.users = updatedUsers;
+
+      // roomInfoUpdated 이벤트와 함께 업데이트된 사용자 목록 전달
+      this.eventEmitter.emit("roomInfoUpdated", {
+        ...roomInfo,
+        users: updatedUsers,
       });
-      console.log("최종 users 배열:", this.users);
+
+      // 사용자 목록 업데이트 이벤트도 따로 발생
+      this.eventEmitter.emit("usersUpdated", updatedUsers);
     } catch (error) {
       console.error("멤버 정보 변환 중 오류 발생:", error);
       this.users = [];
     }
 
-    console.log("roomInfoUpdated 이벤트 발생");
-    this.eventEmitter.emit("roomInfoUpdated", roomInfo);
     console.log("=== 방 정보 설정 완료 ===");
   }
 
@@ -427,7 +483,47 @@ export class RoomManager {
    */
   async createRoom(roomTitle: string, password: string, maxPlayer: number, roomType: string, subjectType: string): Promise<number> {
     try {
-      console.log("방 생성 시작");
+      console.log("=== 방 생성 프로세스 시작 ===");
+
+      // 1. WebSocket 연결 상태 확인
+      if (!this.webSocket) {
+        throw new Error("WebSocket이 초기화되지 않았습니다.");
+      }
+
+      if (!this.webSocket.client?.connected) {
+        console.log("WebSocket 연결이 필요합니다. 연결 시도...");
+        try {
+          await new Promise((resolve, reject) => {
+            if (this.webSocket?.client?.connected) {
+              resolve(true);
+              return;
+            }
+
+            let retryCount = 0;
+            const maxRetries = 3;
+            const retryInterval = setInterval(async () => {
+              retryCount++;
+              console.log(`WebSocket 연결 재시도 (${retryCount}/${maxRetries})`);
+
+              if (this.webSocket?.client?.connected) {
+                clearInterval(retryInterval);
+                resolve(true);
+                return;
+              }
+
+              if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+                reject(new Error("WebSocket 연결 실패"));
+              }
+            }, 1000);
+          });
+        } catch (error) {
+          throw new Error("WebSocket 연결에 실패했습니다.");
+        }
+      }
+
+      // 2. API로 방 생성
+      console.log("방 생성 API 호출");
       const response = await this.roomApi.createRoom(roomTitle, password, maxPlayer, roomType, subjectType);
 
       if (!response.isSuccess || !response.result) {
@@ -437,28 +533,32 @@ export class RoomManager {
       const { roomId } = response.result;
       console.log("방 생성 성공, roomId:", roomId);
 
-      // WebSocket 연결 시도
-      if (this.webSocket) {
-        console.log("WebSocket 연결 시도");
-        const connected = await this.connectWebSocket(roomId.toString());
-        if (!connected) {
-          console.log("WebSocket 연결은 실패했지만 방 생성은 계속 진행합니다.");
-        }
+      // 3. 방 토픽 구독
+      console.log("방 토픽 구독 시도");
+      const connected = await this.connectWebSocket(roomId.toString());
+      if (!connected) {
+        throw new Error("방 구독에 실패했습니다.");
       }
+      console.log("방 토픽 구독 성공");
 
-      // 방 정보 조회
+      // 4. 방 정보 조회
       console.log("방 정보 조회 시도");
       const roomInfoResponse = await this.roomApi.getRoomInfo(roomId);
-      if (roomInfoResponse.isSuccess && roomInfoResponse.result) {
-        console.log("방 정보 조회 성공");
-        this.setRoomInfo(roomInfoResponse.result);
-      } else {
-        console.log("방 정보 조회 실패");
+      if (!roomInfoResponse.isSuccess || !roomInfoResponse.result) {
+        throw new Error("방 정보 조회에 실패했습니다.");
       }
+
+      // 5. 방 정보 설정
+      console.log("방 정보 설정");
+      this.setRoomInfo(roomInfoResponse.result);
+      console.log("=== 방 생성 프로세스 완료 ===");
 
       return roomId;
     } catch (error) {
       console.error("방 생성 실패:", error);
+      // 실패 시 정리 작업
+      this.disconnectWebSocket();
+      this.setRoomInfo(null);
       throw error;
     }
   }
@@ -467,44 +567,74 @@ export class RoomManager {
    * 방에 입장합니다.
    */
   async joinRoom(roomId: number, skipApiCall: boolean = false): Promise<void> {
-    console.log("joinRoom 시작", { roomId, skipApiCall });
+    console.log("=== 방 입장 프로세스 시작 ===");
     try {
-      if (!skipApiCall) {
-        console.log("방 참가 API 호출 시도");
-        const response = await this.roomApi.joinRoom(roomId);
-        console.log("방 참가 API 응답:", response);
-
-        if (!response || !response.isSuccess) {
-          throw new Error(response?.message || "방 입장에 실패했습니다.");
-        }
-
-        // 방 정보 조회
-        console.log("방 정보 조회 시도");
-        const roomInfoResponse = await this.roomApi.getRoomInfo(roomId);
-        console.log("방 정보 조회 응답:", roomInfoResponse);
-
-        if (!roomInfoResponse || !roomInfoResponse.isSuccess) {
-          throw new Error(roomInfoResponse?.message || "방 정보를 불러올 수 없습니다.");
-        }
-
-        // 방 정보 설정
-        console.log("방 정보 설정 시도:", roomInfoResponse.result);
-        this.setRoomInfo(roomInfoResponse.result);
-        console.log("방 정보 설정 완료");
+      // 1. WebSocket 연결 상태 확인 및 연결
+      if (!this.webSocket) {
+        throw new Error("WebSocket이 초기화되지 않았습니다.");
       }
 
-      // WebSocket 체크 및 연결
-      if (this.webSocket) {
-        console.log("WebSocket 연결 시도");
-        const connected = await this.connectWebSocket(roomId.toString());
-        console.log("WebSocket 연결 결과:", connected);
+      if (!this.webSocket.client?.connected) {
+        console.log("WebSocket 연결이 필요합니다. 연결 시도...");
+        try {
+          await new Promise((resolve, reject) => {
+            if (this.webSocket?.client?.connected) {
+              resolve(true);
+              return;
+            }
 
-        if (!connected) {
+            let retryCount = 0;
+            const maxRetries = 3;
+            const retryInterval = setInterval(async () => {
+              retryCount++;
+              console.log(`WebSocket 연결 재시도 (${retryCount}/${maxRetries})`);
+
+              if (this.webSocket?.client?.connected) {
+                clearInterval(retryInterval);
+                resolve(true);
+                return;
+              }
+
+              if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+                reject(new Error("WebSocket 연결 실패"));
+              }
+            }, 1000);
+          });
+        } catch (error) {
           throw new Error("WebSocket 연결에 실패했습니다.");
         }
       }
+
+      if (!skipApiCall) {
+        // 2. 방 참가 API 호출
+        console.log("방 참가 API 호출");
+        const response = await this.roomApi.joinRoom(roomId);
+        if (!response || !response.isSuccess) {
+          throw new Error(response?.message || "방 입장에 실패했습니다.");
+        }
+        console.log("방 참가 API 호출 성공");
+      }
+
+      // 3. 방 토픽 구독 - 한 번만 시도
+      if (!this.webSocket.subscriptions[`/topic/room/${roomId}`]) {
+        console.log("방 토픽 구독 시도");
+        const connected = await this.connectWebSocket(roomId.toString());
+        if (!connected) {
+          throw new Error("방 구독에 실패했습니다.");
+        }
+        console.log("방 토픽 구독 성공");
+      } else {
+        console.log("이미 구독 중인 토픽입니다.");
+      }
+
+      // 4. 방 정보는 READY와 INFO 이벤트를 통해 자동으로 업데이트됨
+      console.log("=== 방 입장 프로세스 완료 ===");
     } catch (error) {
-      console.error("방 입장 실패 상세:", error);
+      console.error("방 입장 실패:", error);
+      // 실패 시 정리 작업
+      this.disconnectWebSocket();
+      this.setRoomInfo(null);
       throw error;
     }
   }

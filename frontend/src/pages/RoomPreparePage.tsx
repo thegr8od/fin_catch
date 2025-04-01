@@ -4,7 +4,7 @@ import Background from "../components/layout/Background";
 import mainBg from "../assets/main.gif";
 import { CustomAlert } from "../components/layout/CustomAlert";
 import { RoomManager } from "../manager/RoomManager";
-import { RoomInfo } from "../types/Room/Room";
+import { RoomInfo, UserStatus } from "../types/Room/Room";
 import { RoomPrepareErrorBoundary } from "../components/error/RoomPrepareErrorBoundary";
 import { useRoom } from "../hooks/useRoom";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -42,6 +42,7 @@ const RoomPreparePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
+  const [users, setUsers] = useState<UserStatus[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [showAlert, setShowAlert] = useState(false);
@@ -116,6 +117,12 @@ const RoomPreparePage: React.FC = () => {
       console.log("방 정보 상태 업데이트 완료");
     };
 
+    const handleUsersUpdated = (updatedUsers: UserStatus[]) => {
+      console.log("사용자 목록 업데이트 이벤트 수신:", updatedUsers);
+      setUsers(updatedUsers);
+      console.log("사용자 목록 상태 업데이트 완료");
+    };
+
     const handleUserKicked = (userId: number) => {
       console.log("사용자 강퇴 이벤트 수신:", userId);
       if (userId === roomInfo?.host.memberId) {
@@ -143,9 +150,15 @@ const RoomPreparePage: React.FC = () => {
       setRoomInfo(initialRoomInfo);
     }
 
+    // 초기 사용자 목록 설정
+    const initialUsers = roomManager.getUsers();
+    console.log("초기 사용자 목록 설정:", initialUsers);
+    setUsers(initialUsers);
+
     // 이벤트 구독
     console.log("이벤트 구독 시작");
     roomManager.subscribe("roomInfoUpdated", handleRoomInfo);
+    roomManager.subscribe("usersUpdated", handleUsersUpdated);
     roomManager.subscribe("userKicked", handleUserKicked);
     roomManager.subscribe("roomDeleted", handleRoomDeleted);
     roomManager.subscribe("error", handleError);
@@ -186,18 +199,20 @@ const RoomPreparePage: React.FC = () => {
   }, [roomId, roomInfo, roomManager, showCustomAlert]);
 
   // 사용자 강퇴
-  // const handleKick = useCallback(
-  //   async (targetUserId: number) => {
-  //     if (!roomId || !roomInfo || !roomManager) return;
-  //     try {
-  //       await roomManager.kickUser(Number(roomId), roomInfo.host.nickname);
-  //     } catch (error) {
-  //       console.error("강퇴 실패:", error);
-  //       showCustomAlert("강퇴할 수 없습니다.");
-  //     }
-  //   },
-  //   [roomId, roomInfo, roomManager, showCustomAlert]
-  // );
+  const handleKick = useCallback(
+    async (targetUserId: number) => {
+      if (!roomId || !roomInfo || !roomManager) return;
+      try {
+        const hostUser = users.find((u) => u.isHost);
+        if (!hostUser) return;
+        await roomManager.kickUser(Number(roomId), hostUser.nickname, users.find((u) => u.memberId === targetUserId)?.nickname || "");
+      } catch (error) {
+        console.error("강퇴 실패:", error);
+        showCustomAlert("강퇴할 수 없습니다.");
+      }
+    },
+    [roomId, roomInfo, roomManager, showCustomAlert, users]
+  );
 
   // 방 나가기
   const handleLeave = useCallback(async () => {
@@ -229,7 +244,6 @@ const RoomPreparePage: React.FC = () => {
     [chatInput]
   );
 
-  const users = roomManager?.getUsers() || [];
   const hostUser = users.find((u) => u.isHost);
   const isHost = roomInfo?.host.nickname === hostUser?.nickname;
   const currentMember = roomInfo?.members.find((m) => m.nickname === hostUser?.nickname);
@@ -308,24 +322,24 @@ const RoomPreparePage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {roomInfo.members.map((member) => (
-                      <tr key={member.nickname} className="border-t border-gray-300">
-                        <td className="py-3 px-4">{member.nickname}</td>
+                    {users.map((user) => (
+                      <tr key={user.nickname} className="border-t border-gray-300">
+                        <td className="py-3 px-4">{user.nickname}</td>
                         <td className="py-3 px-4 text-center">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${member.status === "READY" ? "bg-green-200 text-green-800" : "bg-yellow-200 text-yellow-800"}`}>
-                            {member.status === "READY" ? "준비 완료" : "대기 중"}
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${user.isReady ? "bg-green-200 text-green-800" : "bg-yellow-200 text-yellow-800"}`}>
+                            {user.isReady ? "준비 완료" : "대기 중"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center">{member.nickname === roomInfo.host.nickname ? "방장" : "참가자"}</td>
-                        {/* {isHost && (
-                          // <td className="py-3 px-4 text-center">
-                          //   {member.nickname !== roomInfo.host.nickname && (
-                          //     // <button onClick={() => handleKick(member.nickname)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                          //     //   강퇴
-                          //     // </button>
-                          //   )}
-                          // </td>
-                        )} */}
+                        <td className="py-3 px-4 text-center">{user.isHost ? "방장" : "참가자"}</td>
+                        {isHost && (
+                          <td className="py-3 px-4 text-center">
+                            {!user.isHost && (
+                              <button onClick={() => handleKick(user.memberId)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                                강퇴
+                              </button>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -347,11 +361,9 @@ const RoomPreparePage: React.FC = () => {
                 {isHost && (
                   <button
                     onClick={handleGameStart}
-                    disabled={!roomInfo.members.every((member) => member.status === "READY" || member.nickname === roomInfo.host.nickname)}
+                    disabled={!users.every((user) => user.isReady || user.isHost)}
                     className={`px-6 py-3 rounded-lg font-bold ${
-                      !roomInfo.members.every((member) => member.status === "READY" || member.nickname === roomInfo.host.nickname)
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-green-500 text-white hover:bg-green-600"
+                      !users.every((user) => user.isReady || user.isHost) ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-green-500 text-white hover:bg-green-600"
                     } transition-colors`}
                   >
                     게임 시작

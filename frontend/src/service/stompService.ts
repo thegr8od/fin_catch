@@ -17,39 +17,72 @@ const RECONNECT_DELAY = 5000;
 export const createStompClient = (): Promise<Client> => {
   return new Promise((resolve, reject) => {
     try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.error("인증 토큰이 없습니다.");
+        reject(new Error("인증 토큰이 없습니다."));
+        return;
+      }
+
       console.log("WebSocket 연결 시도:", SOCKET_URL);
+      console.log("인증 토큰:", accessToken);
 
       const client = new Client({
         brokerURL: SOCKET_URL,
         connectHeaders: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         debug: (str) => {
           console.log("STOMP Debug:", str);
         },
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        reconnectDelay: 0, // 자동 재연결 비활성화
+        heartbeatIncoming: 0, // 하트비트 비활성화
+        heartbeatOutgoing: 0,
       });
 
+      // 연결 성공 시
       client.onConnect = (frame) => {
         console.log("STOMP 연결 성공:", frame);
+        console.log("클라이언트 상태:", {
+          connected: client.connected,
+          active: client.active,
+        });
         resolve(client);
       };
 
+      // STOMP 프로토콜 에러
       client.onStompError = (frame) => {
-        console.error("STOMP 에러:", frame);
-        reject(new Error(`STOMP 연결 실패: ${frame.headers?.message || "알 수 없는 오류"}`));
+        const errorMessage = frame.headers?.message || "알 수 없는 STOMP 오류";
+        console.error("STOMP 에러:", errorMessage, frame);
+        client.deactivate(); // 클라이언트 비활성화
+        reject(new Error(`STOMP 연결 실패: ${errorMessage}`));
       };
 
+      // WebSocket 에러
       client.onWebSocketError = (event) => {
         console.error("WebSocket 에러:", event);
+        client.deactivate(); // 클라이언트 비활성화
         reject(new Error("WebSocket 연결 실패"));
       };
 
+      // 연결 해제 시
       client.onDisconnect = (frame) => {
         console.log("STOMP 연결 해제:", frame);
+        console.log("클라이언트 상태:", {
+          connected: client.connected,
+          active: client.active,
+        });
+        // 의도적인 연결 해제가 아닌 경우에만 에러 처리
+        if (!client.active) {
+          reject(new Error("STOMP 연결이 예기치 않게 종료되었습니다."));
+        }
       };
+
+      // 클라이언트 활성화 전에 모든 이전 연결 정리
+      if (client.connected) {
+        console.log("기존 연결 해제");
+        client.deactivate();
+      }
 
       console.log("STOMP 클라이언트 활성화 시도");
       client.activate();
