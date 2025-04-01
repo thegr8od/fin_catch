@@ -1,4 +1,4 @@
-package com.finbattle.domain.banking.model;
+package com.finbattle.domain.banking.dto.transaction;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -12,8 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TransactionList {
+public class TransactionListDto {
 
-    private Integer totalCount;
-    private List<TransactionRecord> list;
+    private String totalCount;
+    private List<TransactionRecordDto> list;
 }

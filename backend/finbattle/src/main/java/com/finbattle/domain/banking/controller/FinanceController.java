@@ -1,8 +1,10 @@
 package com.finbattle.domain.banking.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.banking.service.FinanceService;
@@ -69,7 +71,15 @@ public class FinanceController implements FinanceApi {
             detail.getMemberId(),
             requestDto
         );
-        log.info("거래 내역 조회, 사용자 ID: {}, 조회계좌: {}", detail.getMemberId(), requestDto.getAccountNo());
+        log.info("거래 내역 조회, 사용자 ID: {}, 조회계좌: {}", detail.getMemberId(), requestDto.accountNo());
         return ResponseEntity.ok(new BaseResponse<>(transactionList));
+    }
+
+    @Override
+    public ResponseEntity<BaseResponse<String>> analysisTransaction(
+        AuthenticatedUser detail, AnalysisRequestDto requestDto) throws JsonProcessingException {
+        return ResponseEntity.ok(new BaseResponse<>(
+            financeService.AnalysisSpend(detail.getMemberId(), requestDto.year(),
+                requestDto.month())));
     }
 }

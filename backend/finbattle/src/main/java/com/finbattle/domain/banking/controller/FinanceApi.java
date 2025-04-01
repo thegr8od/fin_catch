@@ -1,8 +1,10 @@
 package com.finbattle.domain.banking.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
@@ -70,4 +72,14 @@ public interface FinanceApi {
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestBody LoadAllTransactionRequestDto requestDto
     );
+
+    @Operation(summary = "소비 내역 분석", description = "로그인한 사용자의 소비 내역을 분석합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "소비 내역 분석 성공")
+    })
+    @PostMapping("/account/analysis")
+    ResponseEntity<BaseResponse<String>> analysisTransaction(
+        @AuthenticationPrincipal AuthenticatedUser detail,
+        @RequestBody AnalysisRequestDto requestDto
+    ) throws JsonProcessingException;
 }
