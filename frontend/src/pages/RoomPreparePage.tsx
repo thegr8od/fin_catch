@@ -268,12 +268,36 @@ const RoomPreparePage: React.FC = () => {
             });
           }
         } else if (event === "START") {
-          // 기존 방 구독 해제
-          unsubscribe(roomTopic);
-          unsubscribe(chatTopic);
-          // 게임 시작
-          if (roomRef.current?.subjectType) {
-            navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`);
+          console.log("🔵 START 이벤트 수신된 원본 데이터:", parsedData);
+          const members = parsedData.data;
+          console.log("🔵 게임 시작 멤버 정보:", members);
+
+          try {
+            // 기존 방 구독 해제
+            unsubscribe(roomTopic);
+            unsubscribe(chatTopic);
+
+            // 데이터 유효성 검사
+            if (!Array.isArray(members)) {
+              console.error("🔴 멤버 데이터가 배열이 아님:", members);
+              return;
+            }
+
+            console.log("🔵 게임으로 전달될 최종 데이터:", {
+              path: `/one-to-one/${roomRef.current?.subjectType?.toLowerCase()}`,
+              players: members,
+            });
+
+            // 게임 시작
+            if (roomRef.current?.subjectType) {
+              navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`, {
+                state: {
+                  players: members,
+                },
+              });
+            }
+          } catch (error) {
+            console.error("🔴 게임 시작 처리 중 오류 발생:", error);
           }
         } else {
           console.log("알 수 없는 이벤트:", event, "서버 데이터:", parsedData);
