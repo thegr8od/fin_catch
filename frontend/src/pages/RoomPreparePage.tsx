@@ -110,7 +110,7 @@ const RoomPreparePage: React.FC = () => {
 
   // 방 정보 로드
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !connected) return;
 
     const loadRoomInfo = async () => {
       try {
@@ -144,7 +144,7 @@ const RoomPreparePage: React.FC = () => {
     };
 
     loadRoomInfo();
-  }, [roomId, navigate, fetchRoom, fetchRoomInfo]);
+  }, [roomId, navigate, fetchRoom, fetchRoomInfo, connected]);
 
   // 에러 처리
   useEffect(() => {
