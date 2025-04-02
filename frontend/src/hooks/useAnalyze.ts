@@ -47,19 +47,23 @@ export const useAnalyze = () => {
   const transformWrongAnswersToCategories = (wrongAnswers: WrongAnswer[]): Category[] => {
     // 문제들을 카테고리별로 그룹화
     const groupedByCategory = wrongAnswers.reduce((acc, wrongAnswer) => {
-      // TODO: 실제 카테고리 정보를 가져오는 API 호출 필요
-      const categoryId = 1; // 임시 카테고리 ID
+      // 임시 카테고리 ID와 태그 - tag 속성 추가
+      const categoryId = 1;
+      const categoryTag = `category-${categoryId}`;
+      
       if (!acc[categoryId]) {
         acc[categoryId] = {
           id: categoryId,
-          name: "금융통화위원회의 역할", // 임시 카테고리 이름
+          tag: categoryTag, // 필수 속성 추가
+          name: "금융통화위원회의 역할",
           problems: [],
           totalProblems: 5,
         };
       }
+      
       acc[categoryId].problems.push({
         id: wrongAnswer.quizId,
-        title: `문제 ${wrongAnswer.quizId}`, // TODO: 실제 문제 제목을 가져오는 API 호출 필요
+        title: `문제 ${wrongAnswer.quizId}`,
         type: "객관식",
         wrongCount: 1,
         correctCount: 0,
@@ -73,6 +77,7 @@ export const useAnalyze = () => {
         weakPoints: [],
         recommendations: [],
       });
+      
       return acc;
     }, {} as Record<number, Category>);
 
