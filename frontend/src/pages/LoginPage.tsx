@@ -104,7 +104,7 @@ const LoginPage = () => {
 
       fetchToken();
     }
-  }, [location.pathname, location.search, isAuthenticated, setAuthState, loginProcessing, navigate]);
+  }, [ isAuthenticated, setAuthState, loginProcessing, navigate]);
 
   // 인증 상태에 따른 리다이렉트 처리
   useEffect(() => {
