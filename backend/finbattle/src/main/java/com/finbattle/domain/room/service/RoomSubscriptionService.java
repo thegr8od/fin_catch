@@ -37,6 +37,7 @@ public class RoomSubscriptionService {
     public void createRoomSubscription(RoomResponse response) {
         RedisRoom redisRoom = new RedisRoom();
         redisRoom.setRoomId(response.getRoomId());
+        redisRoom.setSubjectType(response.getSubjectType());
         redisRoom.setMaxPeople(2);
         redisRoom.setStatus(RoomStatus.OPEN);
 
