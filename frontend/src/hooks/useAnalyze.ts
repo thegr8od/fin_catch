@@ -52,6 +52,7 @@ export const useAnalyze = () => {
       if (!acc[categoryId]) {
         acc[categoryId] = {
           id: categoryId,
+          tag: "",
           name: "금융통화위원회의 역할", // 임시 카테고리 이름
           problems: [],
           totalProblems: 5,
