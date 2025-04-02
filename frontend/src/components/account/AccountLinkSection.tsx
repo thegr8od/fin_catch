@@ -24,12 +24,12 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [consumeHistory, setConsumeHistory] = useState<AllConsumeHistory | null>(null);
-  const { fetchAccountDetail, fetchConsumeHistory, patchAccount } = useAccount();
+  const { fetchAccountDetail, fetchConsumeHistory, patchAccount, fetchConsumeAnalysis } = useAccount();
 
   // 거래내역 필터 상태
   const [historyFilter, setHistoryFilter] = useState({
-    startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split("T")[0].replace(/-/g, ""),
-    endDate: new Date().toISOString().split("T")[0].replace(/-/g, ""),
+    year: new Date().getFullYear().toString(),
+    month: (new Date().getMonth() + 1).toString().padStart(2, "0"),
     transactionType: "A" as "A" | "M" | "D",
   });
 
@@ -53,48 +53,35 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
     }
   };
 
-  // 거래내역 조회
-  const fetchHistory = async () => {
+  const handleAnalysisAndFetch = async () => {
     if (!mainAccount) return;
-
-    setHistoryLoading(true);
     try {
-      console.log("API 요청 전 현재 필터:", historyFilter); // 디버깅용 로그 추가
-      const response = await fetchConsumeHistory(mainAccount.accountNo, historyFilter.startDate, historyFilter.endDate, historyFilter.transactionType);
-      console.log("거래내역 응답 (AccountLinkSection):", JSON.stringify(response, null, 2));
+      const [consumeAnalysisResponse, historyResponse] = await Promise.all([
+        fetchConsumeAnalysis(parseInt(historyFilter.year), parseInt(historyFilter.month)),
+        fetchConsumeHistory(mainAccount.accountNo, parseInt(historyFilter.year), parseInt(historyFilter.month)),
+      ]);
 
-      if (response?.isSuccess && response.result) {
-        console.log("거래내역 데이터 구조:", {
-          list: response.result.list,
-          totalCount: response.result.totalCount,
-          rawResponse: response,
-        });
-
-        // 응답 구조 검증
-        if (!response.result.list) {
-          console.error("거래내역 데이터 구조가 올바르지 않습니다:", response.result);
-          return;
-        }
-
-        // 거래내역 데이터 출력
-        console.log("거래내역 목록:", response.result.list);
-        console.log("거래내역 총 개수:", response.result.totalCount);
-
-        setConsumeHistory(response);
+      if (consumeAnalysisResponse?.isSuccess && consumeAnalysisResponse.result) {
+        console.log("소비 분석 응답 (AccountLinkSection):", JSON.stringify(consumeAnalysisResponse, null, 2));
       } else {
-        console.error("거래내역 조회 실패:", response?.message);
+        console.error("소비 분석 조회 실패:", consumeAnalysisResponse?.message);
+      }
+
+      if (historyResponse?.isSuccess && historyResponse.result) {
+        console.log("거래내역 응답 (AccountLinkSection):", JSON.stringify(historyResponse, null, 2));
+        setConsumeHistory(historyResponse);
+      } else {
+        console.error("거래내역 조회 실패:", historyResponse?.message);
       }
     } catch (error) {
-      console.error("거래내역 조회 에러:", error);
-    } finally {
-      setHistoryLoading(false);
+      console.error("요청 중 오류 발생:", error);
     }
   };
 
   // 최초 마운트 시 거래내역 조회
   useEffect(() => {
     if (mainAccount) {
-      fetchHistory();
+      handleAnalysisAndFetch();
     }
   }, [mainAccount?.accountNo]); // 계좌가 변경될 때만 실행
 
@@ -111,7 +98,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
       return newFilter;
     });
     // 상태 업데이트 후 즉시 조회
-    fetchHistory();
+    handleAnalysisAndFetch();
   };
 
   const handleAccountLinkClick = async () => {
@@ -216,35 +203,26 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
 
             <div className="flex gap-4 mb-6">
               <div className="flex-1">
-                <label className="block text-sm text-gray-500 font-korean-pixel mb-1">조회 시작일</label>
+                <label className="block text-sm text-gray-500 font-korean-pixel mb-1">조회 연도</label>
                 <input
-                  type="date"
-                  value={formatDateToInput(historyFilter.startDate)}
-                  onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                  type="number"
+                  value={historyFilter.year}
+                  onChange={(e) => handleFilterChange("year", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg font-korean-pixel"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm text-gray-500 font-korean-pixel mb-1">조회 종료일</label>
+                <label className="block text-sm text-gray-500 font-korean-pixel mb-1">조회 월</label>
                 <input
-                  type="date"
-                  value={formatDateToInput(historyFilter.endDate)}
-                  onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                  type="number"
+                  value={historyFilter.month}
+                  onChange={(e) => handleFilterChange("month", e.target.value.padStart(2, "0"))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg font-korean-pixel"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-sm text-gray-500 font-korean-pixel mb-1">거래 유형</label>
-                <select
-                  value={historyFilter.transactionType}
-                  onChange={(e) => handleFilterChange("transactionType", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg font-korean-pixel"
-                >
-                  <option value="A">전체</option>
-                  <option value="M">입금</option>
-                  <option value="D">출금</option>
-                </select>
-              </div>
+              <button onClick={handleAnalysisAndFetch} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-korean-pixel hover:bg-blue-100 transition-colors">
+                분석 및 거래내역 조회
+              </button>
             </div>
 
             {historyLoading ? (
