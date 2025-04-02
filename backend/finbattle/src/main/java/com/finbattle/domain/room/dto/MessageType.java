@@ -15,7 +15,8 @@ public enum MessageType {
     KICK,           //강퇴
     INFO,           //방 정보
     START,          //게임 시작
-    UNREADY;        //인원 준비 안됨
+    UNREADY,        //인원 준비 안됨
+    DELETED;        //이미 삭제됨
 
     @JsonValue
     @Override
