@@ -19,6 +19,7 @@ public enum BaseResponseStatus {
     JWT_INVALID(false, HttpStatus.UNAUTHORIZED, 1003, "유효하지 않은 JWT입니다."),
     REFRESH_TOKEN_INVALID(false, HttpStatus.UNAUTHORIZED, 1004, "유효하지 않은 Refresh Token입니다."),
     REFRESH_TOKEN_NOT_FOUND(false, HttpStatus.UNAUTHORIZED, 1005, "Refresh Token이 없습니다."),
+    REFRESH_TOKEN_EXPIRED(false, HttpStatus.BAD_REQUEST, 1006, "만료된 Refresh Token입니다."),
 
     // Member+Cat (2001 ~ 2099)
     MEMBER_NOT_FOUND(false, HttpStatus.NOT_FOUND, 2001, "맴버를 찾을 수 없습니다."),
