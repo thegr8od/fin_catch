@@ -111,7 +111,7 @@ public class FinanceFacadeService implements FinanceService {
                 financeKey, member);
             transactionLists.put(accountNo, transactionList);
         }
-
+        log.info("거래 내역 조회 완료.");
         return spendAnalysisService.analysisSpend(member.getMemberId(), transactionLists);
     }
 }
