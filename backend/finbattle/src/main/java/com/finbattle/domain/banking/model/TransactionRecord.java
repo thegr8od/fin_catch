@@ -16,7 +16,6 @@ public class TransactionRecord {
     private String transactionDate;
     private String transactionTime;
     private String transactionTypeName;
-    private String transactionAccountNo;
     private Long transactionBalance;
     private String transactionSummary;
 
@@ -26,7 +25,6 @@ public class TransactionRecord {
             .transactionDate(dto.getTransactionDate())
             .transactionTime(dto.getTransactionTime())
             .transactionTypeName(dto.getTransactionTypeName())
-            .transactionAccountNo(dto.getTransactionAccountNo())
             .transactionBalance(dto.getTransactionBalance())
             .transactionSummary(dto.getTransactionSummary())
             .build();
