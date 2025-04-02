@@ -10,7 +10,6 @@ import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.service.RoomSubscriptionService;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,11 +44,9 @@ public class ChatService {
                 }
             });
 
-            String jsonMessage = objectMapper.writeValueAsString(Map.of(
-                "roomId", message.getRoomId(),
-                "content", message.getContent(),
-                "sender", nickname.get()
-            ));
+            ChatMessage finalMessage = new ChatMessage(message.getContent(), message.getRoomId(),
+                nickname.get());
+            String jsonMessage = objectMapper.writeValueAsString(finalMessage);
             redisPublisher.publish("chat:" + message.getRoomId(), jsonMessage);
         } catch (Exception e) {
             e.printStackTrace();

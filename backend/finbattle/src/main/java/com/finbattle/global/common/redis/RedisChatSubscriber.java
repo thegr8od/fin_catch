@@ -1,7 +1,5 @@
 package com.finbattle.global.common.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finbattle.domain.chat.dto.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -13,19 +11,21 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RedisChatSubscriber implements MessageListener {
-//
+
     private final SimpMessagingTemplate messagingTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            String msgBody = new String(message.getBody());
-            ChatMessage chatMessage = objectMapper.readValue(msgBody, ChatMessage.class);
+            String channel = new String(message.getChannel());
+            String msg = message.toString();
+
+            String roomId = channel.split(":")[1];
             //  WebSocket 발송 대상: /topic/chat/{roomId}
-            String destination = "/topic/chat/" + chatMessage.getRoomId();
-            messagingTemplate.convertAndSend(destination, chatMessage);
-            log.info("RedisChatSubscriber sent message to destination: {}", destination);
+            String destination = "/topic/chat/" + roomId;
+            
+            messagingTemplate.convertAndSend(destination, msg);
+            log.info("🔵 WebSocket 전송: Destination={}, Message={}", destination, msg);
         } catch (Exception e) {
             log.error("Error processing chat message from Redis", e);
         }
