@@ -35,7 +35,7 @@ public class TokenService {
 
         // 저장된 리프레시 토큰 조회
         TokenData tokenData = refreshTokenRepository.findByToken(memberId)
-            .orElseThrow(() -> new BusinessException(BaseResponseStatus.REFRESH_TOKEN_INVALID));
+            .orElseThrow(() -> new BusinessException(BaseResponseStatus.REFRESH_TOKEN_EXPIRED));
 
         // 입력받은 refreshToken과 저장된 refreshToken 비교
         if (!tokenData.token().equals(refreshToken)) {
