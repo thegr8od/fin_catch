@@ -120,6 +120,7 @@ const RoomPreparePage: React.FC = () => {
         });
 
         if (roomResponse?.isSuccess && roomResponse?.result) {
+          console.log("방 정보 : ", roomResponse);
           setRoom(roomResponse.result);
         } else {
           showCustomAlert("방 정보를 불러오는데 실패했습니다.");
