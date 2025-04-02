@@ -9,8 +9,9 @@ export const useAccount = () => {
   const allAccountApi = useApi<AllAccount>("/api/finance/account/all", "POST");
   const patchAccountApi = useApi<AllAccount>("/api/finance/account/all", "PATCH");
   const accountDetailApi = useApi<AccountDetail, { accountNo: string }>("/api/finance/account/detail", "POST");
-  const consumeHistoryApi = useApi<ConsumeHistoryList, { accountNo: string; startDate: string; endDate: string; transactionType: string }>("/api/finance/account/transactions", "POST");
-
+  const consumeHistoryApi = useApi<ConsumeHistoryList, { accountNo: string; year: number; month: number }>("/api/finance/account/transactions", "POST");
+  // 싸피 12기 화이팅!!
+  const consumeAnalysisApi = useApi<Record<string, string>, { year: number; month: number }>("/api/finance/account/analysis", "POST");
   const changeAccountApi = useApi<string, { accountNo: string }>("/api/finance/account/change", "PATCH");
   const { user } = useUserInfo(false); // autoFetch를 false로 설정하여 자동 조회 방지
 
@@ -68,10 +69,10 @@ export const useAccount = () => {
   );
 
   const fetchConsumeHistory = useCallback(
-    async (accountNo: string, startDate: string, endDate: string, transactionType: string) => {
+    async (accountNo: string, year: number, month: number) => {
       try {
-        console.log("거래내역 조회 요청:", { accountNo, startDate, endDate, transactionType });
-        const response = await consumeHistoryApi.execute({ accountNo, startDate, endDate, transactionType });
+        console.log("거래내역 조회 요청:", { accountNo, year, month });
+        const response = await consumeHistoryApi.execute({ accountNo, year, month });
         console.log("거래내역 API 응답 (전체):", JSON.stringify(response, null, 2));
 
         if (response.isSuccess && response.result) {
@@ -107,6 +108,19 @@ export const useAccount = () => {
       }
     },
     [consumeHistoryApi]
+  );
+
+  const fetchConsumeAnalysis = useCallback(
+    async (year: number, month: number) => {
+      try {
+        const response = await consumeAnalysisApi.execute({ year, month });
+        return response;
+      } catch (error) {
+        console.error("소비 분석 조회 에러:", error);
+        throw error;
+      }
+    },
+    [consumeAnalysisApi]
   );
 
   const patchAccount = useCallback(async () => {
@@ -145,5 +159,6 @@ export const useAccount = () => {
     fetchConsumeHistory,
     changeAccount,
     patchAccount,
+    fetchConsumeAnalysis,
   };
 };
