@@ -23,6 +23,9 @@ public class GameData {
     //game 이용자들
     List<GameMemberStatus> gameMemberStatusList;
 
+    //essay 정답 여부
+    List<EssayCorrected> essayCorrectedList;
+
     //문제 정보들
     List<MultipleChoiceQuizDto> multipleChoiceQuizList;
     List<ShortAnswerQuizDto> shortAnswerQuizList;
