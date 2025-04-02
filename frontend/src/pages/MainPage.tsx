@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useAnalyze } from "../hooks/useAnalyze";
 import { Category } from "../types/analysis/Problem";
 import QuizResultSection from "../components/quiz/QuizResultSection";
-import { dummyQuizScores, dummyWeakPoints } from "../data/dummyData";
+import { dummyQuizScores, dummyWeakPoints, WeakPoint } from "../data/dummyData";
 import { useAccount } from "../hooks/useAccount";
 
 const MainPage = () => {
@@ -90,7 +90,7 @@ const MainPage = () => {
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
 
-              {/* AI 문제 풀기 */}
+              {/* AI 문제 풀기 - 타입 캐스팅 사용하지 않고 dummyData에서 정의된 WeakPoint 타입 사용 */}
               <QuizResultSection scores={dummyQuizScores} weakPoints={dummyWeakPoints} />
             </div>
           </div>

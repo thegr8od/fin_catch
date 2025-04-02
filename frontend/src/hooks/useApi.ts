@@ -52,6 +52,9 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
           case "PUT":
             response = await axiosInstance.put<Response<T>>(url, payload, { headers, params });
             break;
+          case "PUT":
+            response = await axiosInstance.put<Response<T>>(url, payload, { headers, params });
+            break;
         }
 
         const responseData = response.data;
