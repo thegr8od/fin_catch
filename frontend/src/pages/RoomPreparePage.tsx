@@ -75,7 +75,7 @@ const RoomPreparePage: React.FC = () => {
   const [redisRoom, setRedisRoom] = useState<RedisRoom | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<{ sender: string; message: string; timestamp: Date }[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ content: string; roomId: string; sender: string }[]>([]);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [memberId, setMemberId] = useState<number | null>(null);
@@ -202,33 +202,40 @@ const RoomPreparePage: React.FC = () => {
             setRedisRoom(parsedData.data as RedisRoom);
           }
         } else if (event === "KICK") {
+          console.log("🔵 KICK 이벤트 수신:", parsedData);
+
           if (typeof parsedData.data === "number") {
             const kickedMemberId = parsedData.data;
+            console.log("🔵 강퇴될 memberId:", kickedMemberId);
+            console.log("🔵 현재 redisRoom 상태:", redisRoom);
+            console.log("🔵 현재 로그인한 사용자:", user);
 
-            // 강퇴당하는 사람이 방장인지 확인 (nickname으로 체크)
-            const isKickedUserHost = redisRoom?.members.find((member) => member.memberId === kickedMemberId)?.nickname === redisRoom?.host.nickname;
+            const kickedMember = redisRoom?.members.find((member) => member.memberId === kickedMemberId);
+            console.log("🔵 강퇴될 멤버 정보:", kickedMember);
 
-            // 방장이면 강퇴 처리하지 않음
-            if (isKickedUserHost) {
-              console.log("방장은 강퇴할 수 없습니다.");
-              return;
-            }
-
-            // 자신이 강퇴당한 경우 (nickname으로 체크)
-            const isCurrentUserKicked = redisRoom?.members.find((member) => member.memberId === kickedMemberId)?.nickname === user?.nickname;
+            const isCurrentUserKicked = user?.nickname === kickedMember?.nickname;
+            console.log("🔵 현재 사용자가 강퇴당했는지:", isCurrentUserKicked);
+            console.log("🔵 비교 값들:", {
+              userNickname: user?.nickname,
+              kickedMemberNickname: kickedMember?.nickname,
+            });
 
             if (isCurrentUserKicked) {
+              console.log("🔵 강퇴 처리 시작 - 메인으로 이동");
               showCustomAlert("방에서 강퇴되었습니다.");
               navigate("/main");
               return;
             }
 
-            // 다른 사람이 강퇴당한 경우 멤버 목록 업데이트
+            console.log("🔵 다른 사용자 강퇴 처리 시작");
             setRedisRoom((prevRoom) => {
-              if (!prevRoom) return null;
+              if (!prevRoom) {
+                console.log("🔵 이전 방 정보 없음");
+                return null;
+              }
 
-              // 강퇴된 멤버를 제외한 새로운 배열 생성
               const updatedMembers = prevRoom.members.filter((member) => member.memberId !== kickedMemberId);
+              console.log("🔵 업데이트된 멤버 목록:", updatedMembers);
 
               return {
                 ...prevRoom,
@@ -276,17 +283,36 @@ const RoomPreparePage: React.FC = () => {
     const chatTopic = topics.CHAT(roomId);
     const handleChatMessage = (message: IMessage) => {
       try {
-        const chatData = JSON.parse(message.body);
+        console.log("원본 메시지:", message.body);
+        // 메시지가 이중으로 JSON 문자열로 되어있을 수 있으므로 두 번 파싱
+        let chatData;
+        try {
+          const firstParse = JSON.parse(message.body);
+          if (typeof firstParse === "string") {
+            chatData = JSON.parse(firstParse);
+          } else {
+            chatData = firstParse;
+          }
+        } catch {
+          chatData = JSON.parse(message.body);
+        }
+
+        console.log("파싱된 데이터:", chatData);
+
+        // redisRoom에서 발신자의 닉네임 찾기
+        const senderMember = redisRoom?.members.find((member) => member.memberId === chatData.sender);
+        const senderNickname = senderMember?.nickname || "알 수 없음";
+
         setChatMessages((prev) => [
           ...prev,
           {
-            sender: chatData.sender, // 이미 nickname이 들어있음
-            message: chatData.content,
-            timestamp: new Date(),
+            content: chatData.content,
+            roomId: chatData.roomId,
+            sender: chatData.sender,
           },
         ]);
       } catch (error) {
-        console.error("채팅 메시지 처리 중 오류 발생:", error);
+        console.error("채팅 메시지 처리 중 오류 발생:", error, "원본 메시지:", message.body);
       }
     };
 
@@ -398,9 +424,9 @@ const RoomPreparePage: React.FC = () => {
 
     const chatTopic = `/app/chat/${roomId}`;
     const chatData = {
-      roomId: parseInt(roomId),
-      sender: currentMember.memberId, // memberId를 sender로 보냄
+      roomId: roomId.toString(),
       content: chatInput,
+      sender: currentMember.memberId,
     };
 
     send(chatTopic, chatData);
@@ -507,7 +533,10 @@ const RoomPreparePage: React.FC = () => {
                               "방장"
                             ) : user?.nickname === redisRoom.host.nickname ? ( // 현재 사용자가 방장인지 닉네임으로 체크
                               <button
-                                onClick={() => handleKickPlayer(player.memberId)}
+                                onClick={() => {
+                                  handleKickPlayer(player.memberId);
+                                  console.log("강퇴할 플레이어 ID:", player.memberId);
+                                }}
                                 className="bg-red text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors"
                                 disabled={kickLoading}
                               >
@@ -562,7 +591,7 @@ const RoomPreparePage: React.FC = () => {
                   ) : (
                     chatMessages.map((msg, index) => (
                       <div key={index} className="mb-2">
-                        <span className="font-bold">{msg.sender}:</span> {msg.message}
+                        <span className="font-bold">{msg.sender}</span> {msg.content}
                       </div>
                     ))
                   )}
