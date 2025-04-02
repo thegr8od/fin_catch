@@ -2,13 +2,12 @@ package com.finbattle.global.common.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.EventMessage;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -26,7 +25,8 @@ public class RedisGameSubscriber implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         try {
             String msgBody = new String(message.getBody(), StandardCharsets.UTF_8);
-            log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", new String(pattern), msgBody);
+            log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", new String(pattern),
+                msgBody);
 
             // EventMessage로 역직렬화
             EventMessage<?> eventMessage = objectMapper.readValue(msgBody, EventMessage.class);
@@ -35,7 +35,7 @@ public class RedisGameSubscriber implements MessageListener {
             String destination = "/topic/game/" + eventMessage.getRoomId();
             messagingTemplate.convertAndSend(destination, eventMessage);
             log.info("🔵 WebSocket 전송: Destination={}, Event={}, Data={}",
-                    destination, eventMessage.getEvent(), eventMessage.getData());
+                destination, eventMessage.getEvent(), eventMessage.getData());
 
         } catch (Exception e) {
             log.error("❌ RedisGameSubscriber: WebSocket 전송 중 오류 발생", e);
