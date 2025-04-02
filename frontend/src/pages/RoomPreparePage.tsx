@@ -196,7 +196,7 @@ const RoomPreparePage: React.FC = () => {
         // 이벤트 처리
         const event = parsedData.event;
 
-        if (event === "INFO" || event === "JOIN" || event === "READY" || event === "UPDATE" || event === "UNREADY") {
+        if (event === "CREATE" || event === "INFO" || event === "JOIN" || event === "READY" || event === "UPDATE" || event === "UNREADY") {
           // 방 정보 업데이트
           if (parsedData.data && typeof parsedData.data === "object") {
             console.log("방 정보 업데이트:", parsedData.data);

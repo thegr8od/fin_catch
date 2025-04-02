@@ -25,6 +25,7 @@ export const SOCKET_TOPICS = {
  */
 export const MESSAGE_TYPES = {
   ROOM: {
+    CREATE: "CREATE",
     KICK: "KICK", // 방에서 유저 강퇴
     JOIN: "JOIN", // 방 입장
     LEAVE: "LEAVE", // 방 퇴장
