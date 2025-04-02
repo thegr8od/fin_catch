@@ -84,13 +84,8 @@ const MainPage = () => {
               {/* 계좌 연동 섹션 */}
               <AccountLinkSection onAccountLink={() => setIsAccountModalOpen(true)} mainAccount={mainAccountInfo} error={accountError} />
 
-              {/* 오답 분석 - 일반 문제 & AI 퀴즈 통합 */}
-              <WrongAnswerAnalysis 
-                categories={categories} 
-                onDetailView={() => {}} 
-                onStartGame={() => navigate("/lobby")} 
-                onStartAiQuiz={() => navigate("/ai-quiz")} 
-              />
+              {/* 오답 분석 */}
+              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
 
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
