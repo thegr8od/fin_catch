@@ -114,6 +114,9 @@ const RoomPreparePage: React.FC = () => {
 
     const loadRoomInfo = async () => {
       try {
+        // 연결 1초 대기
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // 방 기본 정보 가져오기
         const roomResponse = await fetchRoom(undefined, {
           url: `/api/room/${roomId}`,
