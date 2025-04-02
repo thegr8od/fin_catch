@@ -23,9 +23,13 @@ public class TokenService {
     }
 
     public String createRefreshToken(String providerId, Long memberId) {
-        String refreshToken = jwtUtil.createRefreshToken(providerId, memberId);
-        log.info("Refresh Token 저장 완료!", refreshToken);
-        refreshTokenRepository.save(new TokenData(refreshToken, memberId));
+        TokenData tokenData = refreshTokenRepository.findByToken(memberId).orElse(null);
+        String refreshToken = tokenData != null ? tokenData.token() : "";
+        if (refreshToken.isEmpty()) {
+            refreshToken = jwtUtil.createRefreshToken(providerId, memberId);
+            log.info("Refresh Token 저장 완료!", refreshToken);
+            refreshTokenRepository.save(new TokenData(refreshToken, memberId));
+        }
         return refreshToken;
     }
 
