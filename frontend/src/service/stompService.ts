@@ -1,11 +1,10 @@
-import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import { Client, IMessage, StompHeaders, StompSubscription } from "@stomp/stompjs";
 
 /**
  * WebSocket 서버 연결 URL
  * 개발 환경에서는 로컬 서버 주소를 사용
  */
-const SOCKET_URL = import.meta.env.VITE_SOCKET_BASE_URL;
+const SOCKET_URL = import.meta.env.VITE_APP_SOCKET_BASE_URL;
 
 /**
  * 재연결 시도 간격 (밀리초)
@@ -22,12 +21,19 @@ const RECONNECT_DELAY = 5000;
  * @returns {Client} 설정이 완료된 STOMP 클라이언트 인스턴스
  */
 export const createStompClient = (): Client => {
+  // 로컬 스토리지에서 토큰 가져오기
+  const token = localStorage.getItem("accessToken");
+
   // 클라이언트 인스턴스 생성 및 기본 설정
   const client = new Client({
     // WebSocket 팩토리 함수: 실제 WebSocket 연결 생성
     webSocketFactory: () => {
-      console.log("SockJS 연결 생성:", SOCKET_URL);
-      return new SockJS(SOCKET_URL);
+      console.log("WebSocket 연결 생성:", SOCKET_URL);
+      return new WebSocket(SOCKET_URL);
+    },
+    // 연결 헤더 설정: 인증 토큰 포함
+    connectHeaders: {
+      Authorization: token ? `Bearer ${token}` : "",
     },
     // 디버그 메시지 처리 함수
     debug: (str) => {
@@ -45,6 +51,12 @@ export const createStompClient = (): Client => {
   // 연결 시작 전 호출되는 이벤트 핸들러
   client.beforeConnect = () => {
     console.log("STOMP 연결 시도 중...");
+    // 연결 시도 직전에 토큰 갱신
+    const currentToken = localStorage.getItem("accessToken");
+    if (currentToken && client.connectHeaders) {
+      client.connectHeaders.Authorization = `Bearer ${currentToken}`;
+      console.log("STOMP 연결 헤더에 토큰 설정:", currentToken.substring(0, 15) + "...");
+    }
   };
 
   // WebSocket 연결 종료 이벤트 핸들러
@@ -69,18 +81,22 @@ export const createStompClient = (): Client => {
  *
  * @param {Client} client - STOMP 클라이언트 인스턴스
  * @param {string} destination - 메시지를 전송할 대상 경로
- * @param {any} body - 전송할 메시지 내용 (JSON으로 직렬화됨)
+ * @param {unknown} body - 전송할 메시지 내용 (JSON으로 직렬화됨)
  * @param {Record<string, string>} headers - 메시지에 포함할 추가 헤더 (선택적)
  */
-export const sendMessage = (client: Client, destination: string, body: any, headers: Record<string, string> = {}): void => {
+export const sendMessage = (client: Client, destination: string, body: unknown, headers: Record<string, string> = {}): void => {
   // 클라이언트 연결 상태 확인
   if (client.connected) {
     try {
+      const token = localStorage.getItem("accessToken");
       // 메시지 발행(publish)
       client.publish({
         destination, // 메시지 대상 경로
         body: JSON.stringify(body), // 메시지 내용을 JSON 문자열로 변환
-        headers, // 추가 헤더
+        headers: {
+          ...headers,
+          Authorization: token ? `Bearer ${token}` : "",
+        }, // 추가 헤더
       });
 
       console.log("STOMP 메시지 전송 완료!");

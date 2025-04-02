@@ -1,6 +1,11 @@
-import { Client, IMessage } from "@stomp/stompjs";
+import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import { useCallback, useEffect, useState } from "react";
 import { createStompClient, sendMessage, subscribeToTopic } from "../service/stompService";
+
+interface ChatMessage {
+  content: string;
+  roomId: string;
+}
 
 /**
  * WebSocket 토픽 정의
@@ -8,7 +13,7 @@ import { createStompClient, sendMessage, subscribeToTopic } from "../service/sto
  * 백엔드와 협의 후 변경될 수 있음
  */
 export const SOCKET_TOPICS = {
-  ROOM: (roomId: string) => `/room/room/${roomId}`,
+  ROOM: (roomId: string) => `/topic/room/${roomId}`,
   CHAT: (roomId: string) => `/topic/chat/${roomId}`,
   GAME: (roomId: string) => `/topic/game/${roomId}`,
 };
@@ -25,7 +30,9 @@ export const MESSAGE_TYPES = {
     LEAVE: "LEAVE", // 방 퇴장
     UPDATE: "UPDATE", // 방 정보 업데이트
     READY: "READY", // 준비 상태 변경
+    UNREADY: "UNREADY", // 준비 상태 해제
     START: "START", // 게임 시작
+    INFO: "INFO", // 방 정보 조회
   },
   GAME: {
     STATUS: {
@@ -43,6 +50,9 @@ export const MESSAGE_TYPES = {
   },
 };
 
+// StompSubscription 타입 정의
+type StompSubscriptionType = StompSubscription | null;
+
 /**
  * WebSocket 연결 및 관리를 위한 React 훅
  *
@@ -59,7 +69,7 @@ export const useWebSocket = () => {
   // 연결 상태
   const [connected, setConnected] = useState(false);
   // 활성 구독 목록 (토픽별로 관리)
-  const [subscriptions, setSubscripitons] = useState<Record<string, any>>({});
+  const [subscriptions, setSubscripitons] = useState<Record<string, StompSubscriptionType>>({});
 
   // 컴포넌트 마운트 시 WebSocket 클라이언트 초기화
   useEffect(() => {
@@ -100,20 +110,29 @@ export const useWebSocket = () => {
       // 클라이언트가 없거나 연결되지 않은 경우
       if (!client || !connected) return null;
 
-      // 토픽 구독 수행
-      const subscribtion = subscribeToTopic(client, topic, callback);
-
-      // 구독 성공 시 상태에 추가
-      if (subscribtion) {
-        setSubscripitons((prev) => ({
-          ...prev,
-          [topic]: subscribtion,
-        }));
+      // 이미 구독 중인 토픽이면 기존 구독 반환
+      if (subscriptions[topic]) {
+        return subscriptions[topic];
       }
 
-      return subscribtion;
+      // 토픽 구독 수행
+      const subscription = subscribeToTopic(client, topic, callback);
+
+      // 구독 성공 시 상태에 추가
+      if (subscription) {
+        setSubscripitons((prev) => {
+          // 이미 같은 토픽에 대한 구독이 있으면 업데이트하지 않음
+          if (prev[topic]) return prev;
+          return {
+            ...prev,
+            [topic]: subscription,
+          };
+        });
+      }
+
+      return subscription;
     },
-    [client, connected]
+    [client, connected, subscriptions]
   );
 
   /**
@@ -125,7 +144,7 @@ export const useWebSocket = () => {
     (topic: string) => {
       if (subscriptions[topic]) {
         // 구독 객체 해제
-        subscriptions[topic].unsubscribe();
+        subscriptions[topic]?.unsubscribe();
         // 상태에서 제거
         setSubscripitons((prev) => {
           const newSubs = { ...prev };
@@ -146,7 +165,7 @@ export const useWebSocket = () => {
    * @returns 전송 성공 여부
    */
   const send = useCallback(
-    (destination: string, body: any, headers = {}) => {
+    (destination: string, body: ChatMessage, headers = {}) => {
       // 클라이언트가 없거나 연결되지 않은 경우
       if (!client || !connected) return false;
 
