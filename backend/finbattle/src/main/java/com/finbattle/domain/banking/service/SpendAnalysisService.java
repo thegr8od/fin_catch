@@ -55,17 +55,7 @@ public class SpendAnalysisService {
             String accountNo = entry.getKey();
             TransactionList transactionList = entry.getValue();
 
-            List<TransactionRecord> simplifiedRecords = transactionList.getList().stream()
-                .map(dto -> new TransactionRecord(
-                    dto.getTransactionUniqueNo(),
-                    dto.getTransactionDate(),
-                    dto.getTransactionTime(),
-                    dto.getTransactionTypeName(),
-                    dto.getTransactionAccountNo(),
-                    dto.getTransactionBalance(),
-                    dto.getTransactionSummary()
-                ))
-                .collect(Collectors.toList());
+            List<TransactionRecord> simplifiedRecords = transactionList.getList();
             log.info("{} 계좌 거래 내역: {}", accountNo, simplifiedRecords.size());
             converted.put(accountNo, simplifiedRecords);
         }
