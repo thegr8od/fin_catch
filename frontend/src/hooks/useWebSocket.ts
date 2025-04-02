@@ -2,6 +2,11 @@ import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import { useCallback, useEffect, useState } from "react";
 import { createStompClient, sendMessage, subscribeToTopic } from "../service/stompService";
 
+interface ChatMessage {
+  content: string;
+  roomId: string;
+}
+
 /**
  * WebSocket 토픽 정의
  * 각 도메인별(ROOM, CHAT, GAME)로 토픽을 구분하고 roomId를 파라미터로 받아 동적 토픽 생성
@@ -160,7 +165,7 @@ export const useWebSocket = () => {
    * @returns 전송 성공 여부
    */
   const send = useCallback(
-    (destination: string, body: Record<string, unknown>, headers = {}) => {
+    (destination: string, body: ChatMessage, headers = {}) => {
       // 클라이언트가 없거나 연결되지 않은 경우
       if (!client || !connected) return false;
 
