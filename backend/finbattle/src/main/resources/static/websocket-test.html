@@ -132,7 +132,7 @@
     <option value="AI_BATTLE">AI 배틀</option>
   </select><br/><br/>
   <label>퀴즈 유형:</label>
-  <select id="quizType">
+  <select id="subjectType">
     <option value="FIN_KNOWLEDGE">금융 지식</option>
     <option value="FIN_CRIME">금융 범죄</option>
     <option value="FIN_POLICY">금융 정책</option>
@@ -248,7 +248,7 @@
     const password = document.getElementById('roomPassword').value;
     const maxPlayer = document.getElementById('maxPlayer').value;
     const roomType = document.getElementById('roomType').value;
-    const subjectType = document.getElementById('quizType').value;
+    const subjectType = document.getElementById('subjectType').value;
 
     if (!creatorId || !title || !maxPlayer || !roomType) {
       alert("생성자 ID, 방 제목, 최대 인원 수, 방 유형은 필수 항목입니다.");
