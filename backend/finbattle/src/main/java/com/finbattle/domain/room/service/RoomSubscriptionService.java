@@ -13,7 +13,9 @@ import com.finbattle.domain.room.dto.RedisRoomMember;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.model.RedisRoom;
+import com.finbattle.domain.room.model.Room;
 import com.finbattle.domain.room.repository.RedisRoomRepository;
+import com.finbattle.domain.room.repository.RoomRepository;
 import com.finbattle.global.common.exception.exception.BusinessException;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.util.List;
@@ -30,6 +32,7 @@ public class RoomSubscriptionService {
     private final RedisPublisher redisPublisher;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final MemberRepository memberRepository;
+    private final RoomRepository roomRepository;
 
     /**
      * 방을 생성하고 Redis에 저장 후 이벤트 발행
@@ -111,7 +114,7 @@ public class RoomSubscriptionService {
         RedisRoom redisRoom = getRedisRoom(roomId);
         if (redisRoom == null) {
             // ✅ MessageType.DELETE 사용
-            publishEvent(MessageType.DELETE, roomId, null);
+            publishEvent(MessageType.DELETED, roomId, null);
             return;
         }
 
@@ -121,6 +124,10 @@ public class RoomSubscriptionService {
 
         // 2) 방 인원이 0명이면 방 삭제
         if (members.isEmpty()) {
+            Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 roomId의 room없음"));
+            room.setStatus(RoomStatus.CLOSED);
+            roomRepository.save(room);
             deleteRoom(roomId);
             return;
         }
@@ -168,7 +175,7 @@ public class RoomSubscriptionService {
     /**
      * 방 삭제 및 이벤트 발행
      */
-    public void deleteRoom(Long roomId) {
+    private void deleteRoom(Long roomId) {
         redisRoomRepository.deleteById(roomId);
         publishEvent(MessageType.DELETE, roomId, null);
         log.info("Room {} deleted from Redis", roomId);

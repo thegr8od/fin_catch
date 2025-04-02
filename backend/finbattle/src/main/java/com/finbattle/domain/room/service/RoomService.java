@@ -172,8 +172,9 @@ public class RoomService {
         redisGameRepository.save(gameData);
 
         // (5) 시작 이벤트 발행
-        EventMessage<RedisRoom> eventMessage = new EventMessage<>(MessageType.START, roomId,
-            redisRoom);
+        EventMessage<List<GameMemberStatus>> eventMessage = new EventMessage<>(MessageType.START,
+            roomId,
+            gameMemberStatusList);
         try {
             String jsonMessage = objectMapper.writeValueAsString(eventMessage);
             redisPublisher.publish("room:" + roomId, jsonMessage);
@@ -181,19 +182,6 @@ public class RoomService {
             log.error("RedisRoom START 이벤트 직렬화 실패", e);
             throw new IllegalStateException("이벤트 메시지 생성 중 오류가 발생했습니다.");
         }
-    }
-
-
-    public void deleteRoom(Long roomId) {
-        Room room = roomRepository.findById(roomId)
-            .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
-        if (room.getStatus() == RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("게임이 진행 중인 방은 삭제할 수 없습니다.");
-        }
-        room.setStatus(RoomStatus.CLOSED);
-        roomRepository.save(room);
-
-        redisRoomRepository.deleteById(roomId);
     }
 
     public List<RoomResponse> getAllRooms() {

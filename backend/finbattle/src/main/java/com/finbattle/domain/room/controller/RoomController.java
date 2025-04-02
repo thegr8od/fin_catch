@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,17 +43,6 @@ public class RoomController {
         RoomResponse response = roomService.createRoom(detail.getMemberId(), request);
         roomSubscriptionService.createRoomSubscription(response);
         return ResponseEntity.ok(new BaseResponse<>(response));
-    }
-
-    /**
-     * 방 삭제
-     */
-    @Operation(summary = "방 삭제하기", description = "방 삭제 api")
-    @DeleteMapping("/{roomId}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable Long roomId) {
-        roomService.deleteRoom(roomId);
-        roomSubscriptionService.deleteRoom(roomId);
-        return ResponseEntity.noContent().build();
     }
 
     /**

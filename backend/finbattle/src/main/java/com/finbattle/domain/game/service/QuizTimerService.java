@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.EventMessage;
 import com.finbattle.domain.game.dto.EventType;
 import com.finbattle.domain.game.dto.GameMemberStatus;
+import com.finbattle.domain.game.model.EssayCorrected;
 import com.finbattle.domain.game.model.GameData;
 import com.finbattle.domain.game.repository.RedisGameRepository;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
@@ -127,43 +128,52 @@ public class QuizTimerService {
             return;
         }
 
+        //서술형 별도 처리
+        if (gameData.getCurrentQuizNum() == 9 && !gameData.getEssayCorrectedList().isEmpty()) {
+            EssayCorrected corrected = gameData.getEssayCorrectedList().get(0);
+
+            Long attackedMemberId = -1L;
+
+            List<GameMemberStatus> memberList = gameData.getGameMemberStatusList();
+            for (GameMemberStatus m : memberList) {
+                if (m.getMemberId() != corrected.getMemberId()) {
+                    attackedMemberId = m.getMemberId();
+                    m.setLife(Math.max(0, m.getLife() - 1));
+                    break;
+                }
+            }
+
+            redisGameRepository.save(gameData);
+
+            Map<String, Object> data = Map.of(
+                "attackedMemberId", attackedMemberId,
+                "memberList", memberList
+            );
+
+            EventMessage<Map<String, Object>> userStatusMessage = new EventMessage<>(
+                EventType.ONE_ATTACK, gameData.getRoomId(), data
+            );
+
+            publishToRoom(roomId, userStatusMessage);
+
+            return;
+        }
+
         // 사용자 상태 조회
         List<GameMemberStatus> userList = gameData.getGameMemberStatusList();
 
         // 모든 사용자 라이프 1 감소
-        boolean anyLifeZero = false;
         for (GameMemberStatus user : userList) {
             int newLife = Math.max(0, user.getLife() - 1);
             user.setLife(newLife);
-            if (newLife == 0) {
-                anyLifeZero = true;
-            }
         }
 
         // 업데이트된 사용자 상태 저장
-        gameData.setQuizNum(gameData.getQuizNum() + 1);
         redisGameRepository.save(gameData);
 
         // 사용자 상태 전파 (내부 메서드 호출)
         publishUserStatus(roomId);
 
-        // 라이프 0인 사용자가 있으면 게임 종료, 없으면 다음 퀴즈 타이머 시작
-        if (anyLifeZero) {
-            endGame(roomId, userList);
-        }
-    }
-
-    private void endGame(Long roomId, List<GameMemberStatus> userList) {
-        // 게임 종료 이벤트 전파 (사용자 상태 포함)
-        EventMessage<List<GameMemberStatus>> endMessage = new EventMessage<>(EventType.GAME_INFO,
-            roomId, userList);
-        endMessage.setData(userList); // 결과 표시를 위해 사용자 상태 전송
-        publishToRoom(roomId, endMessage);
-        log.info("✅ Game ended in room {} due to a player reaching 0 life", roomId);
-
-        // 게임 종료 시 Redis에 저장된 방 정보 삭제
-        redisGameRepository.deleteById(roomId);
-        log.info("✅ Redis data for room {} has been deleted", roomId);
     }
 
     public void cancelQuizTasks(Long roomId) {
@@ -192,9 +202,9 @@ public class QuizTimerService {
             log.warn("🚨 publishUserStatus: room:{}에 멤버 상태가 없습니다.", roomId);
             return;
         }
-        List<GameMemberStatus> userList = gameData.getGameMemberStatusList();
-        EventMessage<List<GameMemberStatus>> message = new EventMessage<>(EventType.USER_STATUS,
-            roomId, userList);
+        List<GameMemberStatus> memberList = gameData.getGameMemberStatusList();
+        EventMessage<List<GameMemberStatus>> message = new EventMessage<>(EventType.TWO_ATTACK,
+            roomId, memberList);
         publishToRoom(roomId, message);
         log.info("🚀 UserStatus 전송 -> {}", message);
     }
