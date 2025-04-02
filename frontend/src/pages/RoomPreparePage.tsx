@@ -132,7 +132,7 @@ const RoomPreparePage: React.FC = () => {
         const infoResponse = await fetchRoomInfo(undefined, {
           url: `/api/room/room/${roomId}/info`,
         });
-
+        console.log("실시간 방 정보 : ", infoResponse);
         if (!infoResponse?.isSuccess) {
           showCustomAlert("실시간 방 정보를 불러오는데 실패했습니다.");
         }
