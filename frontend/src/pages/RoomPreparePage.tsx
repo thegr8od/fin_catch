@@ -119,7 +119,7 @@ const RoomPreparePage: React.FC = () => {
           url: `/api/room/${roomId}`,
         });
 
-        if (roomResponse?.isSuccess && roomResponse.result) {
+        if (roomResponse?.isSuccess && roomResponse?.result) {
           setRoom(roomResponse.result);
         } else {
           showCustomAlert("방 정보를 불러오는데 실패했습니다.");
