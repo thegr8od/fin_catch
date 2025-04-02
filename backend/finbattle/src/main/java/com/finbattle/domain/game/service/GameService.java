@@ -410,9 +410,9 @@ public class GameService {
             "loser", loserId
         );
 
-        EventMessage<Map<String, Object>> mssage = new EventMessage<>(EventType.REWARD, roomId,
+        EventMessage<Map<String, Object>> message = new EventMessage<>(EventType.REWARD, roomId,
             data);
-        publishToGame(roomId, mssage);
+        publishToGame(roomId, message);
     }
 
     /**
