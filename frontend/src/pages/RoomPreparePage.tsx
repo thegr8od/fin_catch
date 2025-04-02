@@ -268,6 +268,9 @@ const RoomPreparePage: React.FC = () => {
             });
           }
         } else if (event === "START") {
+          // 기존 방 구독 해제
+          unsubscribe(roomTopic);
+          unsubscribe(chatTopic);
           // 게임 시작
           if (roomRef.current?.subjectType) {
             navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`);
@@ -377,13 +380,7 @@ const RoomPreparePage: React.FC = () => {
 
   // 게임 시작
   const handleStartGame = async () => {
-    if (!roomId || !memberId || !redisRoom) return;
-
-    // 방장 체크
-    if (redisRoom.host.memberId !== memberId) {
-      showCustomAlert("방장만 게임을 시작할 수 있습니다.");
-      return;
-    }
+    if (!roomId || !redisRoom) return;
 
     // 모든 플레이어가 준비 상태인지 확인
     const allReady = redisRoom.members.every((member) => member.memberId === redisRoom.host.memberId || member.status === "READY");
