@@ -77,6 +77,7 @@ const RoomPreparePage: React.FC = () => {
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<{ content: string; roomId: string; sender: string }[]>([]);
   const [showAlert, setShowAlert] = useState(false);
+  const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
   const [alertMessage, setAlertMessage] = useState("");
   const [memberId, setMemberId] = useState<number | null>(null);
 
@@ -100,13 +101,6 @@ const RoomPreparePage: React.FC = () => {
   // WebSocket 훅 사용
   const { client, connected, subscribe, unsubscribe, send, topics, messageTypes } = useWebSocket();
   const { user } = useUserInfo();
-  // 사용자 정보 로드 (실제로는 로그인 정보에서 가져옴)
-  // useEffect(() => {
-  //   // 임시 사용자 ID (실제로는 로그인한 사용자 정보)
-  //   // 예시를 위해 로컬 스토리지에서 가져오는 방식 사용
-  //   const userIdFromStorage = parseInt(localStorage.getItem("userId") || "1");
-  //   setMemberId(userIdFromStorage);
-  // }, []);
 
   // 방 정보 로드
   useEffect(() => {
@@ -206,46 +200,39 @@ const RoomPreparePage: React.FC = () => {
             setRedisRoom(parsedData.data as RedisRoom);
           }
         } else if (event === "KICK") {
-          console.log("🔵 KICK 이벤트 수신:", parsedData);
-
+          console.log("🔵 KICK 이벤트 시작");
           if (typeof parsedData.data === "number") {
             const kickedMemberId = parsedData.data;
+            let shouldShowAlert = false;
             console.log("🔵 강퇴될 memberId:", kickedMemberId);
-            console.log("🔵 현재 redisRoom 상태:", redisRoom);
-            console.log("🔵 현재 로그인한 사용자:", user);
 
-            const kickedMember = redisRoom?.members.find((member) => member.memberId === kickedMemberId);
-            console.log("🔵 강퇴될 멤버 정보:", kickedMember);
-
-            const isCurrentUserKicked = user?.nickname === kickedMember?.nickname;
-            console.log("🔵 현재 사용자가 강퇴당했는지:", isCurrentUserKicked);
-            console.log("🔵 비교 값들:", {
-              userNickname: user?.nickname,
-              kickedMemberNickname: kickedMember?.nickname,
-            });
-
-            if (isCurrentUserKicked) {
-              console.log("🔵 강퇴 처리 시작 - 메인으로 이동");
-              showCustomAlert("방에서 강퇴되었습니다.");
-              navigate("/main");
-              return;
-            }
-
-            console.log("🔵 다른 사용자 강퇴 처리 시작");
             setRedisRoom((prevRoom) => {
               if (!prevRoom) {
-                console.log("🔵 이전 방 정보 없음");
+                console.log("🔴 prevRoom이 null임");
                 return null;
               }
 
-              const updatedMembers = prevRoom.members.filter((member) => member.memberId !== kickedMemberId);
-              console.log("🔵 업데이트된 멤버 목록:", updatedMembers);
+              console.log("🔵 prevRoom 정보:", prevRoom);
 
-              return {
+              const isCurrentUserKicked = prevRoom?.members.some((member) => member.memberId === kickedMemberId && member.nickname === user?.nickname);
+
+              if (isCurrentUserKicked) {
+                console.log("🔵 강퇴된 사용자 처리 시작");
+                setAlertMessage("방에서 강퇴되었습니다.");
+                setShowAlert(true);
+                setOnConfirm(() => navigate("/lobby"));
+                console.log("🔵 강퇴된 사용자 메인으로 이동");
+                return prevRoom;
+              }
+
+              const updatedRoom = {
                 ...prevRoom,
-                members: updatedMembers,
+                members: prevRoom.members.filter((member) => member.memberId !== kickedMemberId),
               };
+              console.log("🔵 업데이트된 room 정보:", updatedRoom);
+              return updatedRoom;
             });
+            console.log("🔵 KICK 이벤트 처리 완료");
           }
         } else if (event === "LEAVE") {
           if (typeof parsedData.data === "number") {
@@ -410,7 +397,12 @@ const RoomPreparePage: React.FC = () => {
     const allReady = redisRoom.members.every((member) => member.memberId === redisRoom.host.memberId || member.status === "READY");
 
     if (!allReady) {
-      showCustomAlert("모든 플레이어가 준비 상태여야 게임을 시작할 수 있습니다.");
+      showCustomAlert("모든 플레이어가 준비 되지 않았어요!");
+      return;
+    }
+
+    if (redisRoom.members.length < 2) {
+      showCustomAlert("2명의 사용자가 필요해요!");
       return;
     }
 
@@ -473,16 +465,17 @@ const RoomPreparePage: React.FC = () => {
     return subjects.find((s) => s.id === subjectType)?.name || subjectType;
   };
 
-  const showCustomAlert = (message: string) => {
+  const showCustomAlert = (message: string, onConfirm?: () => void) => {
     setAlertMessage(message);
     setShowAlert(true);
+    setOnConfirm(onConfirm || null);
   };
 
   if (!room || !redisRoom) {
     return (
       <Background backgroundImage={mainBg}>
         <div className="w-full h-full flex items-center justify-center">
-          <div className="text-white text-2xl">{roomLoading || infoLoading ? "로딩 중..." : "방 정보를 불러올 수 없습니다."}</div>
+          <div className="text-white text-2xl">{roomLoading || infoLoading ? "캣 휠 돌리는 중..." : "그루밍 중..."}</div>
         </div>
       </Background>
     );
