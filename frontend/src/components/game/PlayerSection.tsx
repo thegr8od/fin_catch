@@ -1,41 +1,41 @@
-import React, { useEffect, useState } from "react"
-import { ChatMessage } from "./chatType"
-import { CharacterState } from "./types/character"
-import CharacterAnimation from "./CharacterAnimation"
-import { CharacterType } from "./constants/animations"
+import React, { useEffect, useState } from "react";
+import { ChatMessage } from "./chatType";
+import { CharacterState } from "./types/character";
+import CharacterAnimation from "./CharacterAnimation";
+import { CharacterType } from "./constants/animations";
 
 interface PlayerSectionProps {
-  characterType: CharacterType
-  characterState: CharacterState
-  direction?: boolean
-  name: string
-  health: number
-  maxHealth: number
-  size?: "small" | "large"
-  bubble?: ChatMessage | null
-  onAnimationComplete: (state: CharacterState) => void
-  shouldLoop?: boolean
+  characterType: CharacterType;
+  characterState: CharacterState;
+  direction?: boolean;
+  name: string;
+  health: number;
+  maxHealth: number;
+  size?: "small" | "large";
+  bubble?: ChatMessage | null;
+  onAnimationComplete: (state: CharacterState) => void;
+  shouldLoop?: boolean;
 }
 
 const PlayerSection = React.memo(({ characterType, characterState, direction, name, health, maxHealth, size = "large", bubble, shouldLoop = true, onAnimationComplete }: PlayerSectionProps) => {
   // size에 따른 컨테이너 크기 계산
-  const containerWidth = size === "small" ? 150 : 200
-  const containerHeight = size === "small" ? 100 : 150 // 높이만 50px 감소
+  const containerWidth = size === "small" ? 150 : 200;
+  const containerHeight = size === "small" ? 100 : 150; // 높이만 50px 감소
 
-  const [showBubble, setShowBubble] = useState(false)
+  const [showBubble, setShowBubble] = useState(false);
 
   useEffect(() => {
     if (bubble) {
-      setShowBubble(true)
+      setShowBubble(true);
       const timer = setTimeout(() => {
-        setShowBubble(false)
-      }, 5000) // 5초 후에 버블 숨기기
+        setShowBubble(false);
+      }, 5000); // 5초 후에 버블 숨기기
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     } else {
-      setShowBubble(false)
+      setShowBubble(false);
     }
-  }, [bubble])
+  }, [bubble]);
 
   return (
     <div className="relative flex flex-col items-center gap-1">
@@ -70,16 +70,23 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
       {/* 캐릭터 컨테이너 */}
       <div className="relative" style={{ width: `${containerWidth}px`, height: `${containerHeight}px` }}>
         <div className="absolute inset-0 flex items-center justify-center">
-          <CharacterAnimation characterType={characterType} state={characterState} direction={direction} size={size} loop={(() => {
-    console.log('PlayerSection loop prop:', shouldLoop);
-    return shouldLoop;
-  })()} onAnimationComplete={() => onAnimationComplete(characterState)} />
+          <CharacterAnimation
+            characterType={characterType}
+            state={characterState}
+            direction={direction}
+            size={size}
+            loop={(() => {
+              console.log("PlayerSection loop prop:", shouldLoop);
+              return shouldLoop;
+            })()}
+            onAnimationComplete={() => onAnimationComplete(characterState)}
+          />
         </div>
       </div>
     </div>
-  )
-})
+  );
+});
 
-PlayerSection.displayName = "PlayerSection"
+PlayerSection.displayName = "PlayerSection";
 
-export default PlayerSection
+export default PlayerSection;
