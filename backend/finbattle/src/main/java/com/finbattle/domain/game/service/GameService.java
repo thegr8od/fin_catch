@@ -56,7 +56,7 @@ public class GameService {
         // 아직 출제되지 않은 퀴즈 번호 리스트 만들기 (1~9)
         List<Integer> remaining = new ArrayList<>();
         for (int i = 1; i <= 9; i++) {
-            if ((quizNum & (1 << (i - 1))) == 0) {
+            if ((quizNum & (1 << i)) == 0) {
                 remaining.add(i);
             }
         }
