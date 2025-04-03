@@ -1,14 +1,16 @@
 package com.finbattle.domain.banking.model;
 
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@RequiredArgsConstructor
 public class CommonRequestHeader {
 
     private String apiName;
@@ -36,10 +38,10 @@ public class CommonRequestHeader {
 
     // 고유 거래번호 생성
     private String generateUniqueTransactionNo() {
+        SecureRandom secureRandom = new SecureRandom();
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
-        String randomNum = String.format("%06d",
-            new Random().nextInt(1_000_000)); // 0~999999 숫자 8자리
+        String randomNum = String.format("%06d", secureRandom.nextInt(1_000_000));
         return date + time + randomNum;
     }
 
