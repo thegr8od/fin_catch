@@ -1,15 +1,16 @@
 package com.finbattle.domain.room.controller;
 
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
+import com.finbattle.domain.quiz.model.SubjectType;
+import com.finbattle.domain.room.dto.PageResponse;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
-import com.finbattle.domain.room.dto.RoomType;
+import com.finbattle.domain.room.dto.RoomUpdateResponse;
 import com.finbattle.domain.room.service.RoomService;
 import com.finbattle.domain.room.service.RoomSubscriptionService;
 import com.finbattle.global.common.model.dto.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -46,44 +47,43 @@ public class RoomController {
     }
 
     /**
-     * 방 목록 조회
+     * 방 최신 목록으로 끌어올리기
      */
-    @Operation(summary = "방 모든 방 조회하기", description = "방 전체 조회 api")
-    @GetMapping
-    public ResponseEntity<BaseResponse<List<RoomResponse>>> getAllRooms() {
-        return ResponseEntity.ok(new BaseResponse<>(roomService.getAllRooms()));
+    @Operation(summary = "방 최신 목록으로 끌어올리기", description = "OPEN방 기준으로 updateAt 최신화")
+    @PutMapping("/{roomId}")
+    public ResponseEntity<BaseResponse<RoomUpdateResponse>> updateRoomTime(
+        @AuthenticationPrincipal AuthenticatedUser detail, @PathVariable Long roomId) {
+        RoomUpdateResponse roomUpdateResponse = roomService.updateRoomActivityTime(roomId,
+            detail.getMemberId());
+        return ResponseEntity.ok(new BaseResponse<>(roomUpdateResponse));
     }
+
 
     /**
      * 주제별 방 조회
      */
     @Operation(summary = "방 주제별 방 조회하기", description = "방 주제별 방 조회 api")
-    @GetMapping("/type/{roomType}")
-    public ResponseEntity<BaseResponse<List<RoomResponse>>> getRoomsByType(
-        @PathVariable String roomType) {
+    @GetMapping("/type/{subjectType}/{page}")
+    public ResponseEntity<BaseResponse<PageResponse>> getRoomsByType(
+        @PathVariable String subjectType, @PathVariable Integer page) {
         return ResponseEntity.ok(new BaseResponse<>(
-            roomService.getRoomsByType(RoomType.valueOf(roomType.toUpperCase()))));
+            roomService.getRoomsByType(SubjectType.valueOf(subjectType.toUpperCase()), page)));
     }
 
-    /**
-     * 특정 방 조회
-     */
-    @Operation(summary = "방 id 검색 조회", description = "방 id 검색 조회 api")
-    @GetMapping("/{roomId}")
-    public ResponseEntity<BaseResponse<RoomResponse>> getRoomById(@PathVariable Long roomId) {
-        return ResponseEntity.ok(new BaseResponse<>(roomService.getRoomById(roomId)));
-    }
 
     /**
      * OPEN 상태의 방 목록 조회
      */
     @Operation(summary = "방 열려 있는 방 조회하기", description = "방 열려 있는 방 조회 api")
-    @GetMapping("/open")
-    public ResponseEntity<BaseResponse<List<RoomResponse>>> getOpenRooms() {
-        return ResponseEntity.ok(new BaseResponse<>(roomService.getOpenRooms()));
+    @GetMapping("/open/{page}")
+    public ResponseEntity<BaseResponse<PageResponse>> getOpenRooms(
+        @PathVariable Integer page) {
+        return ResponseEntity.ok(new BaseResponse<>(roomService.getOpenRooms(page)));
     }
 
-
+    /**
+     * 게임 시작
+     */
     @Operation(summary = "게임 시작하기", description = "room 게임 시작 api")
     @PutMapping("/start/{roomId}")
     public ResponseEntity<BaseResponse<Void>> readyRoom(@PathVariable Long roomId,
@@ -91,6 +91,7 @@ public class RoomController {
         roomService.startRoom(roomId, detail.getMemberId());
         return ResponseEntity.ok(new BaseResponse<>());
     }
+
 
     /**
      * 방 정보 요청 -> RedisRoom 정보 조회
@@ -115,6 +116,7 @@ public class RoomController {
         roomSubscriptionService.joinRoom(roomId, detail.getMemberId());
         return ResponseEntity.ok(new BaseResponse<>());
     }
+
 
     /**
      * 방 구독자 수 확인
