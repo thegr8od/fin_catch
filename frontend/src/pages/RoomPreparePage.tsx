@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Background from "../components/layout/Background";
-import oneVsOneImg from "../assets/one_vs_one.png";
+import oneVsOneImg from "../assets/shin_chang_seop_boxing.gif";
 import mainBg from "../assets/main.gif";
 import { CustomAlert } from "../components/layout/CustomAlert";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { IMessage } from "@stomp/stompjs";
 import { useApi } from "../hooks/useApi";
 import { useUserInfo } from "../hooks/useUserInfo";
+import CharacterAnimation from "../components/game/CharacterAnimation";
+import { CharacterType } from "../components/game/constants/animations";
+import { CharacterState } from "../components/game/types/character";
 
 // 방 상태 타입 정의
 type RoomStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
@@ -203,7 +206,6 @@ const RoomPreparePage: React.FC = () => {
           console.log("🔵 KICK 이벤트 시작");
           if (typeof parsedData.data === "number") {
             const kickedMemberId = parsedData.data;
-            let shouldShowAlert = false;
             console.log("🔵 강퇴될 memberId:", kickedMemberId);
 
             setRedisRoom((prevRoom) => {
@@ -491,107 +493,94 @@ const RoomPreparePage: React.FC = () => {
     <>
       <Background backgroundImage={mainBg}>
         <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
-          <div className="w-full max-w-6xl px-6 flex flex-col h-[calc(100vh-12rem)]">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl text-white font-bold tracking-wider text-shadow-lg">{room.roomTitle}</h1>
-              <button onClick={handleLeaveRoom} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors" disabled={isLoading}>
-                {leaveLoading ? "처리 중..." : "방 나가기"}
-              </button>
+          <div className="w-full max-w-7xl px-6 flex flex-col h-[calc(100vh-12rem)]">
+            {/* VS 배너 */}
+            <div className="relative flex justify-center items-center mb-8">
+              <div className="px-8 py-2 bg-gradient-to-r from-red-600 to-blue-600 rounded-full transform -skew-x-12">
+                <h1 className="text-4xl text-white font-black tracking-wider transform skew-x-12 flex items-center gap-4">
+                  <span className="text-black font-bold">{redisRoom.host.nickname}</span>
+                  <span className="text-yellow-300 text-5xl">VS</span>
+                  <span className="text-black font-bold">{redisRoom.members.length > 1 ? redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.nickname : "???"}</span>
+                </h1>
+              </div>
             </div>
 
-            <div className="flex flex-1 gap-6">
-              {/* 왼쪽: 방 정보 및 플레이어 목록 */}
-              <div className="w-2/3 bg-white bg-opacity-80 rounded-lg p-6 flex flex-col">
-                <div className="flex mb-6">
-                  <div className="w-1/3">
-                    <img src={oneVsOneImg} alt={`${room.roomType} 모드`} className="w-full h-48 object-contain" />
+            {/* 방 정보 */}
+            <div className="text-center mb-4">
+              <h2 className="text-xl text-white/80">
+                <span className="font-bold text-yellow-400">{room.roomTitle}</span>
+                <span className="mx-2">·</span>
+                <span className="text-blue-300">{getSubjectName(room.subjectType)}</span>
+              </h2>
+            </div>
+
+            {/* 메인 컨텐츠 영역 */}
+            <div className="flex-1 flex gap-6 relative">
+              {/* 왼쪽 플레이어 - 빨간팀 */}
+              <div className="w-1/3 rounded-3xl p-6 flex flex-col items-center bg-black/40 backdrop-blur-sm border-2 border-black">
+                <div className="w-48 h-48 mb-4 relative">
+                  <div className="absolute inset-0 rounded-full animate-pulse"></div>
+                  <CharacterAnimation characterType={redisRoom.host.mainCat as CharacterType} state="idle" direction={true} size="large" loop={true} />
+                </div>
+                <h3 className="text-2xl font-bold mb-2 text-white">{redisRoom.host.nickname}</h3>
+                <span className="px-6 py-2 rounded-full bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/50">방장</span>
+              </div>
+
+              {/* 중앙 채팅 및 컨트롤 */}
+              <div className="flex-1 flex flex-col gap-4 z-10">
+                {/* 채팅창 */}
+                <div className="flex-1 bg-black/30 backdrop-blur-sm rounded-3xl p-4 border border-white/10">
+                  <div className="flex-1 overflow-y-auto mb-4 rounded-2xl bg-black/20 p-4 h-[calc(100%-80px)]">
+                    {chatMessages.length === 0 ? (
+                      <div className="text-white/50 text-center py-8">
+                        <p className="text-lg">채팅을 입력하세요...</p>
+                      </div>
+                    ) : (
+                      chatMessages.map((msg, index) => (
+                        <div key={index} className="mb-2 p-2 hover:bg-white/5 rounded-lg transition-all">
+                          <span className="font-bold text-yellow-400">{msg.sender}</span>
+                          <span className="mx-2 text-white/70">:</span>
+                          <span className="text-white">{msg.content}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
-                  <div className="w-2/3 pl-6">
-                    <h2 className="text-2xl font-bold mb-4">방 정보</h2>
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-semibold">모드:</span> {room.roomType}
-                      </p>
-                      {room.subjectType && (
-                        <p>
-                          <span className="font-semibold">주제:</span> {getSubjectName(room.subjectType)}
-                        </p>
-                      )}
-                      <p>
-                        <span className="font-semibold">인원:</span> {redisRoom.members.length}/{room.maxPlayer}
-                      </p>
-                      <p>
-                        <span className="font-semibold">방장:</span> {redisRoom.host.nickname}
-                      </p>
-                    </div>
-                  </div>
+                  <form onSubmit={sendChatMessage} className="flex gap-2 mt-4">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      className="flex-1 p-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-yellow-500"
+                      placeholder="메시지를 입력하세요..."
+                    />
+                    <button type="submit" className="px-6 py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition-all">
+                      전송
+                    </button>
+                  </form>
                 </div>
 
-                <h3 className="text-xl font-bold mb-3">플레이어 목록</h3>
-                <div className="flex-1 overflow-y-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-200">
-                        <th className="py-2 px-4 text-left">이름</th>
-                        <th className="py-2 px-4 text-center">상태</th>
-                        <th className="py-2 px-4 text-center">역할</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {redisRoom.members.map((player) => (
-                        <tr key={player.memberId} className="border-t border-gray-300">
-                          <td className="py-3 px-4">{player.nickname}</td>
-                          <td className="py-3 px-4 text-center">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${player.status === "READY" ? "bg-green-200 text-green-800" : "bg-yellow-200 text-yellow-800"}`}>
-                              {player.status === "READY" ? "준비 완료" : "대기 중"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            {player.memberId === redisRoom.host.memberId ? (
-                              "방장"
-                            ) : user?.nickname === redisRoom.host.nickname ? ( // 현재 사용자가 방장인지 닉네임으로 체크
-                              <button
-                                onClick={() => {
-                                  handleKickPlayer(player.memberId);
-                                  console.log("강퇴할 플레이어 ID:", player.memberId);
-                                }}
-                                className="bg-red text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors"
-                                disabled={kickLoading}
-                              >
-                                {kickLoading ? "처리 중..." : "강퇴"}
-                              </button>
-                            ) : (
-                              "참가자"
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex justify-between mt-6">
-                  {/* 방장이 아닌 경우에만 준비 버튼 표시 */}
+                {/* 컨트롤 버튼 */}
+                <div className="flex justify-center gap-6">
                   {user?.nickname !== redisRoom.host.nickname && (
                     <button
                       onClick={handleToggleReady}
                       disabled={readyLoading || unreadyLoading}
-                      className={`px-6 py-3 rounded-lg font-bold ${currentIsReady ? "bg-yellow-500 text-black hover:bg-yellow-500" : "bg-blue-500 text-white hover:bg-blue-600"} transition-colors`}
+                      className={`px-12 py-4 rounded-xl font-bold text-xl transition-all transform hover:scale-105 ${
+                        currentIsReady ? "bg-yellow-500 text-black hover:bg-yellow-400" : "bg-blue-500 text-white hover:bg-blue-400"
+                      }`}
                     >
                       {readyLoading || unreadyLoading ? "처리 중..." : currentIsReady ? "준비 취소" : "준비 완료"}
                     </button>
                   )}
-
-                  {/* 방장인 경우에만 시작 버튼 표시 */}
                   {user?.nickname === redisRoom.host.nickname && (
                     <button
                       onClick={handleStartGame}
                       disabled={startLoading || !redisRoom.members.every((member) => member.nickname === redisRoom.host.nickname || member.status === "READY")}
-                      className={`px-6 py-3 rounded-lg font-bold ${
+                      className={`px-12 py-4 rounded-xl font-bold text-xl transition-all transform hover:scale-105 ${
                         startLoading || !redisRoom.members.every((member) => member.nickname === redisRoom.host.nickname || member.status === "READY")
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-green-500 text-white hover:bg-green-600"
-                      } transition-colors`}
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-green-500 text-white hover:bg-green-400"
+                      }`}
                     >
                       {startLoading ? "시작 중..." : "게임 시작"}
                     </button>
@@ -599,38 +588,80 @@ const RoomPreparePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 오른쪽: 채팅 */}
-              <div className="w-1/3 h-full bg-white bg-opacity-80 rounded-lg p-4 flex flex-col overflow-hidden">
-                <h3 className="text-xl font-bold mb-3">채팅</h3>
-
-                <div className="flex-1 overflow-y-auto mb-4 bg-gray-100 rounded p-3">
-                  {chatMessages.length === 0 ? (
-                    <div className="text-gray-500 text-center py-4">채팅 메시지가 없습니다.</div>
-                  ) : (
-                    chatMessages.map((msg, index) => (
-                      <div key={index} className="mb-2">
-                        <span className="font-bold">{msg.sender}</span> {msg.content}
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="w-full">
-                  <form onSubmit={sendChatMessage} className="flex">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      className="flex-1 min-w-0 p-2 mr-2 border border-gray-300 rounded-l"
-                      placeholder="메시지를 입력하세요..."
-                    />
-                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 transition-colors whitespace-nowrap">
-                      전송
-                    </button>
-                  </form>
-                </div>
+              {/* 오른쪽 플레이어 - 파란팀 */}
+              <div className="w-1/3 rounded-3xl p-6 flex flex-col items-center bg-black/40 backdrop-blur-sm border-2 border-black">
+                {redisRoom.members.length > 1 ? (
+                  <>
+                    <div className="w-48 h-48 mb-4 relative">
+                      <div className="absolute inset-0 rounded-full animate-pulse"></div>
+                      <CharacterAnimation
+                        characterType={redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.mainCat as CharacterType}
+                        state="idle"
+                        direction={false}
+                        size="large"
+                        loop={true}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-2xl font-bold text-white">{redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.nickname}</h3>
+                      {/* 방장일 때만 강퇴 버튼 표시 */}
+                      {user?.nickname === redisRoom.host.nickname && (
+                        <button
+                          onClick={() => {
+                            const targetMember = redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname);
+                            if (targetMember) {
+                              handleKickPlayer(targetMember.memberId);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-600 transition-all transform hover:scale-110"
+                          disabled={kickLoading}
+                        >
+                          {kickLoading ? (
+                            <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <span
+                      className={`px-6 py-2 rounded-full font-bold shadow-lg ${
+                        redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.status === "READY"
+                          ? "bg-green-500 text-white shadow-green-500/50"
+                          : "bg-yellow-500 text-black shadow-yellow-500/50"
+                      }`}
+                    >
+                      {redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.status === "READY" ? "준비 완료" : "대기 중"}
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <div className="w-48 h-48 mb-4 relative">
+                      <div className="absolute inset-0 bg-blue-500/10 rounded-full animate-pulse"></div>
+                      <img src={oneVsOneImg} alt="대기 중" className="w-full h-full object-contain opacity-30" />
+                    </div>
+                    <p className="text-blue-200 text-xl font-bold">상대방 대기 중...</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* 나가기 버튼 */}
+            <button
+              onClick={handleLeaveRoom}
+              className="absolute top-4 right-4 px-6 py-2 bg-red text-white rounded-full hover:bg-red-500 transition-all transform hover:scale-105"
+              disabled={isLoading}
+            >
+              {leaveLoading ? "처리 중..." : "나가기"}
+            </button>
           </div>
         </div>
       </Background>
