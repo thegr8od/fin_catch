@@ -14,7 +14,7 @@ interface QuizItem {
   options: QuizOption[];
 }
 
-interface QuizResponse {
+export interface QuizResponse {
   isSuccess: boolean;
   code: number;
   message: string;

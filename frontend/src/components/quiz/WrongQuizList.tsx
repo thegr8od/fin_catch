@@ -49,8 +49,8 @@ const WrongQuizList: React.FC<WrongQuizListProps> = ({
             </span>
           </div>
           <div className="flex justify-between items-center mt-2">
-            <p className="text-sm text-red-500 font-korean-pixel">틀린 횟수: {problem.wrongCount}회</p>
-            <p className="text-sm text-green-500 font-korean-pixel">정답 횟수: {problem.correctCount}회</p>
+            <p className="text-sm font-korean-pixel" style={{ color: '#EF4444' }}>틀린 횟수: {problem.wrongCount}회</p>
+            {/* <p className="text-sm font-korean-pixel" style={{ color: '#34D399' }}>정답 횟수: {problem.correctCount}회</p> */}
           </div>
 
           {analyzingProblemId === problem.id && (

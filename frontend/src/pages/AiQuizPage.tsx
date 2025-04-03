@@ -6,54 +6,35 @@ import GameResult from "../components/game/GameResult";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
 import { usePreventNavigation } from "../hooks/usePreventNavigation";
-import { useAiQuiz } from "../hooks/useAiQuiz";
+import useQuizResult from "../hooks/useQuizResult";
+import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz"; // 새로운 커스텀 훅 사용
 
 type GameState = "quiz" | "goodResult" | "badResult" | "finalResult";
-
-interface QuizOption {
-  optionId: number;
-  optionText: string;
-  isCorrect: boolean;
-}
-
-interface QuizItem {
-  quizId: number;
-  question: string;
-  options: QuizOption[];
-}
 
 const AiQuizPage = () => {
   const navigate = useNavigate();
   const { user } = useUserInfo();
-  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const [timeLeft, setTimeLeft] = useState<number>(60); // 60초 타이머
   const [gameState, setGameState] = useState<GameState>("quiz");
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [randomCat, setRandomCat] = useState<CharacterType>("classic");
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
-  const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
+  const [quizzes, setQuizzes] = useState<ShuffledQuizItem[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [answeredQuestions, setAnsweredQuestions] = useState<number>(0);
   const [correctAnswers, setCorrectAnswers] = useState<number>(0);
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   
-  const { getLatestQuizContent, submitQuizAnswer } = useAiQuiz();
+  // 새로운 훅 사용
+  const { loading, error, shuffledQuizzes, getShuffledQuizzes, submitShuffledQuizAnswer } = useShuffledQuiz();
+  const { saveQuizResult } = useQuizResult();
 
   usePreventNavigation({
     roomId: null,
     gameType: "AiQuiz",
   });
-
-  // 퀴즈 상태 초기화 함수
-  const resetQuizState = useCallback(() => {
-    setTimeLeft(60);
-    setIsTimeUp(false);
-    setSelectedOption(null);
-    setCurrentQuizIndex(0);
-    setAnsweredQuestions(0);
-    setCorrectAnswers(0);
-    setScore(0);
-  }, []); // 의존성 배열 비움 - 모두 setState 함수
 
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
@@ -64,15 +45,24 @@ const AiQuizPage = () => {
     return availableCats[randomIndex];
   }, [user]);
 
-  // 퀴즈 데이터 가져오기
+  // 퀴즈 데이터 가져오기 - 섞인 퀴즈 사용
   const fetchQuizzes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getLatestQuizContent();
+      const response = await getShuffledQuizzes();
+      console.log("퀴즈 데이터 응답:", response);
       
-      if (response?.isSuccess && Array.isArray(response.result)) {
-        setQuizzes(response.result);
-        resetQuizState(); // 여기서 resetQuizState 호출
+      if (response && response.isSuccess && Array.isArray(response.result)) {
+        // 타입 단언을 사용하여 response.result를 ShuffledQuizItem[] 타입으로 처리
+        setQuizzes(response.result as ShuffledQuizItem[]);
+        setTimeLeft(60);
+        setIsTimeUp(false);
+        setSelectedOption(null);
+        setCurrentQuizIndex(0);
+        setAnsweredQuestions(0);
+        setCorrectAnswers(0);
+        setScore(0);
+        setLastAnswerCorrect(null);
       } else {
         console.error("퀴즈를 가져오는데 실패했습니다:", response?.message || "알 수 없는 오류");
       }
@@ -81,21 +71,23 @@ const AiQuizPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getLatestQuizContent, resetQuizState]); // resetQuizState 의존성 추가
+  }, [getShuffledQuizzes]);
 
-  // 정답 제출 처리
+  // 정답 제출 처리 - 섞인 옵션에 맞게 수정
   const handleSubmitAnswer = useCallback(async () => {
     if (selectedOption === null || quizzes.length === 0) return;
     
     const currentQuiz = quizzes[currentQuizIndex];
     
     try {
-      // API로 정답 제출
-      const response = await submitQuizAnswer(currentQuiz.quizId, selectedOption);
+      // 섞인 퀴즈에 맞는 정답 제출 함수 사용
+      const response = await submitShuffledQuizAnswer(currentQuiz.quizId, selectedOption);
+      console.log("정답 제출 응답:", response);
       
-      // 서버에서 확인한 정답 여부 (타입 가드 추가)
-      const isCorrect = response && typeof response.result === 'boolean' && response.result;
+      // 서버에서 확인한 정답 여부
+      const isCorrect = response.result === true;
       
+      setLastAnswerCorrect(isCorrect);
       setAnsweredQuestions(prev => prev + 1);
       
       if (isCorrect) {
@@ -110,9 +102,9 @@ const AiQuizPage = () => {
     } catch (error) {
       console.error("정답 제출 중 오류 발생:", error);
       // 오류 발생 시에도 정답 여부를 로컬에서 판단
-      const selectedOptionData = currentQuiz.options[selectedOption];
-      const isCorrect = selectedOptionData?.isCorrect === true;
+      const isCorrect = selectedOption === currentQuiz.correctOptionIndex;
       
+      setLastAnswerCorrect(isCorrect);
       setAnsweredQuestions(prev => prev + 1);
       
       if (isCorrect) {
@@ -123,9 +115,9 @@ const AiQuizPage = () => {
         setGameState("badResult");
       }
     }
-  }, [selectedOption, quizzes, currentQuizIndex, submitQuizAnswer]);
+  }, [selectedOption, quizzes, currentQuizIndex, submitShuffledQuizAnswer]);
 
-  // 시간 초과 처리
+  // 시간 초과 시 강제로 오답 제출
   const handleTimeUp = useCallback(async () => {
     if (quizzes.length === 0) return;
     
@@ -135,34 +127,37 @@ const AiQuizPage = () => {
       // 시간 초과 시 임의의 오답 인덱스 찾기
       let wrongOptionIndex = 0;
       for (let i = 0; i < currentQuiz.options.length; i++) {
-        if (!currentQuiz.options[i].isCorrect) {
+        if (i !== currentQuiz.correctOptionIndex) {
           wrongOptionIndex = i;
           break;
         }
       }
       
       // 시간 초과 시 자동으로 오답 제출
-      await submitQuizAnswer(currentQuiz.quizId, wrongOptionIndex);
+      await submitShuffledQuizAnswer(currentQuiz.quizId, wrongOptionIndex);
       
       // 오답 처리
+      setLastAnswerCorrect(false);
       setAnsweredQuestions(prev => prev + 1);
       setGameState("badResult");
     } catch (error) {
       console.error("시간 초과 처리 중 오류 발생:", error);
       // 오류 발생 시에도 오답 처리
+      setLastAnswerCorrect(false);
       setAnsweredQuestions(prev => prev + 1);
       setGameState("badResult");
     }
-  }, [quizzes, currentQuizIndex, submitQuizAnswer]);
+  }, [quizzes, currentQuizIndex, submitShuffledQuizAnswer]);
 
   // 다음 문제로 이동
   const moveToNextQuestion = useCallback(() => {
     if (currentQuizIndex < quizzes.length - 1) {
-      setCurrentQuizIndex(prev => prev + 1);
+      setCurrentQuizIndex(prevIndex => prevIndex + 1);
       setSelectedOption(null);
       setTimeLeft(60);
       setIsTimeUp(false);
       setGameState("quiz");
+      setLastAnswerCorrect(null);
     } else {
       // 모든 문제 완료
       setGameState("finalResult");
@@ -185,7 +180,7 @@ const AiQuizPage = () => {
     }
 
     const timer = setTimeout(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft(timeLeft - 1);
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -200,18 +195,26 @@ const AiQuizPage = () => {
   };
 
   const currentQuiz = getCurrentQuiz();
-  const options = currentQuiz.options?.map(opt => opt.optionText) || [];
+  const options = currentQuiz.options ? currentQuiz.options.map((opt) => opt.optionText) : [];
 
   // 결과 화면에서 계속하기 버튼 클릭 시 처리
   const handleContinue = () => {
     if (gameState === "goodResult" || gameState === "badResult") {
       moveToNextQuestion();
     } else if (gameState === "finalResult") {
+      // 훅을 사용하여 결과 저장
+      saveQuizResult({
+        totalProblems: quizzes.length,
+        correctAnswers: correctAnswers,
+        finalScore: score
+      });
+      
+      // 메인 페이지로 이동
       navigate("/main");
     }
   };
 
-  // 결과 확인 버튼 클릭 처리
+  // 시간 초과 시 결과 확인 버튼 클릭 처리
   const handleShowResults = useCallback(() => {
     if (isTimeUp && selectedOption === null) {
       handleTimeUp();
@@ -220,16 +223,12 @@ const AiQuizPage = () => {
     }
   }, [isTimeUp, selectedOption, handleTimeUp, handleSubmitAnswer]);
 
-  // 정답률 계산
-  const getCorrectRate = () => {
-    if (quizzes.length === 0) return 0;
-    return Math.round((correctAnswers / quizzes.length) * 100);
-  };
-
   return (
     <div
       className="w-full flex flex-col items-center bg-cover h-screen overflow-y-auto"
-      style={{ backgroundImage: `url(${Background})` }}
+      style={{
+        backgroundImage: `url(${Background})`,
+      }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-10"></div>
       
@@ -274,7 +273,7 @@ const AiQuizPage = () => {
               <div className="w-full bg-blue-50 p-4 rounded-xl mb-6">
                 <p className="text-lg font-medium">총 문제: <span className="font-bold">{quizzes.length}문제</span></p>
                 <p className="text-lg font-medium">맞힌 문제: <span className="font-bold text-green-600">{correctAnswers}문제</span></p>
-                <p className="text-lg font-medium">정답률: <span className="font-bold text-blue-600">{getCorrectRate()}%</span></p>
+                <p className="text-lg font-medium">정답률: <span className="font-bold text-blue-600">{Math.round((correctAnswers / quizzes.length) * 100)}%</span></p>
                 <p className="text-lg font-medium mt-2">최종 점수: <span className="font-bold text-purple-600">{score}점</span></p>
               </div>
               
