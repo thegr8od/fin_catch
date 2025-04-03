@@ -24,22 +24,24 @@ import com.finbattle.domain.quiz.repository.QuizOptionRepository;
 import com.finbattle.domain.quiz.repository.ShortAnswerQuizRepository;
 import com.finbattle.domain.room.dto.EventMessage;
 import com.finbattle.domain.room.dto.MessageType;
+import com.finbattle.domain.room.dto.PageResponse;
 import com.finbattle.domain.room.dto.RedisRoomMember;
 import com.finbattle.domain.room.dto.RoomCreateRequest;
 import com.finbattle.domain.room.dto.RoomResponse;
 import com.finbattle.domain.room.dto.RoomStatus;
-import com.finbattle.domain.room.dto.RoomType;
+import com.finbattle.domain.room.dto.RoomUpdateResponse;
 import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.domain.room.model.Room;
 import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
 import com.finbattle.global.common.redis.RedisPublisher;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -110,8 +112,9 @@ public class RoomService {
         // (3) GameDataDto 생성
         GameData gameData = new GameData();
         gameData.setRoomId(roomId);
-        gameData.setQuizNum(0);
+        gameData.setQuizNum(1);
         gameData.setCurrentQuizNum(0);
+        gameData.setEssayCorrectedList(new ArrayList<>());
 
         // (3-1) GameMemberStatusList 구성
         List<GameMemberStatus> gameMemberStatusList = new ArrayList<>();
@@ -172,8 +175,9 @@ public class RoomService {
         redisGameRepository.save(gameData);
 
         // (5) 시작 이벤트 발행
-        EventMessage<RedisRoom> eventMessage = new EventMessage<>(MessageType.START, roomId,
-            redisRoom);
+        EventMessage<List<GameMemberStatus>> eventMessage = new EventMessage<>(MessageType.START,
+            roomId,
+            gameMemberStatusList);
         try {
             String jsonMessage = objectMapper.writeValueAsString(eventMessage);
             redisPublisher.publish("room:" + roomId, jsonMessage);
@@ -183,42 +187,73 @@ public class RoomService {
         }
     }
 
+    public PageResponse getRoomsByType(SubjectType subjectType, Integer page) {
+        PageRequest pageRequest = PageRequest.of(page - 1, 20);
 
-    public void deleteRoom(Long roomId) {
+        Page<Room> roomPage = roomRepository.findBySubjectTypeAndStatusOrderByUpdateAtDesc(
+            subjectType, RoomStatus.OPEN,
+            pageRequest);
+
+        return processPageResponse(roomPage);
+    }
+
+    @Transactional
+    public RoomUpdateResponse updateRoomActivityTime(Long roomId, Long memberId) {
         Room room = roomRepository.findById(roomId)
-            .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
-        if (room.getStatus() == RoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("게임이 진행 중인 방은 삭제할 수 없습니다.");
+            .orElseThrow(() -> new IllegalArgumentException("해당 방이 존재하지 않습니다."));
+
+        // 1. 방 상태 확인
+        if (room.getStatus() != RoomStatus.OPEN) {
+            throw new IllegalStateException("방이 열려있지 않습니다.");
         }
-        room.setStatus(RoomStatus.CLOSED);
+
+        // 2. 요청자가 방장인지 확인
+        if (!room.getHostMember().getMemberId().equals(memberId)) {
+            throw new IllegalStateException("방장만 방을 갱신할 수 있습니다.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextUpdateAt = room.getUpdateAt().plusMinutes(1);
+
+        if (nextUpdateAt.isAfter(now)) {
+            long secondsLeft = java.time.Duration.between(now, nextUpdateAt).getSeconds();
+            log.info("⏳ 아직 {}초 남음", secondsLeft);
+            return new RoomUpdateResponse(false, secondsLeft);
+        }
+
+        // 3. updateAt 갱신
+        room.setUpdateAt(now);
         roomRepository.save(room);
-
-        redisRoomRepository.deleteById(roomId);
-    }
-
-    public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll().stream()
-            .map(this::mapToRoomResponse)
-            .collect(Collectors.toList());
-    }
-
-    public List<RoomResponse> getRoomsByType(RoomType roomType) {
-        return roomRepository.findByRoomType(roomType).stream()
-            .map(this::mapToRoomResponse)
-            .collect(Collectors.toList());
-    }
-
-    public RoomResponse getRoomById(Long roomId) {
-        return roomRepository.findById(roomId)
-            .map(this::mapToRoomResponse)
-            .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+        log.info("✅ 방 {}의 updateAt을 최신화함", roomId);
+        return new RoomUpdateResponse(true, 0);
     }
 
     // OPEN 상태의 방만 가져오기
-    public List<RoomResponse> getOpenRooms() {
-        return roomRepository.findByStatus(RoomStatus.OPEN).stream()
-            .map(RoomResponse::fromEntity) // Room -> RoomResponse 변환
-            .collect(Collectors.toList());
+    public PageResponse getOpenRooms(Integer page) {
+        PageRequest pageRequest = PageRequest.of(page - 1, 20);
+
+        Page<Room> roomPage = roomRepository.findByStatusOrderByUpdateAtDesc(RoomStatus.OPEN,
+            pageRequest);
+
+        return processPageResponse(roomPage);
+    }
+
+    private PageResponse processPageResponse(Page<Room> roomPage) {
+        List<RoomResponse> roomResponses = roomPage.getContent().stream()
+            .map(room -> {
+                RedisRoom redisRoom = redisRoomRepository.findById(room.getRoomId()).orElse(null);
+                return RoomResponse.fromEntity(room, redisRoom);
+            })
+            .toList();
+
+        return new PageResponse(
+            roomResponses,
+            roomPage.getNumber() + 1,  // 1-based로 보정
+            roomPage.getSize(),
+            roomPage.getTotalPages(),
+            roomPage.getTotalElements(),
+            roomPage.isLast()
+        );
     }
 
     // 예시: 방장이 방을 나갈 시 새 방장을 지정하는 로직이 필요하다면

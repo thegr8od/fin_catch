@@ -36,4 +36,11 @@ public class GameController {
             memberId);
     }
 
+    //게임 종료
+    @MessageMapping("/game/{roomId}/endGame")
+    public void endGame(@DestinationVariable Long roomId) {
+        log.info("Received end game request for roomId: {}", roomId);
+        gameService.endGame(roomId);
+    }
+
 }

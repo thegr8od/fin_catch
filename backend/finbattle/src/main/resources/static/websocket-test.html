@@ -321,10 +321,10 @@
             console.log("Room event:", eventData);
           });
 
-          // stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
-          //   const gameData = JSON.parse(message.body);
-          //   console.log("Game event:", gameData);
-          // });
+          stompClient.subscribe(`/topic/game/${roomId}`, function (message) {
+            const gameData = JSON.parse(message.body);
+            console.log("Game event:", gameData);
+          });
 
           // stompClient.onclose = function () {
           //   console.log("🔴 WebSocket 연결 끊어짐");
@@ -472,8 +472,11 @@
       console.log("STOMP is not connected");
       return;
     }
+    const token = localStorage.getItem('accessToken')
+
     const roomId = document.getElementById('roomId').value;
-    stompClient.send(`/app/game/${roomId}/getQuiz`, {}, JSON.stringify({}));
+    stompClient.send(`/app/game/${roomId}/getQuiz`, {Authorization: `Bearer ${token}`},
+        JSON.stringify({}));
   }
 
   function requestQuizHint() {
@@ -487,8 +490,10 @@
     if (!roomId || !answer || !currentUserId) {
       return;
     }
+    const token = localStorage.getItem('accessToken')
     const payload = {userAnswer: answer, memberId: currentUserId};
-    stompClient.send(`/app/game/${roomId}/checkAnswer`, {}, JSON.stringify(payload));
+    stompClient.send(`/app/game/${roomId}/checkAnswer`, {Authorization: `Bearer ${token}`},
+        JSON.stringify(payload));
     document.getElementById('quizAnswer').value = '';
   }
 
