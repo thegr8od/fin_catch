@@ -110,8 +110,9 @@ public class RoomService {
         // (3) GameDataDto 생성
         GameData gameData = new GameData();
         gameData.setRoomId(roomId);
-        gameData.setQuizNum(0);
+        gameData.setQuizNum(1);
         gameData.setCurrentQuizNum(0);
+        gameData.setEssayCorrectedList(new ArrayList<>());
 
         // (3-1) GameMemberStatusList 구성
         List<GameMemberStatus> gameMemberStatusList = new ArrayList<>();
