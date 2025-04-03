@@ -53,7 +53,7 @@ export const useAiQuiz = () => {
         isSuccess: false,
         code: 500,
         message: "퀴즈 데이터를 가져오는데 실패했습니다.",
-        result: [] as QuizItem[] // 명시적으로 타입 지정
+        result: []
       };
     }
   }, [fetchLatestQuizzes]);
