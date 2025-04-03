@@ -14,9 +14,9 @@ import com.finbattle.domain.member.dto.MyInfoDto;
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.global.common.exception.exception.BusinessException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -167,7 +167,7 @@ public class MemberService {
 
         // 랜덤 선택
         List<Cat> returnCatList = new ArrayList<>();
-        Random random = new Random();
+        SecureRandom random = new SecureRandom();
 
         for (int i = 0; i < count; i++) {
             double rand = random.nextDouble();
