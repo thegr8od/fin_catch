@@ -1,6 +1,7 @@
 package com.finbattle.domain.room.dto;
 
 import com.finbattle.domain.quiz.model.SubjectType;
+import com.finbattle.domain.room.model.RedisRoom;
 import com.finbattle.domain.room.model.Room;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -16,9 +17,10 @@ public class RoomResponse {
     private int maxPlayer;
     private Long memberId;
     private LocalDateTime createdAt;
+    private int currentPlayerCount;
 
     // ✅ fromEntity() 추가
-    public static RoomResponse fromEntity(Room room) {
+    public static RoomResponse fromEntity(Room room, RedisRoom redisRoom) {
         RoomResponse response = new RoomResponse();
         response.roomId = room.getRoomId();
         response.roomTitle = room.getRoomTitle();
@@ -29,6 +31,7 @@ public class RoomResponse {
         response.memberId =
             room.getHostMember() != null ? room.getHostMember().getMemberId() : null;
         response.createdAt = room.getCreatedAt();
+        response.currentPlayerCount = redisRoom != null ? redisRoom.getMembers().size() : 0;
         return response;
     }
 }

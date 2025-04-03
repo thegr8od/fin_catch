@@ -36,6 +36,9 @@ public class Room {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now(); // 생성일
 
+    @Column(nullable = false)
+    private LocalDateTime updateAt = LocalDateTime.now(); // 생성일
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RoomStatus status; // 방 상태 (예: OPEN, CLOSED)

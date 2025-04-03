@@ -129,6 +129,11 @@ public class GameService {
      * 정답 체크 및 결과 발행 → "topic/game/{roomId}"
      */
     public void checkQuizAnswer(Long roomId, String userAnswer, Long memberId) {
+        if (!quizTimerService.hasQuizTask(roomId)) {
+            log.warn("🚨 roomId={}에 대한 퀴즈 타이머가 존재하지 않아 정답 처리 중단", roomId);
+            return; // 또는 continue / skip 처리
+        }
+
         // GameData 조회
         GameData gameData = redisGameRepository.findById(roomId)
             .orElseThrow(() -> new RuntimeException("해당 roomId의 GameData가 없습니다."));
@@ -145,16 +150,32 @@ public class GameService {
             // 객관식 문제
             MultipleChoiceQuizDto quiz = gameData.getMultipleChoiceQuizList().get(quizNum - 1);
             quizId = quiz.getQuizId();
-            Integer ans = Integer.parseInt(userAnswer);
-            isCorrect = quiz.getQuizOptions().stream()
-                .anyMatch(option -> option.getOptionNumber() == ans && option.isCorrect());
+
+            boolean isNumericAnswer = userAnswer.matches("[1-4]"); // 1~4 숫자만 허용
+            String resultMessageText;
+
+            if (isNumericAnswer) {
+                int ans = Integer.parseInt(userAnswer);
+                isCorrect = quiz.getQuizOptions().stream()
+                    .anyMatch(option -> option.getOptionNumber() == ans && option.isCorrect());
+
+                resultMessageText = isCorrect ? "정답입니다" : "오답입니다";
+
+                if (isCorrect) {
+                    quizTimerService.cancelQuizTasks(roomId);
+                    updateUserLives(gameData, memberId);
+                }
+            } else {
+                isCorrect = false;
+                resultMessageText = userAnswer; // 사용자가 입력한 문자열을 그대로 전달
+            }
 
             EventMessage<Map<String, Object>> resultMessage = new EventMessage<>(
                 EventType.QUIZ_RESULT,
                 roomId,
                 Map.of(
                     "quizId", quizId,
-                    "result", isCorrect ? "정답입니다" : "오답입니다",
+                    "result", resultMessageText,
                     "sender", nickname
                 )
             );
