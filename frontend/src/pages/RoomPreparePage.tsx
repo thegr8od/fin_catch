@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Background from "../components/layout/Background";
 import oneVsOneImg from "../assets/shin_chang_seop_boxing.gif";
 import mainBg from "../assets/main.gif";
@@ -31,6 +31,11 @@ interface Room {
   maxPlayer: number;
   memberId: number;
   createdAt: string;
+}
+
+interface PullupRoom {
+  updated: boolean;
+  secondsRemaining: number;
 }
 
 // 플레이어 인터페이스 정의
@@ -74,7 +79,9 @@ interface ApiResponse<T = unknown> {
 const RoomPreparePage: React.FC = () => {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
-  const [room, setRoom] = useState<Room | null>(null);
+  const location = useLocation();
+  const initialRoomInfo = location.state?.roomInfo;
+  const [room, setRoom] = useState<Room | null>(initialRoomInfo || null);
   const [redisRoom, setRedisRoom] = useState<RedisRoom | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -83,7 +90,8 @@ const RoomPreparePage: React.FC = () => {
   const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
   const [alertMessage, setAlertMessage] = useState("");
   const [memberId, setMemberId] = useState<number | null>(null);
-
+  const [pullupTimer, setPullupTimer] = useState<number>(0);
+  const [isPullupDisabled, setIsPullupDisabled] = useState(false);
   // room 값을 참조할 ref 추가
   const roomRef = React.useRef<Room | null>(null);
 
@@ -92,13 +100,25 @@ const RoomPreparePage: React.FC = () => {
     roomRef.current = room;
   }, [room]);
 
+  useEffect(() => {
+    if (pullupTimer >= 1) {
+      const timer = setInterval(() => {
+        setPullupTimer((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else {
+      setIsPullupDisabled(false);
+    }
+  }, [pullupTimer]);
+
   // API 훅 사용
-  const { loading: roomLoading, error: roomError, execute: fetchRoom } = useApi<Room>("");
   const { loading: infoLoading, error: infoError, execute: fetchRoomInfo } = useApi<ApiResponse>("", "POST");
   const { loading: readyLoading, error: readyError, execute: setReady } = useApi<ApiResponse>("", "POST");
   const { loading: unreadyLoading, error: unreadyError, execute: setUnready } = useApi<ApiResponse>("", "POST");
   const { loading: startLoading, error: startError, execute: startGame } = useApi<ApiResponse>("", "PUT");
   const { loading: leaveLoading, error: leaveError, execute: leaveRoomApi } = useApi<ApiResponse>("", "POST");
+  const { loading: pullupLoading, error: pullupError, execute: pullupRoom } = useApi<PullupRoom>("", "PUT");
   const { loading: kickLoading, error: kickError, execute: kickPlayer } = useApi<ApiResponse>(`/api/room/room/${roomId}/kick`, "POST");
 
   // WebSocket 훅 사용
@@ -114,20 +134,6 @@ const RoomPreparePage: React.FC = () => {
         // 연결 1초 대기
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // 방 기본 정보 가져오기
-        const roomResponse = await fetchRoom(undefined, {
-          url: `/api/room/${roomId}`,
-        });
-
-        console.log("방 정보 : ", roomResponse);
-        if (roomResponse?.isSuccess && roomResponse?.result) {
-          setRoom(roomResponse.result);
-        } else {
-          showCustomAlert("방 정보를 불러오는데 실패했습니다.");
-          navigate("/main");
-          return;
-        }
-
         // 실시간 방 정보 요청
         const infoResponse = await fetchRoomInfo(undefined, {
           url: `/api/room/room/${roomId}/info`,
@@ -139,22 +145,22 @@ const RoomPreparePage: React.FC = () => {
       } catch (error) {
         console.error("방 정보를 불러오는 중 오류 발생:", error);
         showCustomAlert("방 정보를 불러오는데 실패했습니다.");
-        navigate("/main");
+        navigate("/lobby");
       }
     };
 
     loadRoomInfo();
-  }, [roomId, navigate, fetchRoom, fetchRoomInfo, connected]);
+  }, [roomId, navigate, fetchRoomInfo, connected]);
 
   // 에러 처리
   useEffect(() => {
-    const errors = [roomError, infoError, readyError, unreadyError, startError, leaveError];
+    const errors = [infoError, readyError, unreadyError, startError, leaveError];
     const errorMsg = errors.find((err) => err !== null);
 
     if (errorMsg) {
       showCustomAlert(errorMsg);
     }
-  }, [roomError, infoError, readyError, unreadyError, startError, leaveError]);
+  }, [infoError, readyError, unreadyError, startError, leaveError]);
 
   // WebSocket 구독
   useEffect(() => {
@@ -281,6 +287,7 @@ const RoomPreparePage: React.FC = () => {
             if (roomRef.current?.subjectType) {
               navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`, {
                 state: {
+                  host: redisRoom?.host,
                   players: members,
                 },
               });
@@ -424,7 +431,25 @@ const RoomPreparePage: React.FC = () => {
     });
 
     if (response?.isSuccess) {
-      navigate("/main");
+      navigate("/lobby");
+    }
+  };
+
+  const handlePullUp = async () => {
+    if (!roomId || isPullupDisabled) return;
+
+    try {
+      const response = await pullupRoom(undefined, {
+        url: `/api/room/${roomId}`,
+      });
+
+      if (response?.isSuccess) {
+        setIsPullupDisabled(true);
+        setPullupTimer(response?.result?.secondsRemaining || 0);
+      }
+    } catch (error) {
+      console.error("PullUp 처리 중 오류 발생:", error);
+      showCustomAlert("PullUp 처리 중 오류가 발생했습니다.");
     }
   };
 
@@ -477,7 +502,7 @@ const RoomPreparePage: React.FC = () => {
     return (
       <Background backgroundImage={mainBg}>
         <div className="w-full h-full flex items-center justify-center">
-          <div className="text-white text-2xl">{roomLoading || infoLoading ? "캣 휠 돌리는 중..." : "그루밍 중..."}</div>
+          <div className="text-white text-2xl">{infoLoading ? "캣 휠 돌리는 중..." : "그루밍 중..."}</div>
         </div>
       </Background>
     );
@@ -503,6 +528,24 @@ const RoomPreparePage: React.FC = () => {
                   <span className="text-black font-bold">{redisRoom.members.length > 1 ? redisRoom.members.find((m) => m.nickname !== redisRoom.host.nickname)?.nickname : "???"}</span>
                 </h1>
               </div>
+
+              {/* PullUp 버튼 */}
+              <button
+                onClick={handlePullUp}
+                disabled={isPullupDisabled || pullupLoading}
+                className={`px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 flex items-center gap-2 ${
+                  isPullupDisabled ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-gradient-to-r  text-white"
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {isPullupDisabled ? `${pullupTimer}초 대기` : ""}
+              </button>
             </div>
 
             {/* 방 정보 */}
