@@ -14,10 +14,10 @@ export interface Problem {
   recommendations: string[];
 }
 
-// 카테고리 타입 정의
+// 카테고리 타입 정의 - tag 속성 명시적으로 추가
 export interface Category {
   id: number;
-  tag: string;
+  tag: string; // 태그 속성 추가
   name: string;
   problems: Problem[];
   totalProblems?: number;
@@ -25,7 +25,7 @@ export interface Category {
 
 // 컴포넌트 props 타입 정의
 export interface AnalysisProps {
-  onDetailView: () => void;
+  onDetailView?: () => void; // optional로 변경
   categories: Category[];
   onStartGame?: () => void;
 }

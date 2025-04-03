@@ -6,10 +6,16 @@ interface AnalyzePayload {
   quizId: number;
 }
 
+// AnalyzeResponse 인터페이스 수정 - result 필드 구체화
 interface AnalyzeResponse {
-  analysis: string;
-  weakness: string;
-  recommendation: string;
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  result: {
+    analysis: string;
+    weakness: string;
+    recommendation: string;
+  } | null;
 }
 
 export interface WrongAnswer {
@@ -52,7 +58,7 @@ export const useAnalyze = () => {
       if (!acc[categoryId]) {
         acc[categoryId] = {
           id: categoryId,
-          tag: "",
+          tag: "financial_committee", // tag 속성 추가
           name: "금융통화위원회의 역할", // 임시 카테고리 이름
           problems: [],
           totalProblems: 5,
@@ -104,4 +110,4 @@ export const useAnalyze = () => {
     analyzeWrongAnswer,
     readAllWrongAnswer,
   };
-};
+};  
