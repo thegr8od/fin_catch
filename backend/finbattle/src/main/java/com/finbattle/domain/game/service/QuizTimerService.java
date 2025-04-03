@@ -185,6 +185,10 @@ public class QuizTimerService {
         }
     }
 
+    public boolean hasQuizTask(Long roomId) {
+        return quizTasks.containsKey(roomId);
+    }
+
     private void publishToRoom(Long roomId, EventMessage<?> message) {
         try {
             String jsonMessage = objectMapper.writeValueAsString(message);
