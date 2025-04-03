@@ -1,10 +1,9 @@
 import { Category } from "../types/analysis/Problem";
 
-// 각 카테고리에 tag 속성 추가
 export const dummyWrongAnswerCategories: Category[] = [
   {
     id: 1,
-    tag: "financial_committee", // tag 속성 추가
+    tag: "finance_committee",
     name: "금융통화위원회의 역할",
     totalProblems: 5,
     problems: [
@@ -27,41 +26,41 @@ export const dummyWrongAnswerCategories: Category[] = [
   },
   {
     id: 2,
-    tag: "financial_crime", // tag 속성 추가
+    tag: "financial_crime",
     name: "금융 범죄",
     totalProblems: 30,
     problems: [],
   },
   {
     id: 3,
-    tag: "financial_products", // tag 속성 추가
+    tag: "financial_products",
     name: "금융 상품",
     totalProblems: 30,
     problems: [],
   },
   {
     id: 4,
-    tag: "investment", // tag 속성 추가
+    tag: "investment",
     name: "투자",
     totalProblems: 30,
     problems: [],
   },
   {
     id: 5,
-    tag: "financial_knowledge", // tag 속성 추가
+    tag: "financial_knowledge",
     name: "금융 지식",
     totalProblems: 30,
     problems: [],
   },
 ];
 
+// 수정된 퀴즈 결과 데이터
 export const dummyQuizScores = {
-  average: 85,
-  totalAttempts: 10,
-  consecutiveDays: 3,
+  totalProblems: 10,   // 총 문제 수
+  correctAnswers: 8,   // 맞힌 문제 수
+  finalScore: 400      // 최종 점수
 };
 
-// 취약점 인터페이스 정의 및 export
 export interface WeakPoint {
   id: number;
   topic: string;
