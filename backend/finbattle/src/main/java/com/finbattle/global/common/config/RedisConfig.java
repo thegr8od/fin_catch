@@ -1,6 +1,7 @@
 package com.finbattle.global.common.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
@@ -29,13 +30,15 @@ public class RedisConfig {
         template.setConnectionFactory(factory);
 
         // JSON 직렬화 설정
-        Jackson2JsonRedisSerializer<Object> jacksonSerializer = new Jackson2JsonRedisSerializer<>(
-            Object.class);
+//        Jackson2JsonRedisSerializer<Object> jacksonSerializer = new Jackson2JsonRedisSerializer<>(
+//            Object.class);
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
             ObjectMapper.DefaultTyping.NON_FINAL);
-        jacksonSerializer.setObjectMapper(objectMapper);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
+        Jackson2JsonRedisSerializer<Object> jacksonSerializer =
+            new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
 
         // key는 String, value는 JSON 직렬화
         template.setKeySerializer(new StringRedisSerializer());
