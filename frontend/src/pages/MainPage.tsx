@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Background from "../components/layout/Background";
 import myPageBg from "../assets/mypage_bg.png";
 import { useUserInfo } from "../hooks/useUserInfo";
@@ -16,10 +16,10 @@ import WrongAnswerAnalysis from "../components/analysis/WrongAnswerAnalysis";
 import CharacterChangeModal from "../components/profile/CharacterChangeModal";
 import { useNavigate } from "react-router-dom";
 import { useAnalyze } from "../hooks/useAnalyze";
-import { Category } from "../types/analysis/Problem";
 import QuizResultSection from "../components/quiz/QuizResultSection";
-import { dummyQuizScores, dummyWeakPoints, WeakPoint } from "../data/dummyData";
+import { dummyWeakPoints } from "../data/dummyData";
 import { useAccount } from "../hooks/useAccount";
+import useQuizResult from "../hooks/useQuizResult";
 
 const MainPage = () => {
   const navigate = useNavigate();
@@ -29,6 +29,9 @@ const MainPage = () => {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const { accounts, error: accountError } = useAccount();
   const { categories } = useAnalyze();
+  
+  // 퀴즈 결과 훅 사용
+  const { quizScores } = useQuizResult();
 
   // 계좌 목록에서 main_account와 매칭되는 계좌 찾기
   const mainAccountInfo = React.useMemo(() => {
@@ -90,8 +93,8 @@ const MainPage = () => {
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
 
-              {/* AI 문제 풀기 - 타입 캐스팅 사용하지 않고 dummyData에서 정의된 WeakPoint 타입 사용 */}
-              <QuizResultSection scores={dummyQuizScores} weakPoints={dummyWeakPoints} />
+              {/* AI 문제 풀기 - 훅에서 가져온 데이터 사용 */}
+              <QuizResultSection scores={quizScores} weakPoints={dummyWeakPoints} />
             </div>
           </div>
         </div>
