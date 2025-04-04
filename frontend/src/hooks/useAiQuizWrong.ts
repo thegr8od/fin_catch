@@ -44,7 +44,6 @@ export const useAiQuiz = () => {
   const getLatestQuizContent = useCallback(async () => {
     try {
       const response = await fetchLatestQuizzes();
-      console.log("최신 퀴즈 목록 조회 응답:", response);
       return response;
     } catch (error) {
       console.error("퀴즈 목록 조회 중 오류:", error);
@@ -62,7 +61,6 @@ export const useAiQuiz = () => {
   const submitQuizAnswer = useCallback(async (quizId: number, selectedIndex: number) => {
     try {
       // 제출 전 로그
-      console.log("정답 제출 요청:", { quizId, selectedIndex });
       
       const response = await submitAnswer({
         quizId,
@@ -70,7 +68,6 @@ export const useAiQuiz = () => {
       });
       
       // 제출 후 로그
-      console.log("정답 제출 응답:", response);
       
       return response;
     } catch (error) {

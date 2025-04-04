@@ -13,22 +13,18 @@ export const useUserInfo = (autoFetch: boolean = true) => {
   const fetchUserInfo = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
-      console.log("토큰이 없어서 사용자 정보 요청 중단");
       dispatch(clearUser());
       return;
     }
 
     try {
-      console.log("사용자 정보 요청 시작");
       dispatch(setLoading(true));
       dispatch(setError(null));
 
       // 사용자 정보 조회
       const response = await fetchUserInfoApi();
-      console.log("사용자 정보 응답:", response);
 
       if (response.isSuccess && response.result) {
-        console.log("사용자 정보 설정:", response.result);
         dispatch(setUser(response.result));
       } else {
         console.error("사용자 정보 요청 실패:", response.error);
@@ -43,20 +39,16 @@ export const useUserInfo = (autoFetch: boolean = true) => {
         localStorage.removeItem("accessToken");
       }
     } finally {
-      console.log("사용자 정보 요청 완료");
       dispatch(setLoading(false));
     }
   }, [dispatch, fetchUserInfoApi]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    console.log("useUserInfo 초기화 - 토큰 존재:", !!token, "autoFetch:", autoFetch);
 
     if (autoFetch && token && !user) {
-      console.log("사용자 정보 자동 요청 시작");
       fetchUserInfo();
     } else if (!token) {
-      console.log("토큰이 없어서 사용자 정보 초기화");
       dispatch(clearUser());
     }
   }, [autoFetch, fetchUserInfo, user]);
@@ -64,13 +56,10 @@ export const useUserInfo = (autoFetch: boolean = true) => {
   // localStorage의 accessToken 변경 감지
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      console.log("스토리지 변경 감지:", e.key);
       if (e.key === "accessToken") {
         if (e.newValue) {
-          console.log("새 토큰 감지, 사용자 정보 갱신");
           fetchUserInfo();
         } else {
-          console.log("토큰 제거 감지, 사용자 정보 초기화");
           dispatch(clearUser());
         }
       }
@@ -83,7 +72,6 @@ export const useUserInfo = (autoFetch: boolean = true) => {
   }, [fetchUserInfo, dispatch]);
 
   const clearUserInfo = useCallback(() => {
-    console.log("사용자 정보 초기화");
     dispatch(clearUser());
   }, [dispatch]);
 

@@ -24,7 +24,6 @@ const LoginPage = () => {
 
     // 액세스 토큰이 URL에 있는 경우 처리
     if (accessToken && !isAuthenticated) {
-      console.log("URL에서 액세스 토큰 발견:", accessToken);
 
       // 액세스 토큰을 로컬 스토리지에 저장
       localStorage.setItem("accessToken", accessToken);
@@ -35,7 +34,6 @@ const LoginPage = () => {
 
       // 인증 상태 설정
       setAuthState(accessToken);
-      console.log("인증 상태 설정 완료");
 
       // URL 파라미터 제거 (보안상 이유로)
       navigate("/signin", { replace: true });
@@ -45,12 +43,10 @@ const LoginPage = () => {
     // 소셜 로그인 성공 후 토큰 요청
     if (success && !isAuthenticated && !loginProcessing) {
       setLoginProcessing(true);
-      console.log("소셜 로그인 성공 감지, 토큰 요청 시작");
 
       // 토큰 요청 함수
       const fetchToken = async () => {
         try {
-          console.log("토큰 요청 시작");
 
           const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/member/public/reissue`, {
             withCredentials: true,
@@ -69,22 +65,18 @@ const LoginPage = () => {
           }
 
           const data = response?.data;
-          console.log("API 응답 받음:", data);
 
           if (data?.isSuccess && data?.result?.accessToken) {
             const accessToken = data.result.accessToken;
-            console.log("토큰 추출 성공");
 
             // 액세스 토큰을 로컬 스토리지에 저장
             localStorage.setItem("accessToken", accessToken);
-            console.log("토큰 저장 완료");
 
             // tokenChange 이벤트 발생
             window.dispatchEvent(new Event("tokenChange"));
 
             // 인증 상태 설정
             setAuthState(accessToken);
-            console.log("인증 상태 설정 완료");
 
             // URL 파라미터 제거 (보안상 이유로)
             navigate("/main", { replace: true });

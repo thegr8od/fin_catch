@@ -68,7 +68,6 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
       }
 
       if (historyResponse?.isSuccess && historyResponse.result) {
-        console.log("거래내역 응답 (AccountLinkSection):", JSON.stringify(historyResponse, null, 2));
         setConsumeHistory(historyResponse);
       } else {
         console.error("거래내역 조회 실패:", historyResponse?.message);
@@ -94,7 +93,6 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
         ...prev,
         [name]: value,
       };
-      console.log("새로운 필터:", newFilter); // 디버깅용 로그 추가
       return newFilter;
     });
     // 상태 업데이트 후 즉시 조회

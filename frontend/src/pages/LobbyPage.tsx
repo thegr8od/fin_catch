@@ -113,12 +113,6 @@ const LobbyPage = () => {
   }, [fetchRooms, searchBySubject, currentPage, currentSubject, pageSize]);
 
   const handlePageChange = (newPage: number) => {
-    console.log("페이지 변경:", {
-      currentPage,
-      newPage,
-      totalPages,
-      totalElements,
-    });
     if (newPage >= 1 && newPage <= Math.ceil(totalElements / pageSize)) {
       setCurrentPage(newPage);
     }
@@ -138,9 +132,7 @@ const LobbyPage = () => {
 
   // 방 생성 처리
   const handleCreateRoom = async () => {
-    console.log("방 생성 함수 호출됨");
     if (!roomTitle || !selectedSubject) {
-      console.log("필수 입력값 누락", { roomTitle, selectedSubject });
       return;
     }
 
@@ -153,13 +145,10 @@ const LobbyPage = () => {
       subjectType: selectedSubject as SubjectType,
     };
 
-    console.log("방 생성 요청 데이터:", createRoomData);
 
     // 방 생성 API 호출
     try {
-      console.log("createRoom 호출 직전");
       const response = await createRoom(createRoomData);
-      console.log("방 생성 응답:", response);
 
       if (response?.isSuccess && response.result) {
         // 방 생성 후 방 목록 갱신
@@ -433,7 +422,6 @@ const LobbyPage = () => {
                 </button>
                 <button
                   onClick={(e) => {
-                    console.log("방 생성 버튼 클릭됨");
                     e.preventDefault();
                     handleCreateRoom();
                   }}

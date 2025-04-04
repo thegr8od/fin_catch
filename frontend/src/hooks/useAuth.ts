@@ -22,7 +22,6 @@ export const useAuth = () => {
   );
 
   useEffect(() => {
-    console.log("인증 상태 초기화");
 
     const initializeAuth = async () => {
       if (accessToken) {

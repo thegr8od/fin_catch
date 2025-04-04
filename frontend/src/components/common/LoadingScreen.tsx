@@ -30,15 +30,12 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ customMessage }) => {
   useEffect(() => {
     // 로딩 상태 변경 로그
     if (prevLoadingRef.current !== isLoading) {
-      console.log(`로딩 상태 변경: ${prevLoadingRef.current} -> ${isLoading}`);
       prevLoadingRef.current = isLoading;
     }
 
     if (isLoading) {
-      console.log("로딩 화면 표시");
       setVisible(true);
     } else {
-      console.log("로딩 화면 숨김");
       // 로딩이 끝나면 즉시 숨김
       setVisible(false);
     }
@@ -46,7 +43,6 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ customMessage }) => {
     // 안전장치: 로딩 상태가 true인데 30초 이상 지속되면 강제로 숨김
     if (isLoading) {
       const forceHideTimer = setTimeout(() => {
-        console.log("로딩 화면 30초 타임아웃으로 강제 숨김");
         setVisible(false);
       }, 30000);
 

@@ -17,9 +17,7 @@ export const useAccount = () => {
 
   const fetchAllAccount = useCallback(async () => {
     try {
-      console.log("계좌 목록 API 호출 시작");
       const response = await allAccountApi.execute();
-      console.log("계좌 목록 API 응답:", response);
 
       // financeMember가 null인 경우도 정상적으로 처리
       if (response.isSuccess && response.result) {
@@ -71,9 +69,7 @@ export const useAccount = () => {
   const fetchConsumeHistory = useCallback(
     async (accountNo: string, year: number, month: number) => {
       try {
-        console.log("거래내역 조회 요청:", { accountNo, year, month });
         const response = await consumeHistoryApi.execute({ accountNo, year, month });
-        console.log("거래내역 API 응답 (전체):", JSON.stringify(response, null, 2));
 
         if (response.isSuccess && response.result) {
           // API 응답이 이미 ConsumeHistoryResponse 형식과 일치하는 경우
@@ -125,7 +121,6 @@ export const useAccount = () => {
 
   const patchAccount = useCallback(async () => {
     try {
-      console.log("계좌 목록 갱신 시작");
       const response = await patchAccountApi.execute();
       if (response?.isSuccess) {
         // 계좌 목록 새로고침

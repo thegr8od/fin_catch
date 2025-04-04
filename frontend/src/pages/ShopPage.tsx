@@ -15,21 +15,12 @@ const ShopPage: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
-    console.log("ShopPage 상태 변경:", {
-      showModal,
-      pickedCharacters,
-      pickedCharactersLength: pickedCharacters?.length ?? 0,
-      purchaseAmount,
-      renderCondition: showModal && pickedCharacters && pickedCharacters.length > 0,
-    });
   }, [showModal, pickedCharacters, purchaseAmount]);
 
   const shouldShowModal = showModal && pickedCharacters && pickedCharacters.length > 0;
 
   const handlePurchaseWithValidation = (amount: number) => {
-    console.log("구매 시도:", { amount, userPoint: user?.point });
     if ((user?.point || 0) < amount) {
-      console.log("코인 부족! 경고창 표시");
       setAlertMessage("코인이 부족합니다!");
       setShowAlert(true);
       return;

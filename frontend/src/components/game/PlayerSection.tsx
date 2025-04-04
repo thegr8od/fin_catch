@@ -76,7 +76,6 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
             direction={direction}
             size={size}
             loop={(() => {
-              console.log("PlayerSection loop prop:", shouldLoop);
               return shouldLoop;
             })()}
             onAnimationComplete={() => onAnimationComplete(characterState)}

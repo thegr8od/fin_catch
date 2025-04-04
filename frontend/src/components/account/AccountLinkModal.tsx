@@ -20,17 +20,14 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
   const loadAccounts = useCallback(async () => {
     try {
       const response = await fetchAllAccount();
-      console.log("API 응답:", response);
 
       if (response?.isSuccess && response.result?.accounts) {
         console.log("계좌 목록:", response.result.accounts);
         setAccounts(response.result.accounts);
       } else {
-        console.log("계좌 데이터 구조:", response?.result);
         throw new Error("계좌 정보를 불러올 수 없습니다.");
       }
     } catch (error) {
-      console.error("계좌 목록 로딩 에러:", error);
       setError("계좌 목록을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);

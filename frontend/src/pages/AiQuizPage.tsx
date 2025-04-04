@@ -51,7 +51,6 @@ const AiQuizPage = () => {
     try {
       // 새로운 퀴즈 생성 및 가져오기 함수 사용
       const response = await createAndGetShuffledQuizzes();
-      console.log("새로 생성된 퀴즈 데이터 응답:", response);
       
       if (response && response.isSuccess && Array.isArray(response.result)) {
         // 타입 단언을 사용하여 response.result를 ShuffledQuizItem[] 타입으로 처리
@@ -83,7 +82,6 @@ const AiQuizPage = () => {
     try {
       // 섞인 퀴즈에 맞는 정답 제출 함수 사용
       const response = await submitShuffledQuizAnswer(currentQuiz.quizId, selectedOption);
-      console.log("정답 제출 응답:", response);
       
       // 서버에서 확인한 정답 여부
       const isCorrect = response.result === true;

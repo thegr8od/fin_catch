@@ -48,9 +48,7 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
    */
   useEffect(() => {
     if (isLoading) {
-      console.log("로딩 상태 활성화됨, 30초 타임아웃 설정");
       const timeoutId = setTimeout(() => {
-        console.log("로딩 상태 30초 타임아웃으로 자동 해제");
         setIsLoading(false);
         setProgressState(100);
       }, 30000);
@@ -68,7 +66,6 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const setProgress = (newProgress: number) => {
     // 로딩 중이 아니면 진행률 업데이트 무시
     if (!isLoading && newProgress !== 0) {
-      console.log(`진행률 업데이트 무시 (로딩 중 아님): ${newProgress}%`);
       return;
     }
 
@@ -77,7 +74,6 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // 진행률이 100%에 도달하면 로딩 상태 해제
     if (newProgress >= 100) {
-      console.log("진행률 100% 도달, 로딩 상태 자동 해제");
       setIsLoading(false);
     }
   };
@@ -89,7 +85,6 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
    * @param {boolean} loading - 설정할 로딩 상태
    */
   const setLoading = (loading: boolean) => {
-    console.log(`로딩 상태 설정: ${loading}`);
 
     if (loading) {
       // 로딩 시작
@@ -107,7 +102,6 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
    * 로딩 상태를 즉시 완료 처리 (진행률 100%로 설정 및 로딩 상태 해제)
    */
   const completeLoading = () => {
-    console.log("로딩 완료 함수 호출됨");
 
     // 로딩 상태 즉시 해제
     setProgressState(100);
