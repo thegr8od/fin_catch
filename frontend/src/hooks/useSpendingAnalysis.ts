@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { useApi } from "./useApi";
 import { SpendingAnalysis, SpendingCategory } from "../types/analysis/SpendingAnalysis";
 
-type APIResponse =
-  | {
-      [key: string]: number;
-    }
-  | string;
+interface APIResponse {
+  data: string;
+}
 
 export const useSpendingAnalysis = () => {
   const [loading, setLoading] = useState(false);
@@ -15,42 +13,31 @@ export const useSpendingAnalysis = () => {
 
   const spendingAnalysisApi = useApi<APIResponse, { year: number; month: number }>("/api/finance/account/analysis", "POST");
 
-  const parseResponse = (response: APIResponse): SpendingAnalysis => {
-    console.log("원본 API 응답:", response);
-
-    let jsonData: { [key: string]: number };
+  const parseResponse = (responseData: string): SpendingAnalysis => {
+    console.log("원본 API 응답 데이터:", responseData);
 
     try {
-      // 첫 번째 파싱 시도
-      const firstParse = typeof response === "string" ? JSON.parse(response) : response;
+      // data 필드의 문자열을 파싱
+      const parsedData = JSON.parse(responseData);
+      console.log("파싱된 JSON 데이터:", parsedData);
 
-      // 결과가 문자열인지 확인 (이중 인코딩된 경우)
-      if (typeof firstParse === "string") {
-        console.log("이중 인코딩 감지, 두 번째 파싱 시도");
-        jsonData = JSON.parse(firstParse);
-      } else {
-        jsonData = firstParse;
-      }
+      const result: SpendingAnalysis = {};
 
-      console.log("파싱된 JSON 데이터:", jsonData);
+      // 문자열로 된 키를 SpendingCategory로 변환
+      Object.entries(parsedData).forEach(([key, value]) => {
+        // 따옴표와 'W' 제거 및 공백 제거
+        const cleanKey = key.replace(/[\"\'W]/g, "").trim() as SpendingCategory;
+        if (value !== null && value !== undefined) {
+          result[cleanKey] = value as number;
+        }
+      });
+
+      console.log("최종 파싱된 데이터:", result);
+      return result;
     } catch (e) {
       console.error("JSON 파싱 에러:", e);
       return {};
     }
-
-    const result: SpendingAnalysis = {};
-
-    // 문자열로 된 키를 SpendingCategory로 변환
-    Object.entries(jsonData).forEach(([key, value]) => {
-      // 따옴표와 'W' 제거 및 공백 제거
-      const cleanKey = key.replace(/[\"\'W]/g, "").trim() as SpendingCategory;
-      if (value !== null && value !== undefined) {
-        result[cleanKey] = value;
-      }
-    });
-
-    console.log("최종 파싱된 데이터:", result);
-    return result;
   };
 
   const fetchAnalysis = async (year: number, month: number) => {
@@ -61,8 +48,8 @@ export const useSpendingAnalysis = () => {
       const response = await spendingAnalysisApi.execute({ year, month });
       console.log("API 응답 전체:", response);
 
-      if (response?.isSuccess && response?.result) {
-        const parsedData = parseResponse(response.result);
+      if (response?.isSuccess && response.result?.data) {
+        const parsedData = parseResponse(response.result.data);
         setData(parsedData);
       } else {
         throw new Error(response?.message || "데이터 조회에 실패했습니다.");
