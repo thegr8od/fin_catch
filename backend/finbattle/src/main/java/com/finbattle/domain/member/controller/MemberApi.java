@@ -73,7 +73,7 @@ public interface MemberApi {
     @Operation(summary = "사용자의 고양이 목록 조회", description = "로그인한 사용자가 보유한 고양이 목록을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "고양이 목록 조회 성공")
     @GetMapping("/mycat")
-    ResponseEntity<BaseResponse<List<Cat>>> getMyCats(
+    ResponseEntity<BaseResponse<List<CatDto>>> getMyCats(
         @AuthenticationPrincipal AuthenticatedUser detail);
 
     @Operation(summary = "랜덤 고양이 뽑기", description = "로그인한 사용자가 랜덤으로 고양이를 뽑습니다.")
