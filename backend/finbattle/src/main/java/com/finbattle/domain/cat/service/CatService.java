@@ -26,4 +26,10 @@ public class CatService {
             .orElseThrow(() -> new BusinessException(CAT_NOT_FOUND));
     }
 
+    // 3. 고양이 이름으로 조회
+    public Cat findByCatName(String name) {
+        return catRepository.findByCatName(name)
+            .orElseThrow(() -> new BusinessException(CAT_NOT_FOUND));
+    }
+
 }
