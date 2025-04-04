@@ -328,7 +328,6 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
       containerWidthRef.current = container.clientWidth || width;
       containerHeightRef.current = container.clientHeight || height;
 
-      console.log("컨테이너 크기:", containerWidthRef.current, containerHeightRef.current);
 
       // 캔버스 생성 - 처음에는 숨김 상태로 시작하지 않음
       const canvas = document.createElement("canvas");
@@ -426,7 +425,6 @@ export function useGameAnimation(options: AnimationOptions): UseGameAnimationRet
 
       // 애니메이션 완료 이벤트
       animation.onComplete = () => {
-        console.log("애니메이션 완료");
 
         // 상태에 따른 처리
         if (currentState === AnimationState.HIT) {

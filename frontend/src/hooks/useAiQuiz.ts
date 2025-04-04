@@ -46,10 +46,8 @@ export const useAiQuiz = () => {
   // 퀴즈 생성 함수
   const createQuizzes = useCallback(async () => {
     try {
-      console.log("새로운 AI 퀴즈 생성 요청");
       // 빈 객체 대신 undefined 전달 또는 파라미터 제거
       const response = await createNewQuizzes({});
-      console.log("새로운 퀴즈 생성 응답:", response);
       return response;
     } catch (error) {
       console.error("퀴즈 생성 중 오류:", error);
@@ -66,7 +64,6 @@ export const useAiQuiz = () => {
   const getLatestQuizContent = useCallback(async () => {
     try {
       const response = await fetchLatestQuizzes();
-      console.log("최신 퀴즈 목록 조회 응답:", response);
       return response;
     } catch (error) {
       console.error("퀴즈 목록 조회 중 오류:", error);
@@ -84,7 +81,6 @@ export const useAiQuiz = () => {
   const submitQuizAnswer = useCallback(async (quizId: number, selectedIndex: number) => {
     try {
       // 제출 전 로그
-      console.log("정답 제출 요청:", { quizId, selectedIndex });
       
       const response = await submitAnswer({
         quizId,
@@ -92,7 +88,6 @@ export const useAiQuiz = () => {
       });
       
       // 제출 후 로그
-      console.log("정답 제출 응답:", response);
       
       return response;
     } catch (error) {

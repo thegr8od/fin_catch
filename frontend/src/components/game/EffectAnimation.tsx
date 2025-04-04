@@ -147,14 +147,12 @@ const EffectAnimation: React.FC<EffectAnimationProps> = ({
             if (direction) {
               animationRef.current.x += 5
               if (animationRef.current.x > width * 0.65 && !hitRightRef.current && onHitRight) {
-                console.log("오른쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.65)
                 hitRightRef.current = true
                 onHitRight()
               }
             } else {
               animationRef.current.x -= 5
               if (animationRef.current.x < width * 0.35 && !hitLeftRef.current && onHitLeft) {
-                console.log("왼쪽 플레이어 충돌 감지!", animationRef.current.x, width * 0.35)
                 hitLeftRef.current = true
                 onHitLeft()
               }

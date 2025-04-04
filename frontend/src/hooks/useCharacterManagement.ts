@@ -100,7 +100,6 @@ export const useCharacterManagement = () => {
 
   const changeMyCat = async () => {
     if (!selectedCharacter) {
-      console.log("선택된 캐릭터가 없습니다.");
       return;
     }
 

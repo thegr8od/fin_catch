@@ -104,13 +104,10 @@ const NicknameChangeModal: React.FC<NicknameChangeModalProps> = ({ onClose, curr
     setMessage({ text: "닉네임 변경 중...", type: "info" });
 
     try {
-      console.log("닉네임 변경 시도:", nickname);
       const result = await checkAndUpdateNickname(nickname);
-      console.log("닉네임 변경 결과:", result);
 
       if (result.success) {
         setMessage({ text: "닉네임이 성공적으로 변경되었습니다.", type: "success" });
-        console.log("닉네임 변경 성공:", nickname);
 
         // 부모 컴포넌트에 변경된 닉네임 전달
         onUpdateNickname(nickname);
@@ -120,11 +117,9 @@ const NicknameChangeModal: React.FC<NicknameChangeModalProps> = ({ onClose, curr
           onClose();
         }, 1000);
       } else {
-        console.log("닉네임 변경 실패:", result.message);
         setMessage({ text: result.message || "닉네임 변경 중 오류가 발생했습니다.", type: "error" });
       }
     } catch (error) {
-      console.error("닉네임 변경 에러:", error);
       setMessage({ text: "닉네임 변경 중 오류가 발생했습니다.", type: "error" });
     } finally {
       setIsSubmitting(false);

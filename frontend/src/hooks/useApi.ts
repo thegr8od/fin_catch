@@ -15,8 +15,6 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
 
   const execute = useCallback(
     async (payload?: P, config?: CustomConfig) => {
-      console.log(`API 호출 시작: ${config?.url || endpoint}, 메서드: ${method}`);
-      console.log("요청 데이터:", payload);
       setLoading(true);
       setError(null);
 
@@ -26,7 +24,6 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
         const headers = config?.headers || {};
         const params = config?.params;
 
-        console.log(`최종 URL: ${url}, 헤더:`, headers);
 
         switch (method) {
           case "GET":
@@ -43,11 +40,9 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
             break;
 
           case "POST":
-            console.log(`POST 요청 수행: ${url}`, payload);
             response = await axiosInstance.post<Response<T>>(url, payload, {
               headers,
             });
-            console.log("POST 응답 수신:", response);
             break;
           case "PUT":
             response = await axiosInstance.put<Response<T>>(url, payload, { headers, params });
@@ -55,7 +50,6 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
         }
 
         const responseData = response.data;
-        console.log(`API 응답 데이터:`, responseData);
 
         // 기존 API 응답 처리
         if (responseData.isSuccess) {
@@ -92,7 +86,6 @@ export const useApi = <T, P = void>(endpoint: string, method: "GET" | "PATCH" | 
         return { success: false, error: errorMessage };
       } finally {
         setLoading(false);
-        console.log(`API 호출 완료: ${config?.url || endpoint}`);
       }
     },
     [endpoint, method]

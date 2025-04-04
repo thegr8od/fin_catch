@@ -156,7 +156,6 @@ const getSpritePath = (characterType: CharacterType, state: keyof CharacterState
 
   const stateName = getStateName(state);
   const path = `/cats_assets/${characterType}/${characterType}_cat_${stateName}.png`;
-  console.log("스프라이트 시트 경로:", path);
   return path;
 };
 
