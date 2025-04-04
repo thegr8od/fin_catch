@@ -7,6 +7,7 @@ import com.finbattle.domain.banking.model.SpendCategory;
 import com.finbattle.domain.banking.model.SpendCategoryEntity;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.banking.model.TransactionRecord;
+import com.finbattle.domain.banking.repository.AiCategoryRepository;
 import com.finbattle.domain.banking.repository.CategoryRepository;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,9 +26,10 @@ import org.springframework.stereotype.Service;
 public class SpendAnalysisService {
 
     private final CategoryRepository categoryRepository;
+    private final AiCategoryRepository aiCategoryRepository;
 
-    public String analysisSpend(Long memberId,
-        Map<String, TransactionList> transactionLists) throws JsonProcessingException {
+    public String analysisSpend(Map<String, TransactionList> transactionLists)
+        throws JsonProcessingException {
         Map<String, List<TransactionRecord>> recordByAccount = convertTransactionData(
             transactionLists);
 
@@ -80,12 +82,25 @@ public class SpendAnalysisService {
                 mapping -> new SpendCategoryEntity(mapping.getKeyword(), mapping.getCategory())
             ));
 
-        // 2. 분류되지 않은 요약어 추출
+        // 2. 분류되지 않은 키워드 2번 카데고리 테이블 조회
         Set<String> notFound = new HashSet<>(summaries);
         notFound.removeAll(summaryToCategory.keySet());
 
+        List<KeywordCategoryMapping> aiMappings = aiCategoryRepository.findKeywordCategoryMappings(
+            notFound);
+
+        for (KeywordCategoryMapping mapping : aiMappings) {
+            summaryToCategory.put(mapping.getKeyword(),
+                new SpendCategoryEntity(mapping.getKeyword(), mapping.getCategory()));
+        }
+
+        Set<String> reallyNotFound = new HashSet<>(notFound);
+        reallyNotFound.removeAll(
+            aiMappings.stream().map(KeywordCategoryMapping::getKeyword).collect(Collectors.toSet())
+        );
+
         // 3. FastAPI로 분류 요청
-        Map<String, SpendCategoryEntity> newlyClassified = classifyWithFastApi(notFound);
+        Map<String, SpendCategoryEntity> newlyClassified = classifyWithFastApi(reallyNotFound);
 
         // 4. 결과 병합
         summaryToCategory.putAll(newlyClassified);
@@ -106,6 +121,8 @@ public class SpendAnalysisService {
 //        // FastAPI 서버에 요청 → 결과 예: { "스타벅스": "카페", "배달의민족": "식비" }
 //        Map<String, String> resultFromFastApi = fastApiClient.classifyBulk(summaries);
 //
+//        List<SpendCategoryEntity> entitiesToSave = new ArrayList<>();
+//
 //        for (Map.Entry<String, String> entry : resultFromFastApi.entrySet()) {
 //            String keyword = entry.getKey();
 //            String label = entry.getValue();
@@ -113,10 +130,11 @@ public class SpendAnalysisService {
 //            SpendCategory categoryEnum = SpendCategory.fromLabel(label); // 한글 → Enum
 //            SpendCategoryEntity entity = new SpendCategoryEntity(keyword, categoryEnum);
 //
-//            categoryRepository.save(entity); // DB 저장
 //            result.put(keyword, entity);     // 결과 map 추가
+//            entitiesToSave.add(entity);     // DB 저장용 리스트 추가
 //        }
 
+//        aiCategoryRepository.save(entitiesToSave); // DB 저장
         return result;
     }
 

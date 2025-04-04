@@ -5,6 +5,7 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
+import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
@@ -78,7 +79,7 @@ public interface FinanceApi {
         @ApiResponse(responseCode = "200", description = "소비 내역 분석 성공")
     })
     @PostMapping("/account/analysis")
-    ResponseEntity<BaseResponse<String>> analysisTransaction(
+    ResponseEntity<BaseResponse<AnalysisResponseDto>> analysisTransaction(
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestBody AnalysisRequestDto requestDto
     ) throws JsonProcessingException;

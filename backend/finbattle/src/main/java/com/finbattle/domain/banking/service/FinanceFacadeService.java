@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountResponseDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequest;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.FinanceMember;
@@ -93,7 +94,7 @@ public class FinanceFacadeService implements FinanceService {
     }
 
     @Override
-    public String AnalysisSpend(Long memberId, Integer year, Integer month)
+    public AnalysisResponseDto AnalysisSpend(Long memberId, Integer year, Integer month)
         throws JsonProcessingException {
         FinanceMember member = financeMemberService.loadOrRegister(memberId, financeKey);
         List<AccountResponseDto> lists = financeAccountService.findAllAccount(financeKey,
@@ -112,6 +113,7 @@ public class FinanceFacadeService implements FinanceService {
             transactionLists.put(accountNo, transactionList);
         }
         log.info("거래 내역 조회 완료.");
-        return spendAnalysisService.analysisSpend(member.getMemberId(), transactionLists);
+        String data = spendAnalysisService.analysisSpend(transactionLists);
+        return new AnalysisResponseDto(data);
     }
 }
