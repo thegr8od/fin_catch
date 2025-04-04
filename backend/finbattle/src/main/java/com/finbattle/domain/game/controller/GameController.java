@@ -19,11 +19,11 @@ public class GameController {
     private final GameService gameService;
 
     //퀴즈 정보 가지고 오기
-    @MessageMapping("/game/{roomId}/getQuiz")
-    public void getQuiz(@DestinationVariable Long roomId) {
-        log.info("Received quiz request for roomId: {}", roomId);
-        gameService.publishNextQuiz(roomId);
-    }
+//    @MessageMapping("/game/{roomId}/getQuiz")
+//    public void getQuiz(@DestinationVariable Long roomId) {
+//        log.info("Received quiz request for roomId: {}", roomId);
+//        gameService.startAutoGame(roomId);
+//    }
 
     //퀴즈 정답 체크
     @MessageMapping("/game/{roomId}/checkAnswer")
@@ -37,10 +37,10 @@ public class GameController {
     }
 
     //게임 종료
-    @MessageMapping("/game/{roomId}/endGame")
-    public void endGame(@DestinationVariable Long roomId) {
-        log.info("Received end game request for roomId: {}", roomId);
-        gameService.endGame(roomId);
-    }
+//    @MessageMapping("/game/{roomId}/endGame")
+//    public void endGame(@DestinationVariable Long roomId) {
+//        log.info("Received end game request for roomId: {}", roomId);
+//        gameService.endGame(roomId);
+//    }
 
 }
