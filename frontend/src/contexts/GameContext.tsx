@@ -60,6 +60,7 @@ interface GameContextType {
   handleAnswerSubmit: (message: string) => boolean;
   chatMessages: Array<{ sender: string; message: string; timestamp: Date }>;
   sendChatMessage: (message: string, sender: string) => boolean;
+  setChatMessages: React.Dispatch<React.SetStateAction<Array<{ sender: string; message: string; timestamp: Date }>>>;
 }
 
 // 게임 프로바이더 Props 인터페이스
@@ -102,6 +103,7 @@ const GameContext = createContext<GameContextType>({
   handleAnswerSubmit: () => false,
   chatMessages: [],
   sendChatMessage: () => false,
+  setChatMessages: () => {},
 });
 
 // 게임 컨텍스트 훅
@@ -596,21 +598,24 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         send(`/app/game/${roomId}/checkAnswer`, chatData as any);
 
         // 내가 보낸 메시지를 로컬에 추가
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            sender,
-            message,
-            timestamp: new Date(),
-          },
-        ]);
+        setChatMessages((prev) => {
+          const newMessages = [
+            ...prev,
+            {
+              sender,
+              message,
+              timestamp: new Date(),
+            },
+          ];
+          return newMessages;
+        });
 
         return true;
       } catch (error) {
         return false;
       }
     },
-    [connected, roomId, playerStatus.id, send, lastMessageTime]
+    [connected, roomId, playerStatus.id, send, lastMessageTime, setChatMessages]
   );
 
   // 컨텍스트 값
@@ -628,8 +633,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       handleAnimationComplete,
       handleAttack,
       handleAnswerSubmit,
+      setChatMessages,
     }),
-    [gameState, playerStatus, opponentStatus, loading, quizOptions, firstHint, secondHint, chatMessages, sendChatMessage, handleAnimationComplete, handleAttack, handleAnswerSubmit]
+    [gameState, playerStatus, opponentStatus, loading, quizOptions, firstHint, secondHint, chatMessages, sendChatMessage, handleAnimationComplete, handleAttack, handleAnswerSubmit, setChatMessages]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

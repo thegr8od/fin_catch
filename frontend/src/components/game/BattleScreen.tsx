@@ -5,11 +5,8 @@ import ChatSection from "./ChatSection";
 import { useGame } from "../../contexts/GameContext";
 import { CharacterState } from "./types/character";
 
-interface QuizOptionsProps {
-  onOptionSelect: (option: { optionNumber: number; optionText: string }) => void;
-}
-
-const QuizOptions = ({ onOptionSelect }: QuizOptionsProps) => {
+// 객관식 선택지 UI 컴포넌트 (클릭 액션 없음)
+const QuizOptions = () => {
   const { quizOptions } = useGame();
 
   if (!quizOptions || quizOptions.length === 0) {
@@ -18,9 +15,10 @@ const QuizOptions = ({ onOptionSelect }: QuizOptionsProps) => {
 
   return (
     <div className="bg-white bg-opacity-80 rounded-lg p-3 mb-4">
+      <div className="text-center text-blue-800 font-bold mb-2">※ 채팅창에 번호만 입력하세요 (예: 1, 2, 3, 4)</div>
       <div className="grid grid-cols-1 gap-2">
         {quizOptions.map((option) => (
-          <div key={option.quizOptionId} className="bg-blue-100 hover:bg-blue-200 p-2 rounded-md cursor-pointer border border-blue-300" onClick={() => onOptionSelect(option)}>
+          <div key={option.quizOptionId} className="bg-blue-100 p-2 rounded-md border border-blue-300">
             <span className="font-bold">{option.optionNumber}. </span>
             {option.optionText}
           </div>
@@ -58,22 +56,21 @@ const HintDisplay = () => {
 
 const BattleScreen = () => {
   const [chatInput, setChatInput] = useState("");
-  const { playerStatus, opponentStatus, chatMessages, sendChatMessage, handleAnswerSubmit, handleAnimationComplete, gameState } = useGame();
+  const { playerStatus, opponentStatus, chatMessages, sendChatMessage, handleAnswerSubmit, handleAnimationComplete, gameState, quizOptions } = useGame();
 
   // 폼 제출 핸들러
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (chatInput.trim() === "") return;
 
+    // 채팅 메시지 전송
     sendChatMessage(chatInput, playerStatus.name || "나");
-    setChatInput("");
-  };
 
-  // 객관식 옵션 선택 처리
-  const handleOptionSelect = (option: { optionNumber: number; optionText: string }) => {
-    const optionText = `${option.optionNumber}. ${option.optionText}`;
-    sendChatMessage(optionText, playerStatus.name);
-    handleAnswerSubmit(option.optionNumber.toString());
+    // 정답 체크 수행
+    handleAnswerSubmit(chatInput);
+
+    // 입력창 초기화
+    setChatInput("");
   };
 
   const playerShouldLoop = playerStatus.state === "idle" || playerStatus.state === "victory";
@@ -100,7 +97,8 @@ const BattleScreen = () => {
         <div className="w-3/4 max-w-3xl mx-auto">
           <BattleStatus timer={gameState.remainingTime} question={gameState.currentQuestion} />
           <HintDisplay />
-          <QuizOptions onOptionSelect={handleOptionSelect} />
+          {/* 객관식 선택지 UI 표시 (클릭 불가) */}
+          <QuizOptions />
         </div>
       </div>
 
