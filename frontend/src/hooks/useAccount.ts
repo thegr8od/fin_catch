@@ -6,6 +6,7 @@ import { useUserInfo } from "./useUserInfo";
 export const useAccount = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const allAccountApi = useApi<AllAccount>("/api/finance/account/all", "POST");
   const patchAccountApi = useApi<AllAccount>("/api/finance/account/all", "PATCH");
   const accountDetailApi = useApi<AccountDetail, { accountNo: string }>("/api/finance/account/detail", "POST");
@@ -16,6 +17,9 @@ export const useAccount = () => {
   const { user } = useUserInfo(false); // autoFetch를 false로 설정하여 자동 조회 방지
 
   const fetchAllAccount = useCallback(async () => {
+    if (Date.now() - lastFetchTime < 3000 && accounts.length > 0) {
+      return { isSuccess: true, result: { accounts } };
+    }
     try {
       const response = await allAccountApi.execute();
 

@@ -1,44 +1,29 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { bankLogo } from "../../utils/BankLogo";
 import { Account } from "../../types/Accounts/Account";
-import { useAccount } from "../../hooks/useAccount";
+import { useApi } from "../../hooks/useApi";
 
 interface AccountLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLinkAccount: (accountInfo: Account) => void;
+  accounts: Account[];
+  fetchAllAccount: () => Promise<any>;
 }
 
-const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, onLinkAccount }) => {
+const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, onLinkAccount, accounts, fetchAllAccount }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectLoading, setSelectLoading] = useState<boolean>(false);
   const [selectError, setSelectError] = useState<string | null>(null);
-  const { fetchAllAccount, changeAccount } = useAccount();
 
-  const loadAccounts = useCallback(async () => {
-    try {
-      const response = await fetchAllAccount();
-
-      if (response?.isSuccess && response.result?.accounts) {
-        console.log("계좌 목록:", response.result.accounts);
-        setAccounts(response.result.accounts);
-      } else {
-        throw new Error("계좌 정보를 불러올 수 없습니다.");
-      }
-    } catch (error) {
-      setError("계좌 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const changeAccountApi = useApi<string, { accountNo: string }>("/api/finance/account/change", "PATCH");
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
       setError(null);
-      loadAccounts();
+      fetchAllAccount().finally(() => setLoading(false));
     }
   }, [isOpen]);
 
@@ -46,7 +31,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
     setSelectLoading(true);
     setSelectError(null);
     try {
-      const response = await changeAccount(account.accountNo);
+      const response = await changeAccountApi.execute({ accountNo: account.accountNo });
       if (response?.isSuccess) {
         onLinkAccount(account);
         onClose();
