@@ -145,7 +145,6 @@ const LobbyPage = () => {
       subjectType: selectedSubject as SubjectType,
     };
 
-
     // 방 생성 API 호출
     try {
       const response = await createRoom(createRoomData);
@@ -222,8 +221,8 @@ const LobbyPage = () => {
 
   return (
     <Background backgroundImage={mainBg}>
-      <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
-        <div className="w-full max-w-6xl px-6">
+      <div className="w-full h-[calc(100vh-80px)] flex flex-col items-center pt-8 relative z-10">
+        <div className="w-full max-w-6xl px-6 flex flex-col h-full pb-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl text-white font-bold tracking-wider text-shadow-lg">방 목록</h1>
             <button
@@ -254,9 +253,9 @@ const LobbyPage = () => {
           </div>
 
           {/* 방 목록 테이블 */}
-          <div className="bg-white bg-opacity-90 rounded-xl overflow-hidden flex flex-col shadow-xl">
-            <div className="overflow-x-auto">
-              <div className="max-h-[600px] overflow-y-auto">
+          <div className="bg-white bg-opacity-90 rounded-xl overflow-hidden flex flex-col shadow-xl flex-1">
+            <div className="flex flex-col h-full">
+              <div className="overflow-y-auto flex-1">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-gray-50 border-b border-gray-200 z-10">
                     <tr>
@@ -339,45 +338,45 @@ const LobbyPage = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            {/* 페이지네이션 */}
-            <div className="flex justify-center items-center py-4 gap-2 border-t border-gray-200">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-                }`}
-              >
-                이전
-              </button>
+              {/* 페이지네이션 */}
+              <div className="flex justify-center items-center py-4 gap-2 border-t border-gray-200 bg-white">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    currentPage === 1 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+                  }`}
+                >
+                  이전
+                </button>
 
-              {totalElements > 0 && (
-                <>
-                  {Array.from({ length: Math.ceil(totalElements / pageSize) }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        currentPage === pageNum ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
-                </>
-              )}
+                {totalElements > 0 && (
+                  <>
+                    {Array.from({ length: Math.ceil(totalElements / pageSize) }, (_, i) => i + 1).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                          currentPage === pageNum ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </>
+                )}
 
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage >= Math.ceil(totalElements / pageSize)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  currentPage >= Math.ceil(totalElements / pageSize) ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
-                }`}
-              >
-                다음
-              </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= Math.ceil(totalElements / pageSize)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    currentPage >= Math.ceil(totalElements / pageSize) ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300"
+                  }`}
+                >
+                  다음
+                </button>
+              </div>
             </div>
           </div>
         </div>
