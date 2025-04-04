@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useApi } from "./useApi";
 import { SpendingAnalysis, SpendingCategory } from "../types/analysis/SpendingAnalysis";
 
-type APIResponse = {
-  [key: string]: number;
-};
+type APIResponse =
+  | {
+      [key: string]: number;
+    }
+  | string;
 
 export const useSpendingAnalysis = () => {
   const [loading, setLoading] = useState(false);
@@ -16,12 +18,26 @@ export const useSpendingAnalysis = () => {
   const parseResponse = (response: APIResponse): SpendingAnalysis => {
     console.log("원본 API 응답:", response);
 
+    let jsonData: { [key: string]: number };
+
+    // 문자열인 경우 JSON 파싱
+    if (typeof response === "string") {
+      try {
+        jsonData = JSON.parse(response);
+      } catch (e) {
+        console.error("JSON 파싱 에러:", e);
+        return {};
+      }
+    } else {
+      jsonData = response;
+    }
+
     const result: SpendingAnalysis = {};
 
     // 문자열로 된 키를 SpendingCategory로 변환
-    Object.entries(response).forEach(([key, value]) => {
-      // 따옴표 제거 및 공백 제거
-      const cleanKey = key.replace(/[\"\']/g, "").trim() as SpendingCategory;
+    Object.entries(jsonData).forEach(([key, value]) => {
+      // 따옴표와 'W' 제거 및 공백 제거
+      const cleanKey = key.replace(/[\"\'W]/g, "").trim() as SpendingCategory;
       if (value !== null && value !== undefined) {
         result[cleanKey] = value;
       }
