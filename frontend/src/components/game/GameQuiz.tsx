@@ -6,10 +6,10 @@ interface GameQuizProps {
   timeLeft: number;
   isTimeUp: boolean;
   onShowResults: () => void;
-  playerCat: CharacterType; // 현재 사용하지 않지만 타입 정의는 유지
-  opponentCat: CharacterType; // 현재 사용하지 않지만 타입 정의는 유지
+  playerCat: CharacterType;
+  opponentCat: CharacterType;
   quiz: string;
-  answer: string; // 현재 사용하지 않지만 타입 정의는 유지
+  answer: string;
   selectedOption: number | null;
   onOptionSelect: (index: number) => void;
   options: string[];
@@ -19,8 +19,10 @@ const GameQuiz = ({
   timeLeft, 
   isTimeUp, 
   onShowResults,
-  // playerCat, opponentCat, answer는 현재 사용하지 않음
+  playerCat,
+  opponentCat,
   quiz, 
+  answer,
   selectedOption,
   onOptionSelect,
   options = []
@@ -47,9 +49,15 @@ const GameQuiz = ({
           <div className="w-full flex justify-between items-end mb-4">
             {/* 플레이어 고양이 (왼쪽) - 발판에 P1 표시 추가 */}
             <div className="relative flex flex-col items-center">              
-              {/* 고양이 캐릭터 */}
+              {/* 고양이 캐릭터 - characterType prop 추가 */}
               <div className="relative">
-                <CharacterAnimation state={"idle"} direction={true} scale={3} size="large" />
+                <CharacterAnimation 
+                  state={"idle"} 
+                  direction={true} 
+                  scale={3} 
+                  size="large" 
+                  characterType={playerCat}
+                />
                 
                 {/* 원형 발판 (P1 표시 포함) */}
                 <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600 rounded-full shadow-lg border-[3px] border-white -z-10">
@@ -66,9 +74,15 @@ const GameQuiz = ({
             {/* 상대방 고양이 (오른쪽 끝) - 발판에 P2 표시 추가 */}
             <div className="relative flex flex-col items-center">
               
-              {/* 고양이 캐릭터 */}
+              {/* 고양이 캐릭터 - characterType prop 추가 */}
               <div className="relative">
-                <CharacterAnimation state={"idle"} direction={false} scale={3} size="large" />
+                <CharacterAnimation 
+                  state={"idle"} 
+                  direction={false} 
+                  scale={3} 
+                  size="large" 
+                  characterType={opponentCat}
+                />
                 
                 {/* 원형 발판 (P2 표시 포함) */}
                 <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-8 flex items-center justify-center bg-gradient-to-r from-purple-400 to-purple-600 rounded-full shadow-lg border-[3px] border-white -z-10">

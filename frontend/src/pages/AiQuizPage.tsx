@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Background from "../assets/bg1.png";
 import GameQuiz from "../components/game/GameQuiz";
@@ -7,13 +7,14 @@ import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
 import { usePreventNavigation } from "../hooks/usePreventNavigation";
 import useQuizResult from "../hooks/useQuizResult";
-import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz"; // useShuffledQuiz 사용
+import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz";
+import axiosInstance from "../api/axios";
 
 type GameState = "quiz" | "goodResult" | "badResult" | "finalResult";
 
 const AiQuizPage = () => {
   const navigate = useNavigate();
-  const { user } = useUserInfo();
+  const { user, fetchUserInfo } = useUserInfo();
   const [timeLeft, setTimeLeft] = useState<number>(60); // 60초 타이머
   const [gameState, setGameState] = useState<GameState>("quiz");
   const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
@@ -26,6 +27,11 @@ const AiQuizPage = () => {
   const [answeredQuestions, setAnsweredQuestions] = useState<number>(0);
   const [correctAnswers, setCorrectAnswers] = useState<number>(0);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
+  const [currentQuestionScore, setCurrentQuestionScore] = useState<number>(0);
+  
+  // 추가: 퀴즈 초기화 및 진행 상태 관리
+  const isQuizInitialized = useRef<boolean>(false);
+  const isQuizInProgress = useRef<boolean>(false);
   
   // 새로 수정된 useShuffledQuiz 훅 사용
   const { loading, error, shuffledQuizzes, createAndGetShuffledQuizzes, submitShuffledQuizAnswer } = useShuffledQuiz();
@@ -47,14 +53,24 @@ const AiQuizPage = () => {
 
   // 퀴즈 데이터 가져오기 - 새 API 함수 사용
   const fetchQuizzes = useCallback(async () => {
+    // 이미 퀴즈가 초기화되고 진행 중이면 다시 불러오지 않음
+    if (isQuizInitialized.current && isQuizInProgress.current && quizzes.length > 0) {
+      console.log("퀴즈가 이미 진행 중입니다. 다시 불러오지 않습니다.");
+      return;
+    }
+    
     setIsLoading(true);
     try {
+      console.log("새 퀴즈 데이터를 불러오는 중...");
       // 새로운 퀴즈 생성 및 가져오기 함수 사용
       const response = await createAndGetShuffledQuizzes();
       
-      if (response && response.isSuccess && Array.isArray(response.result)) {
+      if (response && response.isSuccess && Array.isArray(response.result) && response.result.length > 0) {
         // 타입 단언을 사용하여 response.result를 ShuffledQuizItem[] 타입으로 처리
-        setQuizzes(response.result as ShuffledQuizItem[]);
+        const fetchedQuizzes = response.result as ShuffledQuizItem[];
+        console.log(`${fetchedQuizzes.length}개의 퀴즈를 성공적으로 불러왔습니다.`);
+        
+        setQuizzes(fetchedQuizzes);
         setTimeLeft(60);
         setIsTimeUp(false);
         setSelectedOption(null);
@@ -63,6 +79,11 @@ const AiQuizPage = () => {
         setCorrectAnswers(0);
         setScore(0);
         setLastAnswerCorrect(null);
+        setCurrentQuestionScore(0);
+        
+        // 퀴즈 초기화 및 진행 상태 설정
+        isQuizInitialized.current = true;
+        isQuizInProgress.current = true;
       } else {
         console.error("퀴즈를 가져오는데 실패했습니다:", response?.message || "알 수 없는 오류");
       }
@@ -71,11 +92,11 @@ const AiQuizPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [createAndGetShuffledQuizzes]);
+  }, [createAndGetShuffledQuizzes, quizzes.length]);
 
   // 정답 제출 처리 - 섞인 옵션에 맞게 수정
   const handleSubmitAnswer = useCallback(async () => {
-    if (selectedOption === null || quizzes.length === 0) return;
+    if (selectedOption === null || quizzes.length === 0 || !isQuizInProgress.current) return;
     
     const currentQuiz = quizzes[currentQuizIndex];
     
@@ -90,12 +111,15 @@ const AiQuizPage = () => {
       setAnsweredQuestions(prev => prev + 1);
       
       if (isCorrect) {
-        // 정답인 경우 점수 증가
+        // 정답인 경우 점수 증가 - 각 문제별 점수를 50으로 설정
+        const questionScore = 50;
+        setCurrentQuestionScore(questionScore);
         setCorrectAnswers(prev => prev + 1);
-        setScore(prev => prev + 50);
+        setScore(prev => prev + questionScore);
         setGameState("goodResult");
       } else {
         // 오답인 경우
+        setCurrentQuestionScore(0);
         setGameState("badResult");
       }
     } catch (error) {
@@ -107,10 +131,13 @@ const AiQuizPage = () => {
       setAnsweredQuestions(prev => prev + 1);
       
       if (isCorrect) {
+        const questionScore = 50;
+        setCurrentQuestionScore(questionScore);
         setCorrectAnswers(prev => prev + 1);
-        setScore(prev => prev + 50);
+        setScore(prev => prev + questionScore);
         setGameState("goodResult");
       } else {
+        setCurrentQuestionScore(0);
         setGameState("badResult");
       }
     }
@@ -118,7 +145,7 @@ const AiQuizPage = () => {
 
   // 시간 초과 시 강제로 오답 제출
   const handleTimeUp = useCallback(async () => {
-    if (quizzes.length === 0) return;
+    if (quizzes.length === 0 || !isQuizInProgress.current) return;
     
     const currentQuiz = quizzes[currentQuizIndex];
     
@@ -136,12 +163,14 @@ const AiQuizPage = () => {
       await submitShuffledQuizAnswer(currentQuiz.quizId, wrongOptionIndex);
       
       // 오답 처리
+      setCurrentQuestionScore(0);
       setLastAnswerCorrect(false);
       setAnsweredQuestions(prev => prev + 1);
       setGameState("badResult");
     } catch (error) {
       console.error("시간 초과 처리 중 오류 발생:", error);
       // 오류 발생 시에도 오답 처리
+      setCurrentQuestionScore(0);
       setLastAnswerCorrect(false);
       setAnsweredQuestions(prev => prev + 1);
       setGameState("badResult");
@@ -157,17 +186,50 @@ const AiQuizPage = () => {
       setIsTimeUp(false);
       setGameState("quiz");
       setLastAnswerCorrect(null);
+      setCurrentQuestionScore(0);
     } else {
       // 모든 문제 완료
       setGameState("finalResult");
     }
   }, [currentQuizIndex, quizzes.length]);
 
-  // 컴포넌트 마운트 시 초기화
+  // 컴포넌트 마운트 시 초기화 - 의존성 배열 수정
   useEffect(() => {
+    console.log("컴포넌트 마운트: 초기 설정");
     setRandomCat(selectRandomCat());
-    fetchQuizzes();
-  }, [selectRandomCat, fetchQuizzes]);
+    
+    // 초기화 및 데이터 불러오기는 한 번만 실행
+    if (!isQuizInitialized.current) {
+      fetchQuizzes();
+    }
+    
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      console.log("컴포넌트 언마운트: 상태 초기화");
+      isQuizInitialized.current = false;
+      isQuizInProgress.current = false;
+    };
+  }, []); // 빈 의존성 배열로 마운트 시에만 실행
+
+  // fetchQuizzes와 selectRandomCat이 변경되었을 때 실행할 추가 useEffect
+  useEffect(() => {
+    // fetchQuizzes 함수가 변경되었을 때만 실행하고, 
+    // 이미 초기화되지 않은 경우에만 실행
+    if (!isQuizInitialized.current && !isLoading) {
+      console.log("추가 검사: 퀴즈 데이터 초기화 필요");
+      fetchQuizzes();
+    }
+  }, [fetchQuizzes, isLoading]);
+
+  // 디버깅용 로그 추가
+  useEffect(() => {
+    console.log("현재 퀴즈 상태:", {
+      인덱스: currentQuizIndex,
+      진행중: isQuizInProgress.current,
+      초기화됨: isQuizInitialized.current,
+      퀴즈개수: quizzes.length
+    });
+  }, [currentQuizIndex, quizzes.length]);
 
   // 타이머 설정
   useEffect(() => {
@@ -182,6 +244,7 @@ const AiQuizPage = () => {
       setTimeLeft(timeLeft - 1);
     }, 1000);
 
+    // 컴포넌트 언마운트 또는 의존성 변경 시 타이머 정리
     return () => clearTimeout(timer);
   }, [timeLeft, isLoading, gameState]);
 
@@ -196,11 +259,41 @@ const AiQuizPage = () => {
   const currentQuiz = getCurrentQuiz();
   const options = currentQuiz.options ? currentQuiz.options.map((opt) => opt.optionText) : [];
 
+  // 서버에 경험치와 포인트 업데이트 함수
+  const updateExpAndPoint = async (exp: number, point: number) => {
+    try {
+      const response = await axiosInstance.patch('/api/member/exp-point', {
+        exp: exp,
+        point: point
+      });
+      
+      if (response.data.isSuccess) {
+        console.log("경험치와 포인트 업데이트 성공:", response.data.result);
+        // 사용자 정보 갱신
+        await fetchUserInfo();
+        return true;
+      } else {
+        console.error("경험치와 포인트 업데이트 실패:", response.data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("API 호출 중 오류 발생:", error);
+      return false;
+    }
+  };
+
   // 결과 화면에서 계속하기 버튼 클릭 시 처리
-  const handleContinue = () => {
-    if (gameState === "goodResult" || gameState === "badResult") {
+  const handleContinue = async () => {
+    if (gameState === "goodResult") {
+      // 정답일 경우 경험치 및 포인트 업데이트
+      await updateExpAndPoint(100, currentQuestionScore); // 정답 하나당 100 경험치, 점수는 currentQuestionScore
+      moveToNextQuestion();
+    } else if (gameState === "badResult") {
       moveToNextQuestion();
     } else if (gameState === "finalResult") {
+      // 퀴즈 완료 시 상태 초기화
+      isQuizInProgress.current = false;
+      
       // 훅을 사용하여 결과 저장
       saveQuizResult({
         totalProblems: quizzes.length,
@@ -222,6 +315,27 @@ const AiQuizPage = () => {
     }
   }, [isTimeUp, selectedOption, handleTimeUp, handleSubmitAnswer]);
 
+  // 로딩 중일 때 로딩 화면 표시
+  if (isLoading) {
+    return (
+      <div
+        className="w-full flex flex-col items-center bg-cover h-screen overflow-y-auto"
+        style={{
+          backgroundImage: `url(${Background})`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+        <div className="w-full h-screen flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-xl font-medium text-gray-700">퀴즈를 불러오는 중입니다...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 로딩이 완료된 후 게임 화면 표시
   return (
     <div
       className="w-full flex flex-col items-center bg-cover h-screen overflow-y-auto"
@@ -232,14 +346,14 @@ const AiQuizPage = () => {
       <div className="absolute inset-0 bg-black bg-opacity-10"></div>
       
       {/* 퀴즈 진행 상태 표시 */}
-      <div className="w-[85%] mt-4 mb-2 bg-white bg-opacity-75 rounded-lg p-2 flex justify-between items-center z-10">
-        <div className="text-gray-700 font-semibold">
-          문제 {currentQuizIndex + 1} / {quizzes.length}
+      <div className="w-[85%] mt-20 mb-4 bg-white bg-opacity-90 rounded-lg p-3 flex justify-between items-center relative z-50 shadow-md">
+        <div className="text-gray-700 font-bold text-lg">
+          문제 {currentQuizIndex + 1} / {quizzes.length || 10}
         </div>
-        <div className="text-blue-600 font-semibold">
+        <div className="text-blue-600 font-bold text-lg">
           점수: {score}점
         </div>
-        <div className="text-green-600 font-semibold">
+        <div className="text-green-600 font-bold text-lg">
           정답: {correctAnswers} / {answeredQuestions}
         </div>
       </div>
@@ -289,7 +403,7 @@ const AiQuizPage = () => {
       ) : (
         <GameResult
           type={gameState === "goodResult" ? "good" : "bad"}
-          score={gameState === "goodResult" ? 50 : 0}
+          score={currentQuestionScore}
           onContinue={handleContinue}
         />
       )}
