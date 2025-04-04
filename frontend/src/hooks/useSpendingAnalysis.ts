@@ -20,16 +20,22 @@ export const useSpendingAnalysis = () => {
 
     let jsonData: { [key: string]: number };
 
-    // 문자열인 경우 JSON 파싱
-    if (typeof response === "string") {
-      try {
-        jsonData = JSON.parse(response);
-      } catch (e) {
-        console.error("JSON 파싱 에러:", e);
-        return {};
+    try {
+      // 첫 번째 파싱 시도
+      const firstParse = typeof response === "string" ? JSON.parse(response) : response;
+
+      // 결과가 문자열인지 확인 (이중 인코딩된 경우)
+      if (typeof firstParse === "string") {
+        console.log("이중 인코딩 감지, 두 번째 파싱 시도");
+        jsonData = JSON.parse(firstParse);
+      } else {
+        jsonData = firstParse;
       }
-    } else {
-      jsonData = response;
+
+      console.log("파싱된 JSON 데이터:", jsonData);
+    } catch (e) {
+      console.error("JSON 파싱 에러:", e);
+      return {};
     }
 
     const result: SpendingAnalysis = {};
@@ -43,7 +49,7 @@ export const useSpendingAnalysis = () => {
       }
     });
 
-    console.log("파싱된 데이터:", result);
+    console.log("최종 파싱된 데이터:", result);
     return result;
   };
 
