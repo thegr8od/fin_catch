@@ -97,8 +97,8 @@ public class MemberController implements MemberApi {
     }
 
     @Override
-    public ResponseEntity<BaseResponse<List<Cat>>> getMyCats(AuthenticatedUser detail) {
-        List<Cat> cats = memberService.getCatIdsByMemberId(detail.getMemberId());
+    public ResponseEntity<BaseResponse<List<CatDto>>> getMyCats(AuthenticatedUser detail) {
+        List<CatDto> cats = memberService.findCatsByMemberId(detail.getMemberId());
         log.info("사용자가 보유한 고양이 목록: {}", cats);
         return ResponseEntity.ok(new BaseResponse<>(cats));
     }

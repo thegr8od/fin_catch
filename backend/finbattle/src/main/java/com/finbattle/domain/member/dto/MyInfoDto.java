@@ -1,16 +1,17 @@
 package com.finbattle.domain.member.dto;
 
-import com.finbattle.domain.banking.model.FinanceMember;
 import com.finbattle.domain.cat.entity.Cat;
+import com.finbattle.domain.member.model.Member;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @ToString
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Schema(description = "사용자 정보 DTO")
 public class MyInfoDto {
@@ -35,20 +36,20 @@ public class MyInfoDto {
 
     private String main_account;
 
-    public MyInfoDto(String email, String nickname, List<Cat> Cats, String mainCat, Long exp,
-        Long point, FinanceMember financeMember) {
-        this.email = email;
-        this.nickname = nickname;
-        this.cats = Cats.stream()
+    public static MyInfoDto from(Member member, List<Cat> cats) {
+        List<CatDto> catDtos = cats.stream()
             .map(CatDto::new)
-            .collect(Collectors.toList());
-        this.mainCat = mainCat;
-        this.exp = exp;
-        this.point = point;
-        if (financeMember == null) {
-            this.main_account = null;
-        } else {
-            this.main_account = financeMember.getMainaccount();
-        }
+            .toList();
+
+        return new MyInfoDto(
+            member.getEmail(),
+            member.getNickname(),
+            member.getMainCat(),
+            catDtos,
+            member.getExp(),
+            member.getPoint(),
+            member.getFinanceMember().getMainaccount()
+        );
     }
+
 }
