@@ -138,12 +138,10 @@ const RoomPreparePage: React.FC = () => {
         const infoResponse = await fetchRoomInfo(undefined, {
           url: `/api/room/room/${roomId}/info`,
         });
-        console.log("실시간 방 정보 : ", infoResponse);
         if (!infoResponse?.isSuccess) {
           showCustomAlert("실시간 방 정보를 불러오는데 실패했습니다.");
         }
       } catch (error) {
-        console.error("방 정보를 불러오는 중 오류 발생:", error);
         showCustomAlert("방 정보를 불러오는데 실패했습니다.");
         navigate("/lobby");
       }
@@ -172,8 +170,6 @@ const RoomPreparePage: React.FC = () => {
     // 메시지 핸들러
     const handleRoomMessage = (message: IMessage) => {
       try {
-        console.log("원본 메시지 본문:", message.body);
-
         // 이중 인코딩된 메시지 처리 - 메시지 본문이 JSON 문자열을 포함한 문자열인 경우
         let parsedData: EventMessage<RedisRoom | number | null>;
 
@@ -184,18 +180,13 @@ const RoomPreparePage: React.FC = () => {
         if (typeof firstParse === "string") {
           // 두 번째 파싱 시도
           parsedData = JSON.parse(firstParse);
-          console.log("이중 인코딩된 메시지 감지, 두 번째 파싱 결과:", parsedData);
         } else {
           // 일반적인 경우 (한 번만 인코딩됨)
           parsedData = firstParse;
         }
 
-        console.log("최종 파싱 결과:", parsedData);
-        console.log("이벤트 타입:", parsedData.event);
-
         // 이벤트 타입 확인
         if (!parsedData || typeof parsedData !== "object") {
-          console.error("유효하지 않은 메시지 구조:", parsedData);
           return;
         }
 
@@ -205,31 +196,23 @@ const RoomPreparePage: React.FC = () => {
         if (event === "CREATE" || event === "INFO" || event === "JOIN" || event === "READY" || event === "UPDATE" || event === "UNREADY") {
           // 방 정보 업데이트
           if (parsedData.data && typeof parsedData.data === "object") {
-            console.log("방 정보 업데이트:", parsedData.data);
             setRedisRoom(parsedData.data as RedisRoom);
           }
         } else if (event === "KICK") {
-          console.log("🔵 KICK 이벤트 시작");
           if (typeof parsedData.data === "number") {
             const kickedMemberId = parsedData.data;
-            console.log("🔵 강퇴될 memberId:", kickedMemberId);
 
             setRedisRoom((prevRoom) => {
               if (!prevRoom) {
-                console.log("🔴 prevRoom이 null임");
                 return null;
               }
-
-              console.log("🔵 prevRoom 정보:", prevRoom);
 
               const isCurrentUserKicked = prevRoom?.members.some((member) => member.memberId === kickedMemberId && member.nickname === user?.nickname);
 
               if (isCurrentUserKicked) {
-                console.log("🔵 강퇴된 사용자 처리 시작");
                 setAlertMessage("방에서 강퇴되었습니다.");
                 setShowAlert(true);
                 setOnConfirm(() => navigate("/lobby"));
-                console.log("🔵 강퇴된 사용자 메인으로 이동");
                 return prevRoom;
               }
 
@@ -237,10 +220,8 @@ const RoomPreparePage: React.FC = () => {
                 ...prevRoom,
                 members: prevRoom.members.filter((member) => member.memberId !== kickedMemberId),
               };
-              console.log("🔵 업데이트된 room 정보:", updatedRoom);
               return updatedRoom;
             });
-            console.log("🔵 KICK 이벤트 처리 완료");
           }
         } else if (event === "LEAVE") {
           if (typeof parsedData.data === "number") {
@@ -263,9 +244,7 @@ const RoomPreparePage: React.FC = () => {
             });
           }
         } else if (event === "START") {
-          console.log("🔵 START 이벤트 수신된 원본 데이터:", parsedData);
           const members = parsedData.data;
-          console.log("🔵 게임 시작 멤버 정보:", members);
 
           try {
             // 기존 방 구독 해제
@@ -274,15 +253,8 @@ const RoomPreparePage: React.FC = () => {
 
             // 데이터 유효성 검사
             if (!Array.isArray(members)) {
-              console.error("🔴 멤버 데이터가 배열이 아님:", members);
               return;
             }
-
-            console.log("🔵 게임으로 전달될 최종 데이터:", {
-              path: `/one-to-one/${roomRef.current?.subjectType?.toLowerCase()}`,
-              players: members,
-            });
-
             // 게임 시작
             if (roomRef.current?.subjectType) {
               navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`, {
@@ -293,13 +265,13 @@ const RoomPreparePage: React.FC = () => {
               });
             }
           } catch (error) {
-            console.error("🔴 게임 시작 처리 중 오류 발생:", error);
+            showCustomAlert("게임 시작 처리 중 오류 발생");
           }
         } else {
-          console.log("알 수 없는 이벤트:", event, "서버 데이터:", parsedData);
+          showCustomAlert("알 수 없는 이벤트");
         }
       } catch (error) {
-        console.error("메시지 처리 중 오류 발생:", error, "원본 메시지:", message.body);
+        showCustomAlert("메시지 처리 중 오류 발생");
       }
     };
 
@@ -310,7 +282,6 @@ const RoomPreparePage: React.FC = () => {
     const chatTopic = topics.CHAT(roomId);
     const handleChatMessage = (message: IMessage) => {
       try {
-        console.log("원본 메시지:", message.body);
         // 메시지가 이중으로 JSON 문자열로 되어있을 수 있으므로 두 번 파싱
         let chatData;
         try {
@@ -323,8 +294,6 @@ const RoomPreparePage: React.FC = () => {
         } catch {
           chatData = JSON.parse(message.body);
         }
-
-        console.log("파싱된 데이터:", chatData);
 
         // redisRoom에서 발신자의 닉네임 찾기
         const senderMember = redisRoom?.members.find((member) => member.memberId === chatData.sender);
@@ -339,7 +308,7 @@ const RoomPreparePage: React.FC = () => {
           },
         ]);
       } catch (error) {
-        console.error("채팅 메시지 처리 중 오류 발생:", error, "원본 메시지:", message.body);
+        showCustomAlert("채팅 메시지 처리 중 오류 발생");
       }
     };
 
@@ -374,7 +343,6 @@ const RoomPreparePage: React.FC = () => {
       }
       setIsReady(!isReady);
     } catch (error) {
-      console.error("준비 상태 변경 중 오류 발생:", error);
       showCustomAlert("준비 상태 변경에 실패했습니다.");
     }
   };
@@ -393,7 +361,6 @@ const RoomPreparePage: React.FC = () => {
         showCustomAlert("강퇴에 실패했습니다.");
       }
     } catch (error) {
-      console.error("강퇴 처리 중 오류 발생:", error);
       showCustomAlert("강퇴 처리 중 오류가 발생했습니다.");
     }
   };
@@ -448,7 +415,6 @@ const RoomPreparePage: React.FC = () => {
         setPullupTimer(response?.result?.secondsRemaining || 0);
       }
     } catch (error) {
-      console.error("PullUp 처리 중 오류 발생:", error);
       showCustomAlert("PullUp 처리 중 오류가 발생했습니다.");
     }
   };

@@ -18,7 +18,6 @@ const SlotMachine: React.FC<SlotMachineProps> = ({ isSpinning, onPurchase, disab
       </div>
 
       {/* 멤버십 획득 텍스트 */}
-      <div className="text-white text-xl font-korean-pixel mb-6 text-center">멤버십 획득 가능</div>
 
       {/* 구매 버튼 */}
       {!isSpinning && (

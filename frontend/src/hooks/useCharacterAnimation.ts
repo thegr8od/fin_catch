@@ -21,7 +21,6 @@ const preloadTexture = async (config: CharacterSpriteConfig, characterType: Char
   const cacheKey = `${characterType}_${state}`;
 
   if (textureCache[cacheKey]) {
-    console.log("캐시된 텍스처 사용:", cacheKey);
     return textureCache[cacheKey];
   }
 
@@ -31,14 +30,6 @@ const preloadTexture = async (config: CharacterSpriteConfig, characterType: Char
         throw new Error(`스프라이트 시트 설정이 없습니다. characterType: ${characterType}, state: ${state}`);
       }
 
-      console.log("스프라이트 시트 로딩 시작:", {
-        path: config.spriteSheet,
-        characterType,
-        state,
-        frameCount: config.frameCount,
-        frameWidth: config.frameWidth,
-        frameHeight: config.frameHeight,
-      });
 
       // 이미지 존재 여부 확인
       const img = new Image();
@@ -71,20 +62,11 @@ const preloadTexture = async (config: CharacterSpriteConfig, characterType: Char
             }
             const y = 0;
             const rect = new PIXI.Rectangle(x, y, config.frameWidth, config.frameHeight);
-            console.log(`프레임 ${i} 생성:`, { x, y, width: config.frameWidth, height: config.frameHeight });
             const texture = new PIXI.Texture(baseTexture, rect);
             return texture;
           });
 
           textureCache[cacheKey] = textures;
-          console.log("텍스처 생성 성공:", {
-            cacheKey,
-            textureCount: textures.length,
-            dimensions: `${img.width}x${img.height}`,
-            frameSize: `${config.frameWidth}x${config.frameHeight}`,
-            totalFrames: config.frameCount,
-            path: config.spriteSheet,
-          });
           resolve(textures);
         } catch (error) {
           delete textureCache[cacheKey];
@@ -137,7 +119,6 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     if (!containerRef.current || appRef.current) return null;
 
     try {
-      console.log("PIXI 앱 초기화 시작");
 
       // PIXI 설정
       PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -153,7 +134,6 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
       containerRef.current.appendChild(app.view as HTMLCanvasElement);
       appRef.current = app;
 
-      console.log("PIXI 앱 초기화 완료");
       return app;
     } catch (error) {
       console.error("PIXI 앱 초기화 중 오류:", error);
@@ -212,16 +192,10 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
         return;
       }
 
-      console.log("애니메이션 업데이트 시작:", {
-        state,
-        characterType,
-        retryCount: retryCountRef.current,
-      });
 
       const textures = await preloadTexture(config, characterType, state);
 
       if (!mountedRef.current) {
-        console.log("텍스처 로딩 중 컴포넌트 언마운트됨");
         setIsReady(false);
         return;
       }
@@ -255,7 +229,6 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
 
       if (mountedRef.current && retryCountRef.current < MAX_RETRIES) {
         retryCountRef.current++;
-        console.log(`애니메이션 업데이트 재시도 (${retryCountRef.current}/${MAX_RETRIES})`);
         setTimeout(() => {
           if (mountedRef.current) {
             updateAnimation();
@@ -269,13 +242,11 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
 
   // 컴포넌트 마운트/언마운트 처리
   useEffect(() => {
-    console.log("컴포넌트 마운트");
     mountedRef.current = true;
     initializedRef.current = false;
     retryCountRef.current = 0;
 
     return () => {
-      console.log("컴포넌트 언마운트");
       mountedRef.current = false;
       if (animationRef.current) {
         animationRef.current.destroy();
@@ -296,10 +267,8 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     const setup = async () => {
       try {
         if (!initializedRef.current) {
-          console.log("초기 설정 시작");
           await initializeApp();
           initializedRef.current = true;
-          console.log("초기 설정 완료");
         }
         await updateAnimation();
       } catch (error) {

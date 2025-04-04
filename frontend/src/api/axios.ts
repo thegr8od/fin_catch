@@ -15,7 +15,6 @@ const axiosInstance: AxiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("accessToken");
-    console.log("요청 전 저장된 토큰:", token);
 
     if (token && config.headers) {
       config.headers["Authorization"] = `Bearer ${token}`;
@@ -35,12 +34,10 @@ axiosInstance.interceptors.request.use(
       logObject.params = config.params;
     }
 
-    console.log("API 요청:", logObject);
 
     return config;
   },
   (error: AxiosError) => {
-    console.error("API 요청 오류:", error);
     return Promise.reject(error);
   }
 );

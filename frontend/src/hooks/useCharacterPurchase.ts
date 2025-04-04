@@ -23,7 +23,6 @@ export const useCharacterPurchase = () => {
   const { execute } = useApi<Character[]>("/api/member/pick/cat", "GET");
 
   const handlePurchase = async (amount: number) => {
-    console.log("구매 시작:", amount);
     setPurchaseAmount(amount);
     setIsSpinning(true);
 
@@ -32,7 +31,6 @@ export const useCharacterPurchase = () => {
         url: `/api/member/pick/cat?count=${amount}`,
         headers: {},
       });
-      console.log("API 응답:", response);
 
       if (response.isSuccess && response.result) {
         console.log("뽑은 캐릭터들:", response.result);
@@ -42,10 +40,8 @@ export const useCharacterPurchase = () => {
 
         // 슬롯 애니메이션이 끝난 후 모달 표시
         setTimeout(() => {
-          console.log("모달 표시 시도");
           setIsSpinning(false);
           setShowModal(true);
-          console.log("상태 업데이트 후:", { isSpinning: false, showModal: true, pickedCharacters: response.result });
         }, 3000);
       } else {
         setIsSpinning(false);
@@ -59,7 +55,6 @@ export const useCharacterPurchase = () => {
   };
 
   const closeModal = () => {
-    console.log("모달 닫기");
     setShowModal(false);
     setPickedCharacters([]);
     setPurchaseAmount(0);

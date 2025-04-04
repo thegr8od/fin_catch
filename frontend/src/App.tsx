@@ -27,8 +27,6 @@ const RouteChangeHandler = () => {
   const { setLoading, completeLoading } = useLoading(); // 로딩 상태 관리 훅
 
   useEffect(() => {
-    console.log("라우트 변경 감지:", location.pathname);
-
     // 라우트가 변경될 때마다 로딩 상태 초기화
     setLoading(false);
     completeLoading();
@@ -37,7 +35,6 @@ const RouteChangeHandler = () => {
     const forceRefreshTimer = setTimeout(() => {
       const loadingElement = document.querySelector(".fixed.inset-0.flex.items-center.justify-center.bg-black");
       if (loadingElement) {
-        console.log("로딩 화면이 30초 이상 표시됨, 강제 새로고침");
         window.location.reload();
       }
     }, 30000);
