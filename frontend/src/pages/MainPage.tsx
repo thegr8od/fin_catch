@@ -27,27 +27,28 @@ const MainPage = () => {
   const { characters, selectedCharacter, handleCharacterSelect, changeMyCat } = useCharacterManagement();
   const { showNicknameModal, showCharacterInfoModal, handleModalOpen, handleModalClose } = useModalManagement(user);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const { accounts, error: accountError } = useAccount();
+  const { accounts, error: accountError, fetchAllAccount } = useAccount();
   const { categories } = useAnalyze();
-  
-  // 퀴즈 결과 훅 사용
   const { quizScores } = useQuizResult();
-
-  // 계좌 목록에서 main_account와 매칭되는 계좌 찾기
-  const mainAccountInfo = React.useMemo(() => {
-    if (!user?.main_account || !accounts) return null;
-    return accounts.find((account) => account.accountNo === user.main_account) || null;
-  }, [accounts, user?.main_account]);
 
   // 계좌 연동 후 정보 갱신
   const handleAccountLink = async (account: Account) => {
     setIsAccountModalOpen(false);
     try {
-      await fetchUserInfo(); // 사용자 정보만 갱신 (계좌 정보는 useAccount 훅에서 자동으로 갱신됨)
+      await Promise.all([
+        fetchAllAccount(),
+        fetchUserInfo(), // user 정보도 함께 갱신
+      ]);
     } catch (error) {
       console.error("계좌 연동 후 정보 갱신 실패:", error);
     }
   };
+
+  // 주 계좌 정보 찾기
+  const mainAccountInfo = React.useMemo(() => {
+    if (!user?.main_account || !accounts) return null;
+    return accounts.find((account) => account.accountNo === user.main_account) || null;
+  }, [accounts, user?.main_account]);
 
   const handleUpdateNickname = async (newNickname: string) => {
     try {
@@ -81,29 +82,21 @@ const MainPage = () => {
         <div className="py-8">
           <div className="max-w-7xl mx-auto px-4">
             <div className="space-y-6 mt-10">
-              {/* 프로필 섹션 */}
               <ProfileSection profileData={profileData} onNicknameChange={() => handleModalOpen("nickname")} onCharacterClick={handleCharacterClick} />
 
-              {/* 계좌 연동 섹션 */}
-              <AccountLinkSection onAccountLink={() => setIsAccountModalOpen(true)} mainAccount={mainAccountInfo} error={accountError} />
+              <AccountLinkSection onAccountLink={() => setIsAccountModalOpen(true)} mainAccount={mainAccountInfo} error={accountError} accounts={accounts} fetchAllAccount={fetchAllAccount} />
 
-              {/* 오답 분석 */}
-              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
-
-              {/* 소비패턴 분석 */}
               <SpendingAnalysis />
-
-              {/* AI 문제 풀기 - 훅에서 가져온 데이터 사용 */}
+              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
               <QuizResultSection scores={quizScores} weakPoints={dummyWeakPoints} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* 모달들 */}
-      {showNicknameModal && <NicknameChangeModal onClose={() => handleModalClose("nickname")} currentNickname={profileData.nickname} onUpdateNickname={handleUpdateNickname} />}
+      <AccountLinkModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} accounts={accounts} fetchAllAccount={fetchAllAccount} />
 
-      <AccountLinkModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} />
+      {showNicknameModal && <NicknameChangeModal onClose={() => handleModalClose("nickname")} currentNickname={profileData.nickname} onUpdateNickname={handleUpdateNickname} />}
 
       {showCharacterInfoModal && (
         <CharacterChangeModal

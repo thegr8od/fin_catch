@@ -59,94 +59,90 @@ function AppContent() {
       {/* 전역 로딩 화면 - 최상위에 배치하여 모든 컴포넌트보다 위에 표시 */}
       <LoadingScreen />
 
-      <div className="w-full h-screen overflow-hidden relative">
-        <div className="w-full h-full flex flex-col">
-          {/* 헤더 컴포넌트 */}
-          <Header />
+      <div className="flex flex-col min-h-screen">
+        {/* 헤더 컴포넌트 */}
+        <Header />
 
-          {/* 라우트 변경 감지 컴포넌트 */}
-          <RouteChangeHandler />
+        {/* 라우트 변경 감지 컴포넌트 */}
+        <RouteChangeHandler />
 
-          {/* 메인 콘텐츠 영역 */}
-          <div className="flex-grow pt-12">
-            <Routes>
-              {/* 공개 라우트 */}
-              <Route path="/" element={<SplashPage />} />
-              <Route path="/signin" element={<LoginPage />} />
+        {/* 메인 콘텐츠 영역 */}
+        <main className="flex-1 relative">
+          <Routes>
+            {/* 공개 라우트 */}
+            <Route path="/" element={<SplashPage />} />
+            <Route path="/signin" element={<LoginPage />} />
 
-              {/* 보호된 라우트 */}
-              <Route
-                path="/lobby"
-                element={
-                  <PrivateRoute>
-                    <LobbyPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/main"
-                element={
-                  <PrivateRoute>
-                    <MainPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/shop"
-                element={
-                  <PrivateRoute>
-                    <ShopPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/room/prepare/:roomId"
-                element={
-                  <PrivateRoute>
-                    <RoomPreparePage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/one-to-one"
-                element={
-                  <PrivateRoute>
-                    <OneToOnePage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/one-to-one/:category"
-                element={
-                  <PrivateRoute>
-                    <OneToOnePage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/ai-quiz"
-                element={
-                  <PrivateRoute>
-                    <AiQuizPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/ai-quiz-lobby"
-                element={
-                  <PrivateRoute>
-                    <AiQuizLobbyPage />
-                  </PrivateRoute>
-                }
-              />
-            </Routes>
-          </div>
+            {/* 보호된 라우트 */}
+            <Route
+              path="/lobby"
+              element={
+                <PrivateRoute>
+                  <LobbyPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/main"
+              element={
+                <PrivateRoute>
+                  <MainPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/shop"
+              element={
+                <PrivateRoute>
+                  <ShopPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/room/prepare/:roomId"
+              element={
+                <PrivateRoute>
+                  <RoomPreparePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/one-to-one"
+              element={
+                <PrivateRoute>
+                  <OneToOnePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/one-to-one/:category"
+              element={
+                <PrivateRoute>
+                  <OneToOnePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/ai-quiz"
+              element={
+                <PrivateRoute>
+                  <AiQuizPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/ai-quiz-lobby"
+              element={
+                <PrivateRoute>
+                  <AiQuizLobbyPage />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </main>
 
-          {/* 푸터 컴포넌트 */}
-          <div className="absolute bottom-0 w-full">
-            <Footer />
-          </div>
-        </div>
+        {/* 푸터 컴포넌트 */}
+        <Footer />
       </div>
     </>
   );

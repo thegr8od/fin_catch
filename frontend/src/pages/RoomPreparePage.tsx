@@ -483,8 +483,8 @@ const RoomPreparePage: React.FC = () => {
   return (
     <>
       <Background backgroundImage={mainBg}>
-        <div className="w-full h-full flex flex-col items-center pt-8 relative z-10">
-          <div className="w-full max-w-7xl px-6 flex flex-col h-[calc(100vh-12rem)]">
+        <div className="min-h-screen w-full flex flex-col items-center py-20">
+          <div className="w-full max-w-7xl px-6 flex flex-col flex-grow">
             {/* VS 배너 */}
             <div className="relative flex justify-center items-center mb-8">
               <div className="px-8 py-2 bg-gradient-to-r from-red-600 to-blue-600 rounded-full transform -skew-x-12">
@@ -539,33 +539,35 @@ const RoomPreparePage: React.FC = () => {
               <div className="flex-1 flex flex-col gap-4 z-10">
                 {/* 채팅창 */}
                 <div className="flex-1 bg-black/30 backdrop-blur-sm rounded-3xl p-4 border border-white/10">
-                  <div className="flex-1 overflow-y-auto mb-4 rounded-2xl bg-black/20 p-4 h-[calc(100%-80px)]">
-                    {chatMessages.length === 0 ? (
-                      <div className="text-white/50 text-center py-8">
-                        <p className="text-lg">채팅을 입력하세요...</p>
-                      </div>
-                    ) : (
-                      chatMessages.map((msg, index) => (
-                        <div key={index} className="mb-2 p-2 hover:bg-white/5 rounded-lg transition-all">
-                          <span className="font-bold text-yellow-400">{msg.sender}</span>
-                          <span className="mx-2 text-white/70">:</span>
-                          <span className="text-white">{msg.content}</span>
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1 overflow-y-auto mb-4 rounded-2xl bg-black/20 p-4 max-h-[300px]">
+                      {chatMessages.length === 0 ? (
+                        <div className="text-white/50 text-center py-8">
+                          <p className="text-lg">채팅을 입력하세요...</p>
                         </div>
-                      ))
-                    )}
+                      ) : (
+                        chatMessages.map((msg, index) => (
+                          <div key={index} className="mb-2 p-2 hover:bg-white/5 rounded-lg transition-all">
+                            <span className="font-bold text-yellow-400">{msg.sender}</span>
+                            <span className="mx-2 text-white/70">:</span>
+                            <span className="text-white">{msg.content}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <form onSubmit={sendChatMessage} className="flex gap-2 mt-auto">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        className="flex-1 p-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-yellow-500"
+                        placeholder="메시지를 입력하세요..."
+                      />
+                      <button type="submit" className="px-6 py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition-all">
+                        전송
+                      </button>
+                    </form>
                   </div>
-                  <form onSubmit={sendChatMessage} className="flex gap-2 mt-4">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      className="flex-1 p-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-yellow-500"
-                      placeholder="메시지를 입력하세요..."
-                    />
-                    <button type="submit" className="px-6 py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition-all">
-                      전송
-                    </button>
-                  </form>
                 </div>
 
                 {/* 컨트롤 버튼 */}
