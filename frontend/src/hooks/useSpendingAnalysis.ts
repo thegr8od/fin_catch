@@ -1,13 +1,32 @@
 import { useState, useEffect } from "react";
 import { useApi } from "./useApi";
-import { SpendingAnalysis } from "../types/analysis/SpendingAnalysis";
+import { SpendingAnalysis, SpendingCategory } from "../types/analysis/SpendingAnalysis";
+
+type APIResponse = {
+  [key: string]: number;
+};
 
 export const useSpendingAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SpendingAnalysis | null>(null);
 
-  const spendingAnalysisApi = useApi<SpendingAnalysis, { year: number; month: number }>("/api/finance/account/analysis", "POST");
+  const spendingAnalysisApi = useApi<APIResponse, { year: number; month: number }>("/api/finance/account/analysis", "POST");
+
+  const parseResponse = (response: APIResponse): SpendingAnalysis => {
+    const result: SpendingAnalysis = {};
+
+    // 문자열로 된 키를 SpendingCategory로 변환
+    Object.entries(response).forEach(([key, value]) => {
+      // 따옴표 제거 및 공백 제거
+      const cleanKey = key.replace(/[\"\']/g, "").trim() as SpendingCategory;
+      if (value !== null && value !== undefined) {
+        result[cleanKey] = value;
+      }
+    });
+
+    return result;
+  };
 
   const fetchAnalysis = async (year: number, month: number) => {
     setLoading(true);
@@ -15,7 +34,8 @@ export const useSpendingAnalysis = () => {
     try {
       const response = await spendingAnalysisApi.execute({ year, month });
       if (response?.isSuccess && response?.result) {
-        setData(response.result);
+        const parsedData = parseResponse(response.result);
+        setData(parsedData);
       } else {
         throw new Error(response?.message || "데이터 조회에 실패했습니다.");
       }
