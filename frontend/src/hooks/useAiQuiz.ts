@@ -40,6 +40,28 @@ export const useAiQuiz = () => {
   // 소비내역 기반 AI퀴즈 정답 제출
   const { loading: submitLoading, error: submitError, execute: submitAnswer } = useApi<SubmitAnswerResponse, SubmitAnswerPayload>("/api/ai/consumption/submit", "POST");
   
+  // 새로운 AI 퀴즈 생성 API 추가 - 수정: void 대신 any 타입 사용
+  const { loading: createLoading, error: createError, execute: createNewQuizzes } = useApi<any, any>("/api/ai/consumption/create", "POST");
+  
+  // 퀴즈 생성 함수
+  const createQuizzes = useCallback(async () => {
+    try {
+      console.log("새로운 AI 퀴즈 생성 요청");
+      // 빈 객체 대신 undefined 전달 또는 파라미터 제거
+      const response = await createNewQuizzes({});
+      console.log("새로운 퀴즈 생성 응답:", response);
+      return response;
+    } catch (error) {
+      console.error("퀴즈 생성 중 오류:", error);
+      return {
+        isSuccess: false,
+        code: 500,
+        message: "퀴즈 생성에 실패했습니다.",
+        result: null
+      };
+    }
+  }, [createNewQuizzes]);
+  
   // 최신 퀴즈 목록 조회 함수
   const getLatestQuizContent = useCallback(async () => {
     try {
@@ -91,6 +113,9 @@ export const useAiQuiz = () => {
     submitLoading, 
     submitError, 
     getLatestQuizContent, 
-    submitQuizAnswer 
+    submitQuizAnswer,
+    createLoading,
+    createError,
+    createQuizzes
   };
 };

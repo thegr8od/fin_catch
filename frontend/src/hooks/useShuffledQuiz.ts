@@ -25,7 +25,7 @@ export interface ShuffledQuizItem extends Omit<QuizItem, 'options'> {
 }
 
 export const useShuffledQuiz = () => {
-  const { loading, error, getLatestQuizContent, submitQuizAnswer } = useAiQuiz();
+  const { loading, error, getLatestQuizContent, submitQuizAnswer, createQuizzes } = useAiQuiz();
   const [shuffledQuizzes, setShuffledQuizzes] = useState<ShuffledQuizItem[]>([]);
 
   // Fisher-Yates 셔플 알고리즘
@@ -38,7 +38,67 @@ export const useShuffledQuiz = () => {
     return newArray;
   }, []);
 
-  // 섞인 퀴즈를 가져오는 함수
+  // 새 퀴즈를 생성하고 섞는 함수
+  const createAndGetShuffledQuizzes = useCallback(async () => {
+    try {
+      // 1. 먼저 새 퀴즈를 생성 - 파라미터 없이 호출
+      const createResponse = await createQuizzes();
+      
+      if (!createResponse.isSuccess) {
+        console.error("새 퀴즈 생성에 실패했습니다:", createResponse.message);
+        return {
+          isSuccess: false,
+          code: createResponse.code || 500,
+          message: createResponse.message || "퀴즈 생성에 실패했습니다.",
+          result: [] as ShuffledQuizItem[]
+        };
+      }
+      
+      // 2. 생성된 퀴즈 가져오기
+      const response = await getLatestQuizContent();
+      
+      if (response && response.isSuccess && Array.isArray(response.result)) {
+        // 각 퀴즈의 섞인 버전 생성
+        const shuffled = response.result.map((quiz: QuizItem) => {
+          // 셔플하기 전에 각 옵션에 원래 인덱스 추가
+          const optionsWithIndex = quiz.options.map((option, index) => ({
+            ...option,
+            originalIndex: index
+          }));
+
+          // 옵션 섞기
+          const shuffledOptions = shuffleArray(optionsWithIndex);
+          
+          // 섞은 후 정답 옵션의 인덱스 찾기
+          const correctOptionIndex = shuffledOptions.findIndex(option => option.isCorrect);
+          
+          return {
+            ...quiz,
+            options: shuffledOptions,
+            correctOptionIndex
+          };
+        });
+        
+        setShuffledQuizzes(shuffled);
+        return {
+          ...response,
+          result: shuffled
+        };
+      }
+      
+      return response;
+    } catch (error) {
+      console.error("퀴즈를 생성하고 섞는 중 오류 발생:", error);
+      return {
+        isSuccess: false,
+        code: 500,
+        message: "퀴즈 데이터를 가져오는데 실패했습니다.",
+        result: [] as ShuffledQuizItem[]
+      };
+    }
+  }, [createQuizzes, getLatestQuizContent, shuffleArray]);
+
+  // 기존 코드를 유지하되, 새로운 함수 추가
   const getShuffledQuizzes = useCallback(async () => {
     try {
       const response = await getLatestQuizContent();
@@ -110,6 +170,7 @@ export const useShuffledQuiz = () => {
     error,
     shuffledQuizzes,
     getShuffledQuizzes,
+    createAndGetShuffledQuizzes,
     submitShuffledQuizAnswer
   };
 };
