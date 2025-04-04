@@ -7,7 +7,7 @@ import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
 import { usePreventNavigation } from "../hooks/usePreventNavigation";
 import useQuizResult from "../hooks/useQuizResult";
-import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz"; // 새로운 커스텀 훅 사용
+import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz"; // useShuffledQuiz 사용
 
 type GameState = "quiz" | "goodResult" | "badResult" | "finalResult";
 
@@ -27,8 +27,8 @@ const AiQuizPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState<number>(0);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   
-  // 새로운 훅 사용
-  const { loading, error, shuffledQuizzes, getShuffledQuizzes, submitShuffledQuizAnswer } = useShuffledQuiz();
+  // 새로 수정된 useShuffledQuiz 훅 사용
+  const { loading, error, shuffledQuizzes, createAndGetShuffledQuizzes, submitShuffledQuizAnswer } = useShuffledQuiz();
   const { saveQuizResult } = useQuizResult();
 
   usePreventNavigation({
@@ -45,12 +45,13 @@ const AiQuizPage = () => {
     return availableCats[randomIndex];
   }, [user]);
 
-  // 퀴즈 데이터 가져오기 - 섞인 퀴즈 사용
+  // 퀴즈 데이터 가져오기 - 새 API 함수 사용
   const fetchQuizzes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await getShuffledQuizzes();
-      console.log("퀴즈 데이터 응답:", response);
+      // 새로운 퀴즈 생성 및 가져오기 함수 사용
+      const response = await createAndGetShuffledQuizzes();
+      console.log("새로 생성된 퀴즈 데이터 응답:", response);
       
       if (response && response.isSuccess && Array.isArray(response.result)) {
         // 타입 단언을 사용하여 response.result를 ShuffledQuizItem[] 타입으로 처리
@@ -71,7 +72,7 @@ const AiQuizPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getShuffledQuizzes]);
+  }, [createAndGetShuffledQuizzes]);
 
   // 정답 제출 처리 - 섞인 옵션에 맞게 수정
   const handleSubmitAnswer = useCallback(async () => {
