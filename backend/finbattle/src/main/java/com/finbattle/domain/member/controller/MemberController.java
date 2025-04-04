@@ -2,6 +2,8 @@ package com.finbattle.domain.member.controller;
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.member.dto.CatDto;
+import com.finbattle.domain.member.dto.ExpPointUpdateRequestDto;
+import com.finbattle.domain.member.dto.MemberExpPointResponseDto;
 import com.finbattle.domain.member.dto.MyInfoDto;
 import com.finbattle.domain.member.service.MemberService;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
@@ -110,5 +112,23 @@ public class MemberController implements MemberApi {
     ) {
         List<CatDto> cats = memberService.pickCat(detail.getMemberId(), count);
         return ResponseEntity.ok(new BaseResponse<>(cats));
+    }
+
+
+    @Override
+    public ResponseEntity<BaseResponse<MemberExpPointResponseDto>> updateExpPoint(
+            AuthenticatedUser detail,
+            ExpPointUpdateRequestDto requestDto
+    ) {
+        MemberExpPointResponseDto updatedInfo = memberService.updateExpAndPoint(
+                detail.getMemberId(),
+                requestDto.getExp(),
+                requestDto.getPoint()
+        );
+
+        log.info("[EXP/POINT 업데이트 성공] memberId={}, exp={}, point={}",
+                detail.getMemberId(), requestDto.getExp(), requestDto.getPoint());
+
+        return ResponseEntity.ok(new BaseResponse<>(updatedInfo));
     }
 }

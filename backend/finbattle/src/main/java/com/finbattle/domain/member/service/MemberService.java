@@ -2,6 +2,7 @@ package com.finbattle.domain.member.service;
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.member.dto.CatDto;
+import com.finbattle.domain.member.dto.MemberExpPointResponseDto;
 import com.finbattle.domain.member.dto.MyInfoDto;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -62,4 +63,13 @@ public interface MemberService {
      */
     List<CatDto> pickCat(Long memberId, Integer count);
 
+    /**
+     * 회원의 경험치와 포인트를 증가시킵니다.
+     *
+     * @param memberId 경험치와 포인트를 업데이트할 회원의 ID
+     * @param exp      증가시킬 경험치 (null 또는 0 이하이면 증가하지 않음)
+     * @param point    증가시킬 포인트 (null 또는 0 이하이면 증가하지 않음)
+     * @return 업데이트된 사용자 ID, 경험치, 포인트 정보가 담긴 {@link MemberExpPointResponseDto}
+     */
+    MemberExpPointResponseDto updateExpAndPoint(Long memberId, Long exp, Long point);
 }
