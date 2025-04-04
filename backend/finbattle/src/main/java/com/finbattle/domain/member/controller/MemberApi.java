@@ -2,6 +2,8 @@ package com.finbattle.domain.member.controller;
 
 import com.finbattle.domain.cat.entity.Cat;
 import com.finbattle.domain.member.dto.CatDto;
+import com.finbattle.domain.member.dto.ExpPointUpdateRequestDto;
+import com.finbattle.domain.member.dto.MemberExpPointResponseDto;
 import com.finbattle.domain.member.dto.MyInfoDto;
 import com.finbattle.domain.oauth.dto.AuthenticatedUser;
 import com.finbattle.global.common.model.dto.BaseResponse;
@@ -15,12 +17,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "회원 API", description = "회원 관련 기능을 제공하는 컨트롤러")
 @RequestMapping("/api/member")
@@ -82,5 +79,17 @@ public interface MemberApi {
     ResponseEntity<BaseResponse<List<CatDto>>> pickCat(
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestParam Integer count
+    );
+
+    @Operation(
+            summary = "EXP 및 POINT 증가",
+            description = "프론트에서 지정한 EXP와 POINT를 전달받아 해당 값을 증가시킵니다.",
+            security = @SecurityRequirement(name = "JWT")
+    )
+    @ApiResponse(responseCode = "200", description = "EXP 및 POINT 증가 성공")
+    @PatchMapping("/exp-point")
+    ResponseEntity<BaseResponse<MemberExpPointResponseDto>> updateExpPoint(
+            @AuthenticationPrincipal AuthenticatedUser detail,
+            @RequestBody ExpPointUpdateRequestDto requestDto
     );
 }
