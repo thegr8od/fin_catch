@@ -14,6 +14,8 @@ export const useSpendingAnalysis = () => {
   const spendingAnalysisApi = useApi<APIResponse, { year: number; month: number }>("/api/finance/account/analysis", "POST");
 
   const parseResponse = (response: APIResponse): SpendingAnalysis => {
+    console.log("원본 API 응답:", response);
+
     const result: SpendingAnalysis = {};
 
     // 문자열로 된 키를 SpendingCategory로 변환
@@ -25,6 +27,7 @@ export const useSpendingAnalysis = () => {
       }
     });
 
+    console.log("파싱된 데이터:", result);
     return result;
   };
 
@@ -32,7 +35,10 @@ export const useSpendingAnalysis = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log(`${year}년 ${month}월 소비패턴 분석 데이터 요청`);
       const response = await spendingAnalysisApi.execute({ year, month });
+      console.log("API 응답 전체:", response);
+
       if (response?.isSuccess && response?.result) {
         const parsedData = parseResponse(response.result);
         setData(parsedData);
@@ -40,6 +46,7 @@ export const useSpendingAnalysis = () => {
         throw new Error(response?.message || "데이터 조회에 실패했습니다.");
       }
     } catch (err) {
+      console.error("소비패턴 분석 에러:", err);
       setError(err instanceof Error ? err.message : "데이터 조회 중 오류가 발생했습니다.");
       setData(null);
     } finally {
