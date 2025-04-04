@@ -5,6 +5,7 @@ import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
+import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.banking.service.FinanceService;
@@ -76,7 +77,7 @@ public class FinanceController implements FinanceApi {
     }
 
     @Override
-    public ResponseEntity<BaseResponse<String>> analysisTransaction(
+    public ResponseEntity<BaseResponse<AnalysisResponseDto>> analysisTransaction(
         AuthenticatedUser detail, AnalysisRequestDto requestDto) throws JsonProcessingException {
         return ResponseEntity.ok(new BaseResponse<>(
             financeService.AnalysisSpend(detail.getMemberId(), requestDto.year(),
