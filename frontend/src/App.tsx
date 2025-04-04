@@ -123,6 +123,14 @@ function AppContent() {
               }
             />
             <Route
+              path="/one-to-one/:category/:roomId"
+              element={
+                <PrivateRoute>
+                  <OneToOnePage />
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/ai-quiz"
               element={
                 <PrivateRoute>

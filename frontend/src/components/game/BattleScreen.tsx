@@ -1,39 +1,106 @@
-import React from "react"
-import { PlayerStatus, CharacterState } from "./types/character"
-import PlayerSection from "./PlayerSection"
-import BattleStatus from "./BattleStatus"
-import ChatSection from "./ChatSection"
-import { useChat } from "../../hooks/useChat"
+import React, { useState } from "react";
+import PlayerSection from "./PlayerSection";
+import BattleStatus from "./BattleStatus";
+import ChatSection from "./ChatSection";
+import { useGame } from "../../contexts/GameContext";
+import { CharacterState } from "./types/character";
 
-interface BattleScreenProps {
-  resourcesLoaded: boolean
-  playerStatus: PlayerStatus
-  opponentStatus: PlayerStatus
-  timer: number
-  questionText: string
-  onPlayerAnimationComplete: (state: CharacterState) => void
-  onOpponentAnimationComplete: (state: CharacterState) => void
-  onAttack: (playerId: number) => void
+interface QuizOptionsProps {
+  onOptionSelect: (option: { optionNumber: number; optionText: string }) => void;
 }
 
-const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAttack }: BattleScreenProps) => {
-  const { chatInput, chatMessages, playerBubble, handleChatInputChange, handleChatSubmit } = useChat({
-    playerName: playerStatus.name,
-  })
+const QuizOptions = ({ onOptionSelect }: QuizOptionsProps) => {
+  const { quizOptions } = useGame();
+
+  if (!quizOptions || quizOptions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white bg-opacity-80 rounded-lg p-3 mb-4">
+      <div className="grid grid-cols-1 gap-2">
+        {quizOptions.map((option) => (
+          <div key={option.quizOptionId} className="bg-blue-100 hover:bg-blue-200 p-2 rounded-md cursor-pointer border border-blue-300" onClick={() => onOptionSelect(option)}>
+            <span className="font-bold">{option.optionNumber}. </span>
+            {option.optionText}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const HintDisplay = () => {
+  const { firstHint, secondHint } = useGame();
+
+  if (!firstHint && !secondHint) {
+    return null;
+  }
+
+  return (
+    <div className="bg-yellow-100 bg-opacity-90 rounded-lg p-3 mb-4 border-2 border-yellow-400">
+      <div className="font-bold text-center mb-1">힌트</div>
+      {firstHint && (
+        <div className="mb-1">
+          <span className="font-semibold">힌트 1: </span>
+          {firstHint.hint}
+        </div>
+      )}
+      {secondHint && (
+        <div>
+          <span className="font-semibold">힌트 2: </span>
+          {secondHint.hint}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const BattleScreen = () => {
+  const [chatInput, setChatInput] = useState("");
+  const { playerStatus, opponentStatus, chatMessages, sendChatMessage, handleAnswerSubmit, handleAnimationComplete, gameState } = useGame();
+
+  // 폼 제출 핸들러
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (chatInput.trim() === "") return;
+
+    sendChatMessage(chatInput, playerStatus.name || "나");
+    setChatInput("");
+  };
+
+  // 객관식 옵션 선택 처리
+  const handleOptionSelect = (option: { optionNumber: number; optionText: string }) => {
+    const optionText = `${option.optionNumber}. ${option.optionText}`;
+    sendChatMessage(optionText, playerStatus.name);
+    handleAnswerSubmit(option.optionNumber.toString());
+  };
 
   const playerShouldLoop = playerStatus.state === "idle" || playerStatus.state === "victory";
   const opponentShouldLoop = opponentStatus.state === "idle" || opponentStatus.state === "victory";
 
-  if (!resourcesLoaded) {
-    return <div className="h-full w-full"></div>
-  }
+  // 플레이어 애니메이션 완료 처리
+  const onPlayerAnimationComplete = (state: CharacterState) => {
+    if (playerStatus.id) {
+      handleAnimationComplete(playerStatus.id, state);
+    }
+  };
+
+  // 상대방 애니메이션 완료 처리
+  const onOpponentAnimationComplete = (state: CharacterState) => {
+    if (opponentStatus.id) {
+      handleAnimationComplete(opponentStatus.id, state);
+    }
+  };
 
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* 상단 VS 및 문제 영역 */}
       <div className="absolute top-4 left-0 right-0 z-10">
         <div className="w-3/4 max-w-3xl mx-auto">
-          <BattleStatus timer={timer} question={questionText} />
+          <BattleStatus timer={gameState.remainingTime} question={gameState.currentQuestion} />
+          <HintDisplay />
+          <QuizOptions onOptionSelect={handleOptionSelect} />
         </div>
       </div>
 
@@ -47,14 +114,11 @@ const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus
             name={playerStatus.name}
             health={playerStatus.health}
             maxHealth={5}
-            bubble={playerBubble}
+            bubble={null}
             direction={true}
             onAnimationComplete={onPlayerAnimationComplete}
             shouldLoop={playerShouldLoop}
           />
-        </div>
-        <div>
-          <button onClick={() => onAttack(playerStatus.id)}>공격</button>
         </div>
 
         {/* 오른쪽 플레이어 */}
@@ -71,22 +135,16 @@ const BattleScreen = React.memo(({ resourcesLoaded, playerStatus, opponentStatus
             shouldLoop={opponentShouldLoop}
           />
         </div>
-        <div>
-          <button onClick={() => onAttack(opponentStatus.id)}>공격</button>
-        </div>
-
       </div>
 
       {/* 채팅 영역 - 중앙 하단에 배치 */}
-      <div className="w-1/3 h-[12rem] mx-auto mb-12">
-        <div className="w-full h-full">
-          <ChatSection chatMessages={chatMessages} chatInput={chatInput} onChatInputChange={handleChatInputChange} onChatSubmit={handleChatSubmit} showInput={true} showMessages={true} />
-        </div>
+      <div id="battle-chat-container" className="fixed left-1/2 transform -translate-x-1/2 bottom-4 z-30" style={{ width: "33%" }}>
+        <ChatSection chatMessages={chatMessages} chatInput={chatInput} setChatInput={setChatInput} handleSubmit={handleSubmit} showInput={true} showMessages={true} />
       </div>
     </div>
-  )
-})
+  );
+};
 
-BattleScreen.displayName = "BattleScreen"
+BattleScreen.displayName = "BattleScreen";
 
-export default BattleScreen
+export default BattleScreen;
