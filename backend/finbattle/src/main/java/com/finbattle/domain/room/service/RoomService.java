@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finbattle.domain.game.dto.GameMemberStatus;
 import com.finbattle.domain.game.model.GameData;
 import com.finbattle.domain.game.repository.RedisGameRepository;
+import com.finbattle.domain.game.service.GameService;
 import com.finbattle.domain.member.model.Member;
 import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
@@ -39,6 +40,9 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -60,6 +64,9 @@ public class RoomService {
     private final RedisGameRepository redisGameRepository;
     private final MultipleChoiceQuizRepository multipleChoiceQuizRepository;
     private final QuizOptionRepository quizOptionRepository;
+    private final GameService gameService;
+
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     // 방 생성
     public RoomResponse createRoom(Long memberId, RoomCreateRequest request) {
@@ -185,6 +192,15 @@ public class RoomService {
             log.error("RedisRoom START 이벤트 직렬화 실패", e);
             throw new IllegalStateException("이벤트 메시지 생성 중 오류가 발생했습니다.");
         }
+
+        scheduler.schedule(() -> {
+            try {
+                // 원하는 gameService의 메서드 호출
+                gameService.startAutoGame(roomId);
+            } catch (Exception e) {
+                log.error("게임 시작(3초 지연) 중 오류 발생 roomId={}", roomId, e);
+            }
+        }, 3, TimeUnit.SECONDS);
     }
 
     public PageResponse getRoomsByType(SubjectType subjectType, Integer page) {
