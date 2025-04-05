@@ -56,6 +56,8 @@ interface ChatMessage {
   content: string;
   roomId: string;
   sender: number | string;
+  userAnswer?: string;
+  memberId?: number;
 }
 
 // 게임 컨텍스트 인터페이스
@@ -256,50 +258,31 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
 
   // 정답 제출 핸들러
   const handleAnswerSubmit = useCallback(
-    (message: string): boolean => {
-      if (!connected) {
-        showError();
+    (message: string) => {
+      if (!message || message.trim() === "") {
+        console.warn("빈 답변은 제출할 수 없습니다.");
         return false;
       }
 
-      if (!message.trim()) {
-        showError();
+      if (!currentQuizId) {
+        console.warn("현재 퀴즈 ID가 없습니다.");
         return false;
       }
 
-      try {
-        // 중복 전송 방지
-        const currentTime = new Date().getTime();
-        const messageKey = `${playerStatus.name}-${message.trim()}`;
-        const lastSent = lastMessageTime[messageKey] || 0;
+      const trimmedMessage = message.trim();
+      const messageData: ChatMessage = {
+        content: trimmedMessage,
+        roomId: roomId.toString(),
+        sender: playerStatus.id,
+        userAnswer: trimmedMessage,
+        memberId: playerStatus.id,
+      };
 
-        if (currentTime - lastSent < 2000) {
-          return false;
-        }
-
-        // 마지막 전송 시간 업데이트
-        setLastMessageTime((prev) => ({
-          ...prev,
-          [messageKey]: currentTime,
-        }));
-
-        // 요청 데이터 구성
-        const messageData: ChatMessage = {
-          content: message.trim(),
-          roomId: roomId.toString(),
-          sender: playerStatus.id,
-        };
-
-        // 메시지 전송
-        send(`/app/game/${roomId}/checkAnswer`, messageData);
-
-        return true;
-      } catch {
-        showError();
-        return false;
-      }
+      console.log("정답 제출:", messageData);
+      send(`/app/game/${roomId}/checkAnswer`, messageData);
+      return true;
     },
-    [connected, roomId, playerStatus.id, playerStatus.name, showError, send, lastMessageTime]
+    [currentQuizId, roomId, playerStatus.id, send]
   );
 
   // WebSocket 메시지 핸들러 (useRef로 안정적인 참조 생성)
@@ -527,48 +510,27 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         if (payload.event === "QUIZ_RESULT" && payload.data) {
           const resultData = typeof payload.data === "string" ? JSON.parse(payload.data) : payload.data;
 
+          console.log("퀴즈 결과 데이터:", resultData);
+
+          // 서버에서 보내는 데이터 형식에 맞게 처리
           const result = resultData.result || "";
-          const memberId = resultData.memberId || 0;
-          const answer = resultData.userAnswer || resultData.answer || "";
-
-          // 발신자 식별
-          let sender = resultData.sender || resultData.nickname || "";
-          if (!sender) {
-            sender = memberId === playerStatus.id ? playerStatus.name : memberId === opponentStatus.id ? opponentStatus.name : "알 수 없음";
-          }
-
-          // 내가 보낸 메시지도 포함하여 처리 (필터링 제거)
-          // 중복 메시지 체크
-          const messageKey = `${sender}-${answer}`;
-          const currentTime = new Date().getTime();
-          const lastReceived = lastMessageTime[messageKey] || 0;
-
-          if (currentTime - lastReceived < 2000) {
-            return;
-          }
-
-          // 마지막 메시지 시간 업데이트
-          setLastMessageTime((prev) => ({
-            ...prev,
-            [messageKey]: currentTime,
-          }));
+          const quizId = resultData.quizId || 0;
+          const sender = resultData.sender || "알 수 없음";
 
           // 채팅 메시지에 추가
-          if (answer) {
-            setChatMessages((prev) => [
-              ...prev,
-              {
-                sender,
-                message: answer,
-                timestamp: new Date(),
-              },
-            ]);
-          }
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              sender,
+              message: result,
+              timestamp: new Date(),
+            },
+          ]);
 
           // 정답 처리 애니메이션
           if (result === "정답입니다") {
             // 메시지를 보낸 사람이 자신일 경우
-            if (memberId === playerStatus.id) {
+            if (sender === playerStatus.name) {
               setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
               setOpponentStatus((prev) => ({ ...prev, state: "damage" }));
             } else {
