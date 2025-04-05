@@ -13,12 +13,38 @@ const GameContent: React.FC = () => {
 
   const { resourcesLoaded } = useGameResources([playerStatus.characterType, opponentStatus.characterType]);
 
+  // 디버깅 - 게임 상태 로깅
+  useEffect(() => {
+    console.log("GameContent - 게임 상태:", gameState);
+    console.log("GameContent - 리소스 로딩:", resourcesLoaded);
+    console.log("GameContent - 로딩 상태:", loading);
+    console.log("GameContent - 현재 문제:", gameState.currentQuestion);
+    console.log("GameContent - 타이머:", gameState.remainingTime);
+  }, [gameState, resourcesLoaded, loading]);
+
+  // 백엔드 타이밍 이슈를 위한 안전장치 - 5초 후에도 여전히 로딩 중이면 강제로 진행
+  useEffect(() => {
+    if (loading && resourcesLoaded) {
+      const timer = setTimeout(() => {
+        console.log("GameContent - 5초 타임아웃: 로딩 지연으로 강제 진행");
+
+        // BattleScreen 컴포넌트로 강제 진행
+        const battleScreen = document.createElement("div");
+        battleScreen.id = "battlescreen-forced";
+        document.getElementById("game-content-wrapper")?.appendChild(battleScreen);
+
+        // 콘솔에 강제 진행 메시지 출력
+        console.log("강제 진행: 백엔드에서 START 이벤트가 오지 않아 타임아웃으로 진행합니다");
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, resourcesLoaded]);
+
   usePreventNavigation({
     roomId: gameState.roomId || null,
     gameType: "1vs1",
   });
-
-  console.log("GameContent 렌더링 - 로딩 상태:", { loading, resourcesLoaded, gameStatus: gameState.gameStatus });
 
   // 리소스 또는 게임 상태 로딩 중인 경우 로딩 화면 표시
   if (loading || !resourcesLoaded) {
@@ -29,7 +55,13 @@ const GameContent: React.FC = () => {
     );
   }
 
-  console.log("게임 화면 렌더링 시작 - 플레이어:", playerStatus.name, "상대방:", opponentStatus.name);
+  // 배틀스크린에 전달되는 props 디버깅
+  console.log("BattleScreen props:", {
+    timer: gameState.remainingTime,
+    questionText: gameState.currentQuestion,
+    playerStatus,
+    opponentStatus,
+  });
 
   return (
     <BattleScreen

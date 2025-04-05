@@ -1,5 +1,5 @@
-import { PlayerStatus } from "../components/game/types/character";
-import { GameState } from "../components/game/types/game";
+import { PlayerStatus } from "../../components/game/types/character";
+import { GameState } from "../../components/game/types/game";
 
 // 게임 컨텍스트 상태 인터페이스
 export interface GameContextState {

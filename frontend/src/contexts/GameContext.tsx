@@ -1,10 +1,15 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { IMessage } from "@stomp/stompjs";
 import { CharacterState, PlayerStatus } from "../components/game/types/character";
 import { GameState } from "../components/game/types/game";
 import { CharacterType } from "../components/game/constants/animations";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { useWebSocket } from "../hooks/useWebSocket";
+// 게임 관련 타입들은 현재 직접 정의하여 사용 중입니다.
+// 필요시 아래 타입들을 활용할 수 있습니다.
+// import { EventType } from "../types/game/eventType";
+// import { GameContextState, GameEventData, HintData } from "../types/game/gameTypes";
+// import { AnswerRequest } from "../types/game/answerRequest";
 
 // 퀴즈 옵션 인터페이스
 interface QuizOption {
@@ -45,6 +50,13 @@ type TwoAttackData = Array<{
   nickname: string;
   life: number;
 }>;
+
+// 채팅 메시지 타입 (useWebSocket.ts와 일치)
+interface ChatMessage {
+  content: string;
+  roomId: string;
+  sender: number | string;
+}
 
 // 게임 컨텍스트 인터페이스
 interface GameContextType {
@@ -115,7 +127,12 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
   const [loading, setLoading] = useState(true);
 
   // useWebSocket 훅 사용
-  const { connected, subscribe, unsubscribe, send, topics } = useWebSocket();
+  const { connected, subscribe, send, topics } = useWebSocket();
+
+  // WebSocket 연결 상태 로깅
+  useEffect(() => {
+    console.log("GameContext - WebSocket 연결 상태:", connected, "roomId:", roomId);
+  }, [connected, roomId]);
 
   // 현재 멤버 정보 찾기 (닉네임으로 비교)
   const currentPlayer = players.find((p) => p.nickname === user?.nickname);
@@ -128,6 +145,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
     remainingTime: 0,
     gameStatus: "waiting",
   });
+
+  // 게임 상태 변경 로깅
+  useEffect(() => {
+    console.log("GameContext - 게임 상태 변경:", gameState.gameStatus);
+  }, [gameState.gameStatus]);
+
+  // 로딩 상태 변경 로깅
+  useEffect(() => {
+    console.log("GameContext - 로딩 상태 변경:", loading);
+  }, [loading]);
 
   // 퀴즈 관련 상태 추가
   const [quizOptions, setQuizOptions] = useState<QuizOption[] | null>(null);
@@ -174,13 +201,14 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
   const [chatMessages, setChatMessages] = useState<Array<{ sender: string; message: string; timestamp: Date }>>([]);
 
   // 에러 메시지 알림 함수
-  const showError = (message: string) => {
+  const showError = () => {
     // 실제 애플리케이션에서는 토스트나 알림 UI를 표시
+    console.error("오류가 발생했습니다");
   };
 
   // 애니메이션 완료 핸들러
   const handleAnimationComplete = useCallback(
-    (playerId: number, currentState: CharacterState) => {
+    (playerId: number) => {
       if (playerId === playerStatus.id) {
         setPlayerStatus((prev) => ({
           ...prev,
@@ -230,12 +258,12 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
   const handleAnswerSubmit = useCallback(
     (message: string): boolean => {
       if (!connected) {
-        showError("서버 연결이 끊어졌습니다. 게임을 다시 시작해주세요.");
+        showError();
         return false;
       }
 
       if (!message.trim()) {
-        showError("정답을 입력해주세요.");
+        showError();
         return false;
       }
 
@@ -256,85 +284,241 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         }));
 
         // 요청 데이터 구성
-        const messageData = {
-          userAnswer: message.trim(),
-          memberId: playerStatus.id,
-          sender: playerStatus.name,
+        const messageData: ChatMessage = {
+          content: message.trim(),
+          roomId: roomId.toString(),
+          sender: playerStatus.id,
         };
 
         // 메시지 전송
-        send(`/app/game/${roomId}/checkAnswer`, messageData as any);
-
-        // 내가 보낸 메시지를 로컬 채팅창에 즉시 표시
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            sender: playerStatus.name,
-            message: message.trim(),
-            timestamp: new Date(),
-          },
-        ]);
+        send(`/app/game/${roomId}/checkAnswer`, messageData);
 
         return true;
-      } catch (error) {
-        showError("정답 제출 중 오류가 발생했습니다.");
+      } catch {
+        showError();
         return false;
       }
     },
     [connected, roomId, playerStatus.id, playerStatus.name, showError, send, lastMessageTime]
   );
 
-  // WebSocket 메시지 핸들러
-  const handleMessage = useCallback(
-    (message: IMessage) => {
+  // WebSocket 메시지 핸들러 (useRef로 안정적인 참조 생성)
+  const handleMessageRef = useRef<(message: IMessage) => void>(() => {});
+
+  // 핸들러 업데이트
+  useEffect(() => {
+    handleMessageRef.current = (message: IMessage) => {
       try {
-        // JSON 파싱
+        // 전체 원본 메시지 로깅
+        console.log("GameContext - WebSocket 원본 메시지:", message.body);
+
+        // JSON 파싱 (신중하게 처리)
         let payload;
         try {
+          // 1차 파싱 시도
           payload = JSON.parse(message.body);
+
+          // 이중 문자열 파싱 처리 (가끔 서버에서 이중으로 인코딩되어 오는 경우)
           if (typeof payload === "string") {
             payload = JSON.parse(payload);
           }
+
+          console.log("GameContext - 파싱된 메시지 데이터:", payload);
+
+          // 이벤트와 데이터 확인 로깅
+          console.log("GameContext - 이벤트 타입:", payload.event);
+          console.log("GameContext - 데이터 구조:", payload.data);
+
+          // data가 string인 경우 추가 파싱 (서버에서 가끔 데이터를 stringify하여 보내는 경우)
+          if (typeof payload.data === "string") {
+            try {
+              payload.data = JSON.parse(payload.data);
+            } catch {
+              // data가 일반 문자열인 경우 파싱 오류는 무시
+              console.log("GameContext - 데이터 내부 파싱 건너뜀 (일반 문자열)");
+            }
+          }
         } catch (parseError) {
+          console.error("GameContext - 메시지 파싱 오류:", parseError);
           return;
         }
 
+        // START 이벤트 특별 로깅
+        if (payload.event === "START") {
+          console.log("GameContext - 중요! START 이벤트 수신!");
+          setLoading(false);
+          setGameState((prev) => {
+            console.log("GameContext - START 이벤트 처리: loading=false, gameStatus=playing");
+            return {
+              ...prev,
+              gameStatus: "playing" as const,
+            };
+          });
+          return; // START 이벤트 처리 후 종료
+        }
+
+        // MULTIPLE_QUIZ 이벤트 처리
+        if (payload.event === "MULTIPLE_QUIZ") {
+          console.log("GameContext - 중요! MULTIPLE_QUIZ 이벤트 수신! 원본 데이터:", JSON.stringify(payload.data, null, 2));
+
+          // 문제 필드 확인 및 추출
+          let questionText = "";
+
+          if (payload.data.question) {
+            console.log("GameContext - question 필드 발견:", payload.data.question);
+            questionText = payload.data.question;
+          } else if (payload.data.multipleQuestion) {
+            console.log("GameContext - multipleQuestion 필드 발견:", payload.data.multipleQuestion);
+            questionText = payload.data.multipleQuestion;
+          } else {
+            console.warn("GameContext - 문제 텍스트 필드 없음! 전체 데이터:", payload.data);
+          }
+
+          console.log("GameContext - 최종 사용할 문제 텍스트:", questionText);
+
+          // 이전 문제와 같은지 확인
+          if (gameState.currentQuestion === questionText) {
+            console.log("GameContext - 이전과 동일한 문제입니다. 무시합니다.");
+            return;
+          }
+
+          // 디버깅: 옵션 데이터 확인
+          if (payload.data.options) {
+            console.log("GameContext - 객관식 옵션 수:", payload.data.options.length);
+            console.log("GameContext - 첫 번째 옵션:", payload.data.options[0]);
+          } else {
+            console.warn("GameContext - 객관식 옵션 없음!");
+          }
+
+          // 로딩 상태 해제 및 게임 상태 업데이트
+          setLoading(false);
+          setGameState((prev) => {
+            const newState = {
+              ...prev,
+              gameStatus: "playing" as const,
+              currentQuestion: questionText,
+              remainingTime: payload.data.timer || 10,
+            };
+            console.log("GameContext - MULTIPLE_QUIZ 이벤트 처리 후 게임 상태:", newState);
+            return newState;
+          });
+
+          // 퀴즈 ID 저장
+          if (payload.data.quizId) {
+            console.log("GameContext - 퀴즈 ID 저장:", payload.data.quizId);
+            setCurrentQuizId(payload.data.quizId);
+          }
+
+          // 객관식 옵션 저장
+          if (payload.data.options) {
+            console.log("GameContext - 객관식 옵션 저장");
+            setQuizOptions(payload.data.options);
+          } else {
+            setQuizOptions(null);
+          }
+
+          // 힌트 초기화
+          setFirstHint(null);
+          setSecondHint(null);
+
+          return; // MULTIPLE_QUIZ 이벤트 처리 후 종료
+        }
+
+        // ESSAY_QUIZ 이벤트 처리
+        else if (payload.event === "ESSAY_QUIZ") {
+          console.log("GameContext - ESSAY_QUIZ 이벤트 수신! 원본 데이터:", JSON.stringify(payload.data, null, 2));
+
+          // 문제 필드 확인 및 추출
+          let questionText = "";
+
+          if (payload.data.question) {
+            console.log("GameContext - question 필드 발견:", payload.data.question);
+            questionText = payload.data.question;
+          } else if (payload.data.essayQuestion) {
+            console.log("GameContext - essayQuestion 필드 발견:", payload.data.essayQuestion);
+            questionText = payload.data.essayQuestion;
+          } else {
+            console.warn("GameContext - 문제 텍스트 필드 없음! 전체 데이터:", payload.data);
+          }
+
+          console.log("GameContext - 최종 사용할 문제 텍스트:", questionText);
+
+          // 이전 문제와 같은지 확인
+          if (gameState.currentQuestion === questionText) {
+            console.log("GameContext - 이전과 동일한 문제입니다. 무시합니다.");
+            return;
+          }
+
+          // 로딩 상태 해제 및 게임 상태 업데이트
+          setLoading(false);
+          setGameState((prev) => {
+            const newState = {
+              ...prev,
+              gameStatus: "playing" as const,
+              currentQuestion: questionText,
+              remainingTime: payload.data.timer || 30,
+            };
+            console.log("GameContext - ESSAY_QUIZ 이벤트 처리 후 게임 상태:", newState);
+            return newState;
+          });
+
+          // 퀴즈 ID 저장
+          if (payload.data.quizId) {
+            console.log("GameContext - 퀴즈 ID 저장:", payload.data.quizId);
+            setCurrentQuizId(payload.data.quizId);
+          }
+
+          // 객관식 옵션 초기화
+          setQuizOptions(null);
+
+          // 힌트 초기화
+          setFirstHint(null);
+          setSecondHint(null);
+
+          return; // ESSAY_QUIZ 이벤트 처리 후 종료
+        }
+
+        // 나머지 코드는 그대로 유지
         // 일반 채팅 메시지 처리
         if (!payload.event && payload.data) {
           const data = typeof payload.data === "string" ? JSON.parse(payload.data) : payload.data;
+          console.log("채팅 메시지 데이터:", data);
 
           if (data && (data.userAnswer || data.message || data.content)) {
             const memberId = data.memberId || payload.memberId || 0;
             const sender = data.sender || data.nickname || (memberId === playerStatus.id ? playerStatus.name : opponentStatus.name) || "알 수 없음";
             const content = data.userAnswer || data.message || data.content || "";
 
-            // 내가 보낸 메시지는 이미 로컬에 표시했으므로 제외
-            if (memberId !== playerStatus.id) {
-              // 중복 메시지 체크
-              const messageKey = `${sender}-${content}`;
-              const currentTime = new Date().getTime();
-              const lastReceived = lastMessageTime[messageKey] || 0;
+            console.log("채팅 메시지 처리:", { sender, content, memberId });
 
-              if (currentTime - lastReceived < 2000) {
-                return;
-              }
+            // 내가 보낸 메시지도 포함하여 처리 (필터링 제거)
+            // 중복 메시지 체크
+            const messageKey = `${sender}-${content}`;
+            const currentTime = new Date().getTime();
+            const lastReceived = lastMessageTime[messageKey] || 0;
 
-              // 마지막 메시지 시간 업데이트
-              setLastMessageTime((prev) => ({
-                ...prev,
-                [messageKey]: currentTime,
-              }));
-
-              // 채팅 메시지 추가
-              setChatMessages((prev) => [
-                ...prev,
-                {
-                  sender,
-                  message: content,
-                  timestamp: new Date(),
-                },
-              ]);
+            if (currentTime - lastReceived < 2000) {
+              console.log("중복 메시지 필터링됨:", messageKey);
+              return;
             }
+
+            // 마지막 메시지 시간 업데이트
+            setLastMessageTime((prev) => ({
+              ...prev,
+              [messageKey]: currentTime,
+            }));
+
+            // 채팅 메시지 추가
+            console.log("채팅 메시지 추가:", { sender, message: content });
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                sender,
+                message: content,
+                timestamp: new Date(),
+              },
+            ]);
+
             return;
           }
         }
@@ -353,81 +537,88 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             sender = memberId === playerStatus.id ? playerStatus.name : memberId === opponentStatus.id ? opponentStatus.name : "알 수 없음";
           }
 
-          // 내가 보낸 메시지가 아닐 경우만 처리
-          if (memberId !== playerStatus.id && sender !== playerStatus.name) {
-            // 중복 메시지 체크
-            const messageKey = `${sender}-${answer}`;
-            const currentTime = new Date().getTime();
-            const lastReceived = lastMessageTime[messageKey] || 0;
+          // 내가 보낸 메시지도 포함하여 처리 (필터링 제거)
+          // 중복 메시지 체크
+          const messageKey = `${sender}-${answer}`;
+          const currentTime = new Date().getTime();
+          const lastReceived = lastMessageTime[messageKey] || 0;
 
-            if (currentTime - lastReceived < 2000) {
-              return;
-            }
+          if (currentTime - lastReceived < 2000) {
+            return;
+          }
 
-            // 마지막 메시지 시간 업데이트
-            setLastMessageTime((prev) => ({
+          // 마지막 메시지 시간 업데이트
+          setLastMessageTime((prev) => ({
+            ...prev,
+            [messageKey]: currentTime,
+          }));
+
+          // 채팅 메시지에 추가
+          if (answer) {
+            setChatMessages((prev) => [
               ...prev,
-              [messageKey]: currentTime,
-            }));
+              {
+                sender,
+                message: answer,
+                timestamp: new Date(),
+              },
+            ]);
+          }
 
-            // 채팅 메시지에 추가
-            if (answer) {
-              setChatMessages((prev) => [
-                ...prev,
-                {
-                  sender,
-                  message: answer,
-                  timestamp: new Date(),
-                },
-              ]);
-            }
-
-            // 정답 처리 애니메이션
-            if (result === "정답입니다") {
+          // 정답 처리 애니메이션
+          if (result === "정답입니다") {
+            // 메시지를 보낸 사람이 자신일 경우
+            if (memberId === playerStatus.id) {
+              setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
+              setOpponentStatus((prev) => ({ ...prev, state: "damage" }));
+            } else {
               setOpponentStatus((prev) => ({ ...prev, state: "attack" }));
               setPlayerStatus((prev) => ({ ...prev, state: "damage" }));
             }
           }
         }
 
-        // 게임 이벤트 처리 로직 복원
-        else if (payload.event === "START") {
-          setLoading(false);
-          setGameState((prev) => ({
-            ...prev,
-            gameStatus: "playing",
-          }));
-        } else if (payload.event === "MULTIPLE_QUIZ") {
-          setLoading(false);
-          setGameState((prev) => ({
-            ...prev,
-            gameStatus: "playing",
-            currentQuestion: payload.data.multipleQuestion || payload.data.question,
-            remainingTime: payload.data.timer || 10,
-          }));
+        // SHORT_QUIZ 이벤트 처리
+        else if (payload.event === "SHORT_QUIZ") {
+          console.log("GameContext - SHORT_QUIZ 이벤트 수신! 원본 데이터:", JSON.stringify(payload.data, null, 2));
 
-          // 퀴즈 ID 저장
-          if (payload.data.quizId) {
-            setCurrentQuizId(payload.data.quizId);
+          // 문제 필드 확인 및 추출
+          let questionText = "";
+
+          if (payload.data.question) {
+            console.log("GameContext - question 필드 발견:", payload.data.question);
+            questionText = payload.data.question;
+          } else if (payload.data.shortQuestion) {
+            console.log("GameContext - shortQuestion 필드 발견:", payload.data.shortQuestion);
+            questionText = payload.data.shortQuestion;
+          } else {
+            console.warn("GameContext - 문제 텍스트 필드 없음! 전체 데이터:", payload.data);
           }
 
-          // 객관식 옵션 저장
-          setQuizOptions(payload.data.options);
+          console.log("GameContext - 최종 사용할 문제 텍스트:", questionText);
 
-          // 힌트 초기화
-          setFirstHint(null);
-          setSecondHint(null);
-        } else if (payload.event === "SHORT_QUIZ") {
+          // 이전 문제와 같은지 확인
+          if (gameState.currentQuestion === questionText) {
+            console.log("GameContext - 이전과 동일한 문제입니다. 무시합니다.");
+            return;
+          }
+
+          // 로딩 상태 해제 및 게임 상태 업데이트
           setLoading(false);
-          setGameState((prev) => ({
-            ...prev,
-            gameStatus: "playing",
-            currentQuestion: payload.data.shortQuestion || payload.data.question,
-            remainingTime: payload.data.timer || 20,
-          }));
+          setGameState((prev) => {
+            const newState = {
+              ...prev,
+              gameStatus: "playing" as const,
+              currentQuestion: questionText,
+              remainingTime: payload.data.timer || 20,
+            };
+            console.log("GameContext - SHORT_QUIZ 이벤트 처리 후 게임 상태:", newState);
+            return newState;
+          });
 
           // 퀴즈 ID 저장
           if (payload.data.quizId) {
+            console.log("GameContext - 퀴즈 ID 저장:", payload.data.quizId);
             setCurrentQuizId(payload.data.quizId);
           }
 
@@ -497,6 +688,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             }));
           }
         } else if (payload.event === "REWARD" || payload.event === "END") {
+          console.log("GameContext - REWARD/END 이벤트 수신!");
           setGameState((prev) => ({
             ...prev,
             gameStatus: "finished",
@@ -521,10 +713,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         }
       } catch (error) {
         // 오류 처리
+        console.error("메시지 처리 오류:", error);
       }
-    },
-    [playerStatus.id, playerStatus.name, opponentStatus.id, opponentStatus.name, lastMessageTime]
-  );
+    };
+  }, [playerStatus.id, playerStatus.name, opponentStatus.id, opponentStatus.name, lastMessageTime]);
 
   // 타이머 감소 로직
   useEffect(() => {
@@ -532,11 +724,38 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
 
     if (gameState.remainingTime > 0) {
       timerInterval = setInterval(() => {
+        setGameState((prev) => {
+          const newRemainingTime = Math.max(0, prev.remainingTime - 1);
+
+          // 타이머가 0이 되면 콘솔에 로그 출력
+          if (newRemainingTime === 0 && prev.remainingTime > 0) {
+            console.log("GameContext - 타이머 종료: 다음 문제 대기 상태");
+          }
+
+          return {
+            ...prev,
+            remainingTime: newRemainingTime,
+          };
+        });
+      }, 1000);
+    }
+    // 타이머가 0이 되었을 때 추가 로직
+    else if (gameState.remainingTime === 0 && gameState.currentQuestion) {
+      console.log("GameContext - 타이머가 0입니다. 다음 문제를 기다립니다.");
+
+      // 타이머가 0이 된 후 3초 후에 자동으로 다음 문제를 받을 준비상태로 변경
+      const readyForNextQuizTimer = setTimeout(() => {
+        console.log("GameContext - 다음 문제 준비 상태로 변경");
+        // 현재 문제 초기화하지만 게임 상태는 유지
         setGameState((prev) => ({
           ...prev,
-          remainingTime: Math.max(0, prev.remainingTime - 1),
+          currentQuestion: "", // 현재 문제 초기화
         }));
-      }, 1000);
+      }, 3000);
+
+      return () => {
+        clearTimeout(readyForNextQuizTimer);
+      };
     }
 
     return () => {
@@ -544,25 +763,61 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         clearInterval(timerInterval);
       }
     };
-  }, [gameState.currentQuestion, currentQuizId]);
+  }, [gameState.currentQuestion, gameState.remainingTime, currentQuizId]);
 
   // WebSocket 구독 설정
   useEffect(() => {
     if (!connected || !roomId) {
+      console.log("GameContext - 구독 실패: connected=", connected, "roomId=", roomId);
       return;
     }
 
     // 게임 토픽 구독
     const gameTopic = topics.GAME(roomId);
+    console.log("GameContext - 게임 토픽 구독 시작:", gameTopic);
     setChatMessages([]);
-    const gameSubscription = subscribe(gameTopic, handleMessage);
 
-    return () => {
-      if (gameSubscription) {
-        unsubscribe(gameSubscription);
+    // useRef로 만든 안정적인 핸들러 사용
+    const stableHandleMessage = (message: IMessage) => {
+      console.log("GameContext - 메시지 수신!", message);
+      console.log("GameContext - 메시지 원본 내용:", message.body);
+      console.log("GameContext - 메시지 헤더:", message.headers);
+
+      // 디버깅: 메시지 수신 상태 확인
+      try {
+        if (handleMessageRef.current) {
+          handleMessageRef.current(message);
+        }
+      } catch (error) {
+        console.error("GameContext - 메시지 처리 오류:", error);
       }
     };
-  }, [connected, roomId, topics.GAME, subscribe, unsubscribe, handleMessage]);
+
+    const gameSubscription = subscribe(gameTopic, stableHandleMessage);
+    console.log("GameContext - 게임 토픽 구독 완료:", gameSubscription ? "성공" : "실패");
+
+    // 백엔드 타이밍 이슈를 위한 안전장치
+    // 8초 후에도 여전히 로딩 중이면 강제로 로딩 상태 해제
+    const forceLoadingTimer = setTimeout(() => {
+      console.log("GameContext - 8초 타임아웃 체크: loading=", loading);
+      if (loading) {
+        console.log("GameContext - 로딩 상태 8초 초과, 강제 해제");
+        setLoading(false);
+        setGameState((prev) => ({
+          ...prev,
+          gameStatus: "playing" as const,
+        }));
+      }
+    }, 8000);
+
+    return () => {
+      clearTimeout(forceLoadingTimer);
+      if (gameSubscription) {
+        console.log("GameContext - 게임 토픽 구독 해제 - 컴포넌트 언마운트");
+        gameSubscription.unsubscribe(); // 직접 구독 객체의 unsubscribe 호출
+      }
+    };
+  }, [connected, roomId, topics.GAME]);
 
   // 채팅 메시지 전송 함수
   const sendChatMessage = useCallback(
@@ -588,34 +843,22 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         }));
 
         // 채팅 메시지 데이터 구성
-        const chatData = {
-          userAnswer: message,
-          memberId: playerStatus.id,
+        const chatData: ChatMessage = {
+          content: message,
+          roomId,
           sender: sender,
         };
 
         // 채팅 메시지 전송
-        send(`/app/game/${roomId}/checkAnswer`, chatData as any);
-
-        // 내가 보낸 메시지를 로컬에 추가
-        setChatMessages((prev) => {
-          const newMessages = [
-            ...prev,
-            {
-              sender,
-              message,
-              timestamp: new Date(),
-            },
-          ];
-          return newMessages;
-        });
+        send(`/app/game/${roomId}/checkAnswer`, chatData);
 
         return true;
-      } catch (error) {
+      } catch {
+        console.error("채팅 메시지 전송 실패");
         return false;
       }
     },
-    [connected, roomId, playerStatus.id, send, lastMessageTime, setChatMessages]
+    [connected, roomId, playerStatus.id, send, lastMessageTime]
   );
 
   // 컨텍스트 값

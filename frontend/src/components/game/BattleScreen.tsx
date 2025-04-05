@@ -1,73 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PlayerSection from "./PlayerSection";
 import BattleStatus from "./BattleStatus";
 import ChatSection from "./ChatSection";
+import QuizOptions from "./QuizOptions";
+import HintDisplay from "./HintDisplay";
 import { useGame } from "../../contexts/GameContext";
-import { CharacterState } from "./types/character";
+import { CharacterState, PlayerStatus } from "./types/character";
 
-// 객관식 선택지 UI 컴포넌트 (클릭 액션 없음)
-const QuizOptions = () => {
-  const { quizOptions } = useGame();
+// BattleScreen 컴포넌트의 props 타입 정의
+interface BattleScreenProps {
+  resourcesLoaded: boolean;
+  playerStatus: PlayerStatus;
+  opponentStatus: PlayerStatus;
+  timer: number;
+  questionText: string;
+  onPlayerAnimationComplete: (state: CharacterState) => void;
+  onOpponentAnimationComplete: (state: CharacterState) => void;
+  onAnswerSubmit: (message: string) => boolean;
+}
 
-  if (!quizOptions || quizOptions.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="bg-white bg-opacity-80 rounded-lg p-3 mb-4">
-      <div className="text-center text-blue-800 font-bold mb-2">※ 채팅창에 번호만 입력하세요 (예: 1, 2, 3, 4)</div>
-      <div className="grid grid-cols-1 gap-2">
-        {quizOptions.map((option) => (
-          <div key={option.quizOptionId} className="bg-blue-100 p-2 rounded-md border border-blue-300">
-            <span className="font-bold">{option.optionNumber}. </span>
-            {option.optionText}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const HintDisplay = () => {
-  const { firstHint, secondHint } = useGame();
-
-  if (!firstHint && !secondHint) {
-    return null;
-  }
-
-  return (
-    <div className="bg-yellow-100 bg-opacity-90 rounded-lg p-3 mb-4 border-2 border-yellow-400">
-      <div className="font-bold text-center mb-1">힌트</div>
-      {firstHint && (
-        <div className="mb-1">
-          <span className="font-semibold">힌트 1: </span>
-          {firstHint.hint}
-        </div>
-      )}
-      {secondHint && (
-        <div>
-          <span className="font-semibold">힌트 2: </span>
-          {secondHint.hint}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const BattleScreen = () => {
+const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAnswerSubmit }) => {
   const [chatInput, setChatInput] = useState("");
-  const { playerStatus, opponentStatus, chatMessages, sendChatMessage, handleAnswerSubmit, handleAnimationComplete, gameState, quizOptions } = useGame();
+  const { chatMessages, quizOptions } = useGame();
+
+  // 디버깅용 로그 추가
+  useEffect(() => {
+    console.log("BattleScreen - 타이머 변경:", timer);
+    console.log("BattleScreen - 문제 변경:", questionText);
+  }, [timer, questionText]);
+
+  // 퀴즈 옵션 변경 감지
+  useEffect(() => {
+    console.log("BattleScreen - 퀴즈 옵션 변경:", quizOptions);
+  }, [quizOptions]);
+
+  // 문제와 타이머 상태 로그 - 컴포넌트 렌더링마다
+  console.log("BattleScreen render - 문제:", questionText);
+  console.log("BattleScreen render - 타이머:", timer);
+  console.log("BattleStatus props:", { timer, question: questionText });
 
   // 폼 제출 핸들러
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (chatInput.trim() === "") return;
 
-    // 채팅 메시지 전송
-    sendChatMessage(chatInput, playerStatus.name || "나");
-
-    // 정답 체크 수행
-    handleAnswerSubmit(chatInput);
+    console.log("BattleScreen - 답변 제출:", chatInput);
+    // 수정된 코드: 정답 체크만 수행 (handleAnswerSubmit이 서버로 메시지도 전송함)
+    onAnswerSubmit(chatInput);
 
     // 입력창 초기화
     setChatInput("");
@@ -76,26 +55,12 @@ const BattleScreen = () => {
   const playerShouldLoop = playerStatus.state === "idle" || playerStatus.state === "victory";
   const opponentShouldLoop = opponentStatus.state === "idle" || opponentStatus.state === "victory";
 
-  // 플레이어 애니메이션 완료 처리
-  const onPlayerAnimationComplete = (state: CharacterState) => {
-    if (playerStatus.id) {
-      handleAnimationComplete(playerStatus.id, state);
-    }
-  };
-
-  // 상대방 애니메이션 완료 처리
-  const onOpponentAnimationComplete = (state: CharacterState) => {
-    if (opponentStatus.id) {
-      handleAnimationComplete(opponentStatus.id, state);
-    }
-  };
-
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* 상단 VS 및 문제 영역 */}
       <div className="absolute top-4 left-0 right-0 z-10">
         <div className="w-3/4 max-w-3xl mx-auto">
-          <BattleStatus timer={gameState.remainingTime} question={gameState.currentQuestion} />
+          <BattleStatus timer={timer} question={questionText || "문제 로딩 중..."} />
           <HintDisplay />
           {/* 객관식 선택지 UI 표시 (클릭 불가) */}
           <QuizOptions />

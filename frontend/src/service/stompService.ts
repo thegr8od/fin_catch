@@ -132,6 +132,21 @@ export const subscribeToTopic = (client: Client, topic: string, callback: (messa
         (message) => {
           // 메시지 수신 시 처리 로직
           console.log(`토픽 ${topic}에서 메시지 수신:`, message);
+
+          // 추가 디버깅 정보
+          console.log(`메시지 헤더:`, message.headers);
+          console.log(`메시지 본문 길이:`, message.body ? message.body.length : 0);
+
+          try {
+            // 메시지 내용 로깅 (JSON 파싱 시도)
+            const jsonContent = JSON.parse(message.body);
+            console.log(`메시지 JSON 내용:`, jsonContent);
+            console.log(`이벤트 타입:`, jsonContent.event);
+            console.log(`데이터:`, jsonContent.data);
+          } catch (e) {
+            console.log(`메시지 원본 내용(파싱 실패):`, message.body);
+          }
+
           callback(message); // 사용자 정의 콜백 실행
         },
         headers // 추가 헤더
