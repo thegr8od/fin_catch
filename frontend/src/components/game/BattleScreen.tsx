@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import PlayerSection from "./PlayerSection";
 import BattleStatus from "./BattleStatus";
 import ChatSection from "./ChatSection";
@@ -21,13 +22,15 @@ interface BattleScreenProps {
 
 const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAnswerSubmit }) => {
   const [chatInput, setChatInput] = useState("");
-  const { chatMessages, quizOptions } = useGame();
+  const { chatMessages, quizOptions, gameState } = useGame();
+  const navigate = useNavigate();
 
   // 디버깅용 로그 추가
   useEffect(() => {
     console.log("BattleScreen - 타이머 변경:", timer);
     console.log("BattleScreen - 문제 변경:", questionText);
-  }, [timer, questionText]);
+    console.log("BattleScreen - 게임 상태:", gameState.gameStatus);
+  }, [timer, questionText, gameState.gameStatus]);
 
   // 퀴즈 옵션 변경 감지
   useEffect(() => {
@@ -55,15 +58,53 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
   const playerShouldLoop = playerStatus.state === "idle" || playerStatus.state === "victory";
   const opponentShouldLoop = opponentStatus.state === "idle" || opponentStatus.state === "victory";
 
+  // 게임 결과 메시지 생성
+  const getGameResultMessage = () => {
+    if (playerStatus.state === "dead" && opponentStatus.state === "dead") {
+      return "비겼습니다.";
+    } else if (playerStatus.state === "dead") {
+      return "패배했습니다...";
+    } else if (playerStatus.state === "victory") {
+      return "승리했습니다!";
+    }
+    return "비겼습니다.";
+  };
+
+  const isGameFinished = gameState.gameStatus === "finished";
+  console.log("게임 종료 여부:", isGameFinished, "결과 메시지:", getGameResultMessage());
+
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* 상단 VS 및 문제 영역 */}
       <div className="absolute top-4 left-0 right-0 z-10">
         <div className="w-3/4 max-w-3xl mx-auto">
-          <BattleStatus timer={timer} question={questionText || "문제 로딩 중..."} />
-          <HintDisplay />
-          {/* 객관식 선택지 UI 표시 (클릭 불가) */}
-          <QuizOptions />
+          {!isGameFinished ? (
+            <>
+              <BattleStatus timer={timer} question={questionText || "문제 로딩 중..."} />
+              <HintDisplay />
+              <QuizOptions />
+            </>
+          ) : (
+            <div className="bg-white bg-opacity-90 rounded-lg p-6 text-center shadow-2xl border-4 border-yellow-500">
+              <h2 className="text-3xl font-bold mb-4 text-blue-800">게임 결과</h2>
+              <div className="text-2xl font-bold mb-2">{getGameResultMessage()}</div>
+              <div className="mt-4 flex justify-around">
+                <div className="text-center">
+                  <div className="font-semibold">{playerStatus.name}</div>
+                  <div className="text-xl">{playerStatus.state === "victory" ? "🏆" : playerStatus.state === "dead" ? "💀" : "🤝"}</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold">{opponentStatus.name}</div>
+                  <div className="text-xl">{opponentStatus.state === "victory" ? "🏆" : opponentStatus.state === "dead" ? "💀" : "🤝"}</div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <button onClick={() => navigate("/main")} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-300">
+                  메인으로 가기
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -102,7 +143,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
 
       {/* 채팅 영역 - 중앙 하단에 배치 */}
       <div id="battle-chat-container" className="fixed left-1/2 transform -translate-x-1/2 bottom-4 z-30" style={{ width: "33%" }}>
-        <ChatSection chatMessages={chatMessages} chatInput={chatInput} setChatInput={setChatInput} handleSubmit={handleSubmit} showInput={true} showMessages={true} />
+        <ChatSection chatMessages={chatMessages} chatInput={chatInput} setChatInput={setChatInput} handleSubmit={handleSubmit} showInput={!isGameFinished} showMessages={true} />
       </div>
     </div>
   );

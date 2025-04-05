@@ -210,20 +210,39 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
 
   // 애니메이션 완료 핸들러
   const handleAnimationComplete = useCallback(
-    (playerId: number) => {
-      if (playerId === playerStatus.id) {
-        setPlayerStatus((prev) => ({
-          ...prev,
-          state: "idle",
-        }));
-      } else {
-        setOpponentStatus((prev) => ({
-          ...prev,
-          state: "idle",
-        }));
+    (playerId: number, currentState: CharacterState) => {
+      console.log(`GameContext - 애니메이션 완료: 플레이어 ${playerId}, 상태 ${currentState}`);
+
+      // dead 상태는 그대로 유지
+      if (currentState === "dead") {
+        console.log(`GameContext - dead 상태 유지 (플레이어 ${playerId})`);
+        return;
+      }
+
+      // 공격 또는 피해 애니메이션 완료 후 idle 상태로 복귀
+      if (currentState === "attack" || currentState === "damage") {
+        if (playerId === playerStatus.id) {
+          // 체력이 0 이하면 dead 상태로 변경
+          if (playerStatus.health <= 0) {
+            console.log(`GameContext - 플레이어 체력 0, dead 상태로 변경`);
+            setPlayerStatus((prev) => ({ ...prev, state: "dead" }));
+          } else {
+            console.log(`GameContext - 플레이어 애니메이션 완료, idle 상태로 변경`);
+            setPlayerStatus((prev) => ({ ...prev, state: "idle" }));
+          }
+        } else {
+          // 체력이 0 이하면 dead 상태로 변경
+          if (opponentStatus.health <= 0) {
+            console.log(`GameContext - 상대방 체력 0, dead 상태로 변경`);
+            setOpponentStatus((prev) => ({ ...prev, state: "dead" }));
+          } else {
+            console.log(`GameContext - 상대방 애니메이션 완료, idle 상태로 변경`);
+            setOpponentStatus((prev) => ({ ...prev, state: "idle" }));
+          }
+        }
       }
     },
-    [playerStatus.id]
+    [playerStatus.id, playerStatus.health, opponentStatus.health]
   );
 
   // 공격 처리
@@ -621,11 +640,17 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           if (attackedId === playerStatus.id) {
             // 내가 공격받음
             setOpponentStatus((prev) => ({ ...prev, state: "attack" }));
-            setPlayerStatus((prev) => ({ ...prev, state: "damage" }));
+            setPlayerStatus((prev) => ({
+              ...prev,
+              state: myInfo && myInfo.life <= 0 ? "dead" : "damage",
+            }));
           } else {
             // 상대방이 공격받음
             setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
-            setOpponentStatus((prev) => ({ ...prev, state: "damage" }));
+            setOpponentStatus((prev) => ({
+              ...prev,
+              state: opponentInfo && opponentInfo.life <= 0 ? "dead" : "damage",
+            }));
           }
         } else if (payload.event === "TWO_ATTACK") {
           const data = payload.data as TwoAttackData;
@@ -638,7 +663,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             setPlayerStatus((prev) => ({
               ...prev,
               health: myInfo.life,
-              state: "damage",
+              state: myInfo.life <= 0 ? "dead" : "damage",
             }));
           }
 
@@ -646,7 +671,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             setOpponentStatus((prev) => ({
               ...prev,
               health: opponentInfo.life,
-              state: "damage",
+              state: opponentInfo.life <= 0 ? "dead" : "damage",
             }));
           }
         } else if (payload.event === "REWARD" || payload.event === "END") {
