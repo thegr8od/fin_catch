@@ -30,7 +30,6 @@ const preloadTexture = async (config: CharacterSpriteConfig, characterType: Char
         throw new Error(`스프라이트 시트 설정이 없습니다. characterType: ${characterType}, state: ${state}`);
       }
 
-
       // 이미지 존재 여부 확인
       const img = new Image();
       const timestamp = new Date().getTime(); // 캐시 방지를 위한 타임스탬프 추가
@@ -104,6 +103,23 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
 
+  // 1. 렌더링에 영향받지 않는 애니메이션 상태 관리
+  const animStateRef = useRef({
+    state,
+    characterType,
+    direction,
+    loop,
+    scale,
+  });
+
+  // 2. 콜백 함수를 ref로 관리
+  const callbackRef = useRef(onAnimationComplete);
+
+  // 3. 콜백 함수 업데이트 (렌더링과 무관하게)
+  useEffect(() => {
+    callbackRef.current = onAnimationComplete;
+  }, [onAnimationComplete]);
+
   // 크기 설정
   const dimensions = useMemo(() => {
     // 컨테이너 크기에 맞춰서 설정
@@ -119,7 +135,6 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     if (!containerRef.current || appRef.current) return null;
 
     try {
-
       // PIXI 설정
       PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
@@ -144,21 +159,33 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
 
   // 애니메이션 생성 함수
   const createAnimation = useCallback(
-    (textures: PIXI.Texture[], config: CharacterSpriteConfig) => {
+    (textures: PIXI.Texture[], config: CharacterSpriteConfig, animState: { state: CharacterState; loop: boolean; direction: boolean }) => {
       try {
+        console.log(`애니메이션 생성: 상태=${animState.state}, 루프=${animState.loop}`);
+
         const animation = new PIXI.AnimatedSprite(textures);
         animation.animationSpeed = config.animationSpeed;
         animation.anchor.set(0.5);
 
         // 크기에 맞게 스케일 조정
         const baseScale = (dimensions.width / config.frameWidth) * 0.6; // 60% 크기로 조정
-        animation.scale.set(baseScale * (direction ? 1 : -1), baseScale);
+        animation.scale.set(baseScale * (animState.direction ? 1 : -1), baseScale);
 
         // 위치 조정 (약간 아래로)
         animation.x = dimensions.width / 2;
         animation.y = dimensions.height / 2 + dimensions.height * 0.1; // 10% 아래로
 
-        animation.loop = loop;
+        // 루프 설정
+        animation.loop = animState.loop;
+
+        // 애니메이션 완료 콜백 설정 (콜백은 ref에서 가져옴)
+        animation.onComplete = () => {
+          console.log(`애니메이션 완료 이벤트 발생: 상태=${animState.state}, 루프=${animState.loop}`);
+          if (mountedRef.current && callbackRef.current) {
+            callbackRef.current();
+          }
+        };
+
         animation.play();
         setIsReady(true);
         return animation;
@@ -168,12 +195,16 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
         return null;
       }
     },
-    [dimensions.width, dimensions.height, direction, loop]
+    [dimensions]
   );
 
   // 애니메이션 업데이트
   const updateAnimation = useCallback(async () => {
     try {
+      // 현재 애니메이션 상태 불러오기
+      const currentAnimState = animStateRef.current;
+      console.log(`애니메이션 업데이트: 상태=${currentAnimState.state}, 루프=${currentAnimState.loop}`);
+
       const app = appRef.current || (await initializeApp());
       if (!app) {
         console.error("PIXI 앱 초기화 실패");
@@ -181,26 +212,25 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
         return;
       }
 
-      const config = animations[state];
+      const config = animations[currentAnimState.state];
       if (!config) {
         console.error("애니메이션 설정을 찾을 수 없음:", {
-          state,
-          characterType,
+          state: currentAnimState.state,
+          characterType: currentAnimState.characterType,
           availableStates: Object.keys(animations),
         });
         setIsReady(false);
         return;
       }
 
-
-      const textures = await preloadTexture(config, characterType, state);
+      const textures = await preloadTexture(config, currentAnimState.characterType, currentAnimState.state);
 
       if (!mountedRef.current) {
         setIsReady(false);
         return;
       }
 
-      const newAnimation = createAnimation(textures, config);
+      const newAnimation = createAnimation(textures, config, currentAnimState);
       if (!newAnimation) {
         throw new Error("애니메이션 생성 실패");
       }
@@ -212,15 +242,6 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
 
       app.stage.addChild(newAnimation);
       animationRef.current = newAnimation;
-
-      // 애니메이션 완료 이벤트 핸들러 설정
-      if (onAnimationComplete) {
-        newAnimation.onComplete = () => {
-          if (mountedRef.current) {
-            onAnimationComplete();
-          }
-        };
-      }
 
       retryCountRef.current = 0;
       setIsReady(true);
@@ -238,7 +259,7 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
         setIsReady(false);
       }
     }
-  }, [state, characterType, animations, createAnimation, initializeApp, loop, onAnimationComplete]);
+  }, [animations, createAnimation, initializeApp]);
 
   // 컴포넌트 마운트/언마운트 처리
   useEffect(() => {
@@ -260,19 +281,50 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     };
   }, []);
 
-  // 초기화 및 상태 변경 시 애니메이션 업데이트
+  // 4. 상태 변경 감지와 애니메이션 업데이트 분리
   useEffect(() => {
-    if (!containerRef.current) return;
+    // 실제 상태 변경 감지
+    if (
+      animStateRef.current.state !== state ||
+      animStateRef.current.characterType !== characterType ||
+      animStateRef.current.loop !== loop ||
+      animStateRef.current.direction !== direction ||
+      animStateRef.current.scale !== scale
+    ) {
+      console.log(`애니메이션 상태 실제 변경:`, {
+        prevState: animStateRef.current.state,
+        newState: state,
+        prevLoop: animStateRef.current.loop,
+        newLoop: loop,
+      });
+
+      // 상태 업데이트
+      animStateRef.current = {
+        state,
+        characterType,
+        direction,
+        loop,
+        scale,
+      };
+
+      // 상태가 변경되었으므로 애니메이션 업데이트
+      if (containerRef.current) {
+        updateAnimation();
+      }
+    }
+  }, [state, characterType, direction, loop, scale, updateAnimation]);
+
+  // 5. 초기화 (의존성 최소화)
+  useEffect(() => {
+    if (!containerRef.current || initializedRef.current) return;
 
     const setup = async () => {
       try {
-        if (!initializedRef.current) {
-          await initializeApp();
-          initializedRef.current = true;
-        }
+        await initializeApp();
+        initializedRef.current = true;
         await updateAnimation();
       } catch (error) {
-        console.error("애니메이션 설정 중 오류:", error);
+        console.error("애니메이션 초기 설정 중 오류:", error);
         if (mountedRef.current) {
           setIsReady(false);
         }
@@ -280,7 +332,7 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
     };
 
     setup();
-  }, [state, direction, scale, characterType, size, updateAnimation, initializeApp]);
+  }, [initializeApp, updateAnimation]);
 
   return { containerRef, isReady };
 };
