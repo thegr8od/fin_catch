@@ -28,7 +28,7 @@ const ChatSection = React.memo(({ chatMessages = [], chatInput = "", onChatInput
       {showMessages && (
         <>
           <div className="text-sm font-bold border-b border-gray-300 pb-1" id="chatbox-header">
-            채팅 ({chatMessages.length}개)
+            채팅
           </div>
           <div className="flex-1 overflow-y-auto my-1 text-sm scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100" id="chatbox-messages">
             {chatMessages.length === 0 ? (

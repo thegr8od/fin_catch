@@ -22,7 +22,7 @@ interface BattleScreenProps {
 
 const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAnswerSubmit }) => {
   const [chatInput, setChatInput] = useState("");
-  const { chatMessages, quizOptions, gameState } = useGame();
+  const { chatMessages, quizOptions, gameState, quizType } = useGame();
   const navigate = useNavigate();
 
   // 디버깅용 로그 추가
@@ -30,7 +30,8 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
     console.log("BattleScreen - 타이머 변경:", timer);
     console.log("BattleScreen - 문제 변경:", questionText);
     console.log("BattleScreen - 게임 상태:", gameState.gameStatus);
-  }, [timer, questionText, gameState.gameStatus]);
+    console.log("BattleScreen - 퀴즈 타입:", quizType);
+  }, [timer, questionText, gameState.gameStatus, quizType]);
 
   // 퀴즈 옵션 변경 감지
   useEffect(() => {
@@ -80,7 +81,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
         <div className="w-3/4 max-w-3xl mx-auto">
           {!isGameFinished ? (
             <>
-              <BattleStatus timer={timer} question={questionText || "문제 로딩 중..."} />
+              <BattleStatus timer={timer} question={questionText || "문제 로딩 중..."} quizType={quizType} />
               <HintDisplay />
               <QuizOptions />
             </>

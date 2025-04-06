@@ -69,6 +69,7 @@ interface GameContextType {
   quizOptions: QuizOption[] | null;
   firstHint: Hint | null;
   secondHint: Hint | null;
+  quizType: string | null;
   handleAnimationComplete: (playerId: number, currentState: CharacterState) => void;
   handleAttack: (playerId: number) => void;
   handleAnswerSubmit: (message: string) => boolean;
@@ -112,6 +113,7 @@ const GameContext = createContext<GameContextType>({
   quizOptions: null,
   firstHint: null,
   secondHint: null,
+  quizType: null,
   handleAnimationComplete: () => {},
   handleAttack: () => {},
   handleAnswerSubmit: () => false,
@@ -162,6 +164,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
   const [quizOptions, setQuizOptions] = useState<QuizOption[] | null>(null);
   const [firstHint, setFirstHint] = useState<Hint | null>(null);
   const [secondHint, setSecondHint] = useState<Hint | null>(null);
+  const [quizType, setQuizType] = useState<string | null>(null);
 
   // 컴포넌트 마운트 시 roomId 설정 확인
   useEffect(() => {
@@ -423,6 +426,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           setFirstHint(null);
           setSecondHint(null);
 
+          // 퀴즈 타입 설정
+          setQuizType("MULTIPLE");
+
           return; // MULTIPLE_QUIZ 이벤트 처리 후 종료
         }
 
@@ -476,6 +482,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           // 힌트 초기화
           setFirstHint(null);
           setSecondHint(null);
+
+          // 퀴즈 타입 설정
+          setQuizType("ESSAY");
 
           return; // ESSAY_QUIZ 이벤트 처리 후 종료
         }
@@ -533,6 +542,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
 
           // 서버에서 보내는 데이터 형식에 맞게 처리
           const result = resultData.result || "";
+          const score = resultData.score;
           const quizId = resultData.quizId || 0;
           const sender = resultData.sender || "알 수 없음";
 
@@ -541,13 +551,13 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             ...prev,
             {
               sender,
-              message: result,
+              message: score !== undefined ? `${score}점 입니다.` : result,
               timestamp: new Date(),
             },
           ]);
 
           // 정답 처리 애니메이션
-          if (result === "정답입니다") {
+          if (result === "정답입니다" || score !== undefined) {
             // 메시지를 보낸 사람이 자신일 경우
             if (sender === playerStatus.name) {
               setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
@@ -609,6 +619,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           // 힌트 초기화
           setFirstHint(null);
           setSecondHint(null);
+
+          // 퀴즈 타입 설정
+          setQuizType("SHORT");
         } else if (payload.event === "FIRST_HINT") {
           setFirstHint(payload.data);
         } else if (payload.event === "SECOND_HINT") {
@@ -858,6 +871,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       quizOptions,
       firstHint,
       secondHint,
+      quizType,
       chatMessages,
       sendChatMessage,
       handleAnimationComplete,
@@ -865,7 +879,22 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       handleAnswerSubmit,
       setChatMessages,
     }),
-    [gameState, playerStatus, opponentStatus, loading, quizOptions, firstHint, secondHint, chatMessages, sendChatMessage, handleAnimationComplete, handleAttack, handleAnswerSubmit, setChatMessages]
+    [
+      gameState,
+      playerStatus,
+      opponentStatus,
+      loading,
+      quizOptions,
+      firstHint,
+      secondHint,
+      quizType,
+      chatMessages,
+      sendChatMessage,
+      handleAnimationComplete,
+      handleAttack,
+      handleAnswerSubmit,
+      setChatMessages,
+    ]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
