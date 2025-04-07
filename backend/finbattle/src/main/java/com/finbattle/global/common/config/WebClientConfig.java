@@ -11,17 +11,20 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    private final String apiUrl;
+    private final String financeapiUrl;
+    private final String fastapiUrl;
 
-    public WebClientConfig(@Value("${app.financeApi}") String apiUrl) {
-        this.apiUrl = apiUrl;
+    public WebClientConfig(@Value("${app.financeApi}") String financeapiUrl,
+        @Value("${app.fastapiUrl}") String fastapiUrl) {
+        this.financeapiUrl = financeapiUrl;
+        this.fastapiUrl = fastapiUrl;
     }
 
     @Bean
     @Qualifier("fastApiWebClient")
     public WebClient fastApiWebClient() {
         return WebClient.builder()
-            .baseUrl("http://localhost:8000") // FastAPI 주소
+            .baseUrl(fastapiUrl) // FastAPI 주소
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
     }
@@ -31,7 +34,7 @@ public class WebClientConfig {
     @Qualifier("financeWebClient")
     public WebClient financeWebClient(WebClient.Builder builder) {
         return builder
-            .baseUrl(apiUrl)
+            .baseUrl(financeapiUrl)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
     }
