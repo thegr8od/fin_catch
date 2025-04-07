@@ -726,10 +726,9 @@ public class GameService {
                 int ans = Integer.parseInt(userAnswer);
                 isCorrect = quiz.getQuizOptions().stream()
                     .anyMatch(option -> option.getOptionNumber() == ans && option.isCorrect());
-                resultMessageText = isCorrect ? "정답입니다" : "오답입니다";
+                resultMessageText = isCorrect ? "정답입니다" : userAnswer;
                 if (isCorrect) {
                     quizTimerService.cancelQuizTasks(roomId);
-                    updateUserLives(gameData, memberId);
                 }
             } else {
                 isCorrect = false;
