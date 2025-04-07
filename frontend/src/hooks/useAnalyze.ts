@@ -6,7 +6,6 @@ interface AnalyzePayload {
   quizId: number;
 }
 
-// AnalyzeResponse 인터페이스 수정 - result 필드 구체화
 interface AnalyzeResponse {
   isSuccess: boolean;
   code: number;
@@ -33,7 +32,7 @@ interface AllWrongAnswer {
 
 export const useAnalyze = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const { loading, error, execute: analyzeAnswer } = useApi<AnalyzeResponse, AnalyzePayload>("api/ai/analyze", "POST");
+  const { loading, error, execute: analyzeAnswer } = useApi<AnalyzeResponse, AnalyzePayload>("api/ai/analysis/regular/analyze", "POST");
   const { execute: readWrongAnswer } = useApi<AllWrongAnswer>("api/quiz/wrong", "GET");
 
   const analyzeWrongAnswer = useCallback(
@@ -110,4 +109,4 @@ export const useAnalyze = () => {
     analyzeWrongAnswer,
     readAllWrongAnswer,
   };
-};  
+};

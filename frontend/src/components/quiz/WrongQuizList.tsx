@@ -34,10 +34,10 @@ const WrongQuizList: React.FC<WrongQuizListProps> = ({
               : "bg-gray-50 hover:bg-gray-100"
           }`}
         >
-          <div className="flex justify-between items-center">
-            <h4 className="font-korean-pixel text-gray-800">{problem.title}</h4>
+          <div className="flex justify-between items-start gap-2">
+            <h4 className="font-korean-pixel text-gray-800 flex-1">{problem.title}</h4>
             <span
-              className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
+              className={`px-2 py-1 rounded-full text-sm font-korean-pixel whitespace-nowrap flex-shrink-0 ${
                 problem.type === "객관식" 
                   ? "bg-blue-100 text-blue-700" 
                   : problem.type === "주관식" 
