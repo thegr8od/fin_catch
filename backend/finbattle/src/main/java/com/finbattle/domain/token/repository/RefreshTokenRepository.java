@@ -2,6 +2,7 @@ package com.finbattle.domain.token.repository;
 
 import com.finbattle.domain.token.dto.TokenData;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +41,9 @@ public class RefreshTokenRepository {
     }
 
     public long countActiveUsers() {
-        return redisTemplate.keys("refresh_token:*").size();
+        return Optional.ofNullable(redisTemplate.keys("refresh_token:*"))
+            .map(Set::size)
+            .orElse(0);
     }
 
 }
