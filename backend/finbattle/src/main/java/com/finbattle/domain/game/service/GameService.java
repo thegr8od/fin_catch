@@ -729,7 +729,6 @@ public class GameService {
                 resultMessageText = isCorrect ? "정답입니다" : "오답입니다";
                 if (isCorrect) {
                     quizTimerService.cancelQuizTasks(roomId);
-                    updateUserLives(gameData, memberId);
                 }
             } else {
                 isCorrect = false;
