@@ -58,7 +58,7 @@ public class AiConsumptionQuizService {
                     .build();
             AiMultipleChoiceQuiz savedMultiple = multipleChoiceQuizRepository.save(multiple);
             for (int i = 0; i < parsed.options().size(); i++) {
-                boolean isCorrect = (i == parsed.answerIndex());
+                boolean isCorrect = (i == parsed.answer());
                 AiOption option = AiOption.builder()
                         .multipleChoiceQuiz(savedMultiple)
                         .optionText(parsed.options().get(i))
@@ -138,7 +138,7 @@ public class AiConsumptionQuizService {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record ParsedQuiz(String question, List<String> options, int answerIndex) {}
+    record ParsedQuiz(String question, List<String> options, int answer) {}
 
     public List<AiConsumptionQuizDto> getLatestConsumptionQuizzes(Long memberId) {
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
