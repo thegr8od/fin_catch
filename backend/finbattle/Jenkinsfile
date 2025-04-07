@@ -125,9 +125,7 @@ pipeline {
 
     post {
         always {
-           node {
-               sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
-           }
+           sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
         }
         success {
             script {
