@@ -24,6 +24,10 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
     </div>
   );
 
+  // 소비 퀴즈 오답인지 확인 (문제 분석에 "소비 퀴즈"라는 문구가 포함되어 있는지 확인)
+  const isConsumptionQuiz = problem.analysis.includes('소비 퀴즈') || 
+                           problem.weakPoints.some(point => point.includes('소비 퀴즈'));
+
   if (loading) {
     return renderLoadingState();
   }
@@ -43,25 +47,30 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
         <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{problem.analysis}</p>
       </div>
       <div>
-        <h5 className="font-korean-pixel text-gray-800 mb-2">💡 취약점</h5>
+        {/* <h5 className="font-korean-pixel text-gray-800 mb-2">💡 취약점</h5> */}
         <ul className="list-disc pl-5 space-y-1">
-          {problem.weakPoints.map((point, index) => (
-            <li key={index} className="font-korean-pixel text-gray-600">
-              {point}
-            </li>
-          ))}
         </ul>
       </div>
       <div>
-        <h5 className="font-korean-pixel text-gray-800 mb-2">✨ 추천 학습</h5>
+        {/* <h5 className="font-korean-pixel text-gray-800 mb-2">✨ 추천 학습</h5> */}
         <ul className="list-disc pl-5 space-y-1">
-          {problem.recommendations.map((rec, index) => (
-            <li key={index} className="font-korean-pixel text-gray-600">
-              {rec}
-            </li>
-          ))}
         </ul>
       </div>
+      
+      {/* 금융 공부 조언 섹션 - 소비 퀴즈 오답일 때만 표시 */}
+      {isConsumptionQuiz && (
+        <div className="mt-4">
+          <p className="font-korean-pixel text-gray-700 mb-2">
+            금융 공부는 기초 개념부터 차근차근 이해하는 것이 중요하므로 경제 용어와 금융 구조를 먼저 익히세요.
+          </p>
+          <p className="font-korean-pixel text-gray-700 mb-2">
+            뉴스나 유튜브, 책 등을 통해 실제 사례와 시사 이슈를 접하면서 흥미를 높이고 실전 감각을 키우세요.
+          </p>
+          <p className="font-korean-pixel text-gray-700">
+            마지막으로 가계부 작성이나 모의투자 등 실생활에 적용해보며 배운 내용을 꾸준히 반복하세요.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
