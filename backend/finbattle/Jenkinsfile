@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        SONAR_PROJECT_KEY = credentials('sonarQubeProjectKey')
+        SONAR_HOST_URL = 'http://(serverURL):9006'
+        SONAR_LOGIN = credentials('sonarQubeLogin')
+    }
+
     tools {
         jdk 'JDK17'
     }
@@ -66,6 +72,25 @@ pipeline {
                             docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}
                             docker push ${BACKEND_IMAGE_NAME}
                             docker logout
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Sonarqube') {
+            steps {
+                dir('backend/finbattle') {
+                    withCredentials([
+                        string(credentialsId: 'SONARQUBE_BACKEND_NAME', variable: 'SONARQUBE_BACKEND_NAME'),
+                        string(credentialsId: 'SONARQUBE_URL', variable: 'SONARQUBE_URL'),
+                        string(credentialsId: 'SONARQUBE_BACKEND_TOKEN', variable: 'SONARQUBE_BACKEND_TOKEN')
+                    ]) {
+                        sh """
+                            ./gradlew sonarqube \
+                                -Dsonar.projectKey=${SONARQUBE_BACKEND_NAME} \
+                                -Dsonar.host.url=${SONARQUBE_URL} \
+                                -Dsonar.login=${SONARQUBE_BACKEND_TOKEN}
                         """
                     }
                 }
