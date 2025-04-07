@@ -1,6 +1,5 @@
 package com.finbattle.global.common.config;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +20,6 @@ public class WebClientConfig {
     }
 
     @Bean
-    @Qualifier("fastApiWebClient")
     public WebClient fastApiWebClient() {
         return WebClient.builder()
             .baseUrl(fastapiUrl) // FastAPI 주소
@@ -31,7 +29,6 @@ public class WebClientConfig {
 
 
     @Bean
-    @Qualifier("financeWebClient")
     public WebClient financeWebClient(WebClient.Builder builder) {
         return builder
             .baseUrl(financeapiUrl)
