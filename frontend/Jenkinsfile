@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        sonarQube 'Default'
-    }
-
     environment {
         FRONTEND_BRANCH = 'feature-frontend'
     }
@@ -50,28 +46,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Sonarqube Frontend Static Analyze') {
-            steps {
-                script{
-                    withCredentials([
-                        string(credentialsId: 'SONARQUBE_URL', variable: 'SONARQUBE_URL'),
-                        string(credentialsId: 'SONAR_FRONTEND_NAME', variable: 'SONAR_FRONTEND_NAME'),
-                        string(credentialsId: 'SONAR_FRONTEND_TOKEN', variable: 'SONAR_FRONTEND_TOKEN')
-                    ]) {
-                        dir('frontend') {  
-                            sh """sonar-scanner \
-                                -Dsonar.projectKey=${SONAR_FRONTEND_NAME} \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=${SONARQUBE_URL} \
-                                -Dsonar.login=${SONAR_FRONTEND_TOKEN}
-                            """
-                        }
-                    }
-                }
-            }
-        }
-
 
         stage('Deploy Frontend') {
             steps {
