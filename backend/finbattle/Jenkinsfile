@@ -72,6 +72,25 @@ pipeline {
             }
         }
 
+        stage('Sonarqube') {
+            steps {
+                dir('backend/finbattle') {
+                    withCredentials([
+                        string(credentialsId: 'SONARQUBE_BACKEND_NAME', variable: 'SONARQUBE_BACKEND_NAME'),
+                        string(credentialsId: 'SONARQUBE_URL', variable: 'SONARQUBE_URL'),
+                        string(credentialsId: 'SONARQUBE_BACKEND_TOKEN', variable: 'SONARQUBE_BACKEND_TOKEN')
+                    ]) {
+                        sh """
+                            ./gradlew sonarqube \
+                                -Dsonar.projectKey=${SONARQUBE_BACKEND_NAME} \
+                                -Dsonar.host.url=${SONARQUBE_URL} \
+                                -Dsonar.login=${SONARQUBE_BACKEND_TOKEN}
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Deploy Backend') {
             steps {
                 script {
@@ -106,7 +125,7 @@ pipeline {
 
     post {
         always {
-            sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
+           sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
         }
         success {
             script {

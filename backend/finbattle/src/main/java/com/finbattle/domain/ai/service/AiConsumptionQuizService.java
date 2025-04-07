@@ -108,7 +108,7 @@ public class AiConsumptionQuizService {
         headers.setBearerAuth(openaiApiKey);
         Map<String, Object> message = Map.of("role", "user", "content", prompt);
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-3.5-turbo",
+                "model", "gpt-4o",
                 "messages", List.of(message),
                 "temperature", 0.7
         );
