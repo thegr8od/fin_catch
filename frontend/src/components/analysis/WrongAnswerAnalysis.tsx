@@ -201,9 +201,13 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
   };
 
   const handleProblemSelect = async (problem: Problem) => {
-    setSelectedProblem(problem);
+    setSelectedProblem(null); // 이전 선택된 문제 초기화
     setAnalyzingProblemId(problem.id);
 
+    // 약 1초간 분석 중 표시 - 모든 문제 타입에 적용
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // 소비 퀴즈가 아닌 경우에만 분석 API 호출
     if (selectedCategory !== "consumption") {
       try {
         const result = await analyzeWrongAnswer(problem.id);
@@ -221,15 +225,13 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
           ) {
             const analysisData = analysisResult as AnalysisData;
             
-            setSelectedProblem((prev) => {
-              if (!prev) return null;
-              return {
-                ...prev,
-                analysis: analysisData.analysis,
-                weakPoints: [analysisData.weakness],
-                recommendations: [analysisData.recommendation],
-              };
-            });
+            // 분석 결과로 문제 업데이트
+            problem = {
+              ...problem,
+              analysis: analysisData.analysis,
+              weakPoints: [analysisData.weakness],
+              recommendations: [analysisData.recommendation],
+            };
           }
         }
       } catch (err) {
@@ -237,6 +239,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       }
     }
     
+    // 분석 완료 후 선택된 문제 설정
+    setSelectedProblem(problem);
     setAnalyzingProblemId(null);
   };
 
@@ -297,7 +301,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
           </div>
 
           <div className="bg-gray-50 p-4 rounded-lg">
-            {loading ? (
+            {analyzingProblemId ? (
               <div className="flex items-center justify-center p-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 <span className="ml-2 font-korean-pixel">분석 중...</span>
