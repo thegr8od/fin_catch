@@ -71,6 +71,15 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
     return "비겼습니다.";
   };
 
+  // 획득한 코인 수량 계산
+  const getEarnedCoins = () => {
+    if (playerStatus.state === "victory") {
+      return 300; // 승리 시 300 코인
+    } else {
+      return 100; // 패배 또는 비김 시 100 코인
+    }
+  };
+
   const isGameFinished = gameState.gameStatus === "finished";
   console.log("게임 종료 여부:", isGameFinished, "결과 메시지:", getGameResultMessage());
 
@@ -98,6 +107,10 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
                   <div className="font-semibold">{opponentStatus.name}</div>
                   <div className="text-xl">{opponentStatus.state === "victory" ? "🏆" : opponentStatus.state === "dead" ? "💀" : "🤝"}</div>
                 </div>
+              </div>
+              <div className="mt-4 mb-4 flex items-center justify-center">
+                <img src="/assets/coin.png" alt="코인" className="w-8 h-8 mr-2" />
+                <span className="text-xl font-bold text-yellow-600">× {getEarnedCoins()} 획득!</span>
               </div>
               <div className="mt-6">
                 <button onClick={() => navigate("/main")} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-300">

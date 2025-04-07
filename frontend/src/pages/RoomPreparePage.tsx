@@ -485,7 +485,7 @@ const RoomPreparePage: React.FC = () => {
     <>
       <Background backgroundImage={mainBg}>
         <div className="min-h-screen w-full flex flex-col items-center py-20">
-          <div className="w-full max-w-7xl px-6 flex flex-col flex-grow">
+          <div className="w-full max-w-7xl px-6 flex flex-col flex-grow relative">
             {/* VS 배너 */}
             <div className="relative flex justify-center items-center mb-8">
               <div className="px-8 py-2 bg-gradient-to-r from-red-600 to-blue-600 rounded-full transform -skew-x-12">
@@ -669,7 +669,7 @@ const RoomPreparePage: React.FC = () => {
             {/* 나가기 버튼 */}
             <button
               onClick={handleLeaveRoom}
-              className="absolute top-4 right-4 px-6 py-2 bg-red text-white rounded-full hover:bg-red-500 transition-all transform hover:scale-105"
+              className="absolute top-4 right-4 px-6 py-2 bg-red text-white rounded-full hover:bg-red transition-all transform hover:scale-105"
               disabled={isLoading}
             >
               {leaveLoading ? "처리 중..." : "나가기"}
