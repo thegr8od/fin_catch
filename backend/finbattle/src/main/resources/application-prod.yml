@@ -15,6 +15,7 @@ server:
 app:
   clientUrl: https://j12d108.p.ssafy.io
   baseUrl: https://j12d108.p.ssafy.io
+  fastapiUrl: https://j12d108.p.ssafy.io:8000
 
 logging:
   file:
@@ -28,4 +29,4 @@ logging:
     org.apache.tomcat: WARN  # Tomcat 관련 상세 로그 줄이기
 
   pattern:
-    console:  "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
