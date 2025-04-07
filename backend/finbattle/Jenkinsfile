@@ -1,12 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        SONAR_PROJECT_KEY = credentials('sonarQubeProjectKey')
-        SONAR_HOST_URL = 'http://(serverURL):9006'
-        SONAR_LOGIN = credentials('sonarQubeLogin')
-    }
-
     tools {
         jdk 'JDK17'
     }
@@ -131,7 +125,9 @@ pipeline {
 
     post {
         always {
-            sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
+           node {
+               sh 'rm -f ./backend/finbattle/src/main/resources/application-secret.yml'
+           }
         }
         success {
             script {
