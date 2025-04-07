@@ -2,13 +2,16 @@ package com.finbattle.domain.banking.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finbattle.domain.banking.dto.analysis.FastApiResponseDto;
 import com.finbattle.domain.banking.dto.analysis.KeywordCategoryMapping;
+import com.finbattle.domain.banking.model.AiSpendCategoryEntity;
 import com.finbattle.domain.banking.model.SpendCategory;
 import com.finbattle.domain.banking.model.SpendCategoryEntity;
 import com.finbattle.domain.banking.model.TransactionList;
 import com.finbattle.domain.banking.model.TransactionRecord;
 import com.finbattle.domain.banking.repository.AiCategoryRepository;
 import com.finbattle.domain.banking.repository.CategoryRepository;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +30,7 @@ public class SpendAnalysisService {
 
     private final CategoryRepository categoryRepository;
     private final AiCategoryRepository aiCategoryRepository;
+    private final FastApiClient fastApiClient;
 
     public String analysisSpend(Map<String, TransactionList> transactionLists)
         throws JsonProcessingException {
@@ -117,24 +121,22 @@ public class SpendAnalysisService {
         }
 
         Map<String, SpendCategoryEntity> result = new HashMap<>();
+        // FastAPI 서버에 요청 → 결과 예: { "스타벅스": "카페", "배달의민족": "식비" }
+        List<FastApiResponseDto> resultFromFastApi = fastApiClient.predict(summaries);
+        //fastAPi : 8000
+        List<AiSpendCategoryEntity> entitiesToSave = new ArrayList<>();
 
-//        // FastAPI 서버에 요청 → 결과 예: { "스타벅스": "카페", "배달의민족": "식비" }
-//        Map<String, String> resultFromFastApi = fastApiClient.classifyBulk(summaries);
-//
-//        List<SpendCategoryEntity> entitiesToSave = new ArrayList<>();
-//
-//        for (Map.Entry<String, String> entry : resultFromFastApi.entrySet()) {
-//            String keyword = entry.getKey();
-//            String label = entry.getValue();
-//
-//            SpendCategory categoryEnum = SpendCategory.fromLabel(label); // 한글 → Enum
-//            SpendCategoryEntity entity = new SpendCategoryEntity(keyword, categoryEnum);
-//
-//            result.put(keyword, entity);     // 결과 map 추가
-//            entitiesToSave.add(entity);     // DB 저장용 리스트 추가
-//        }
+        for (FastApiResponseDto entry : resultFromFastApi) {
+            String keyword = entry.store_name();
+            String label = entry.category();
 
-//        aiCategoryRepository.save(entitiesToSave); // DB 저장
+            SpendCategory categoryEnum = SpendCategory.fromLabel(label); // 한글 → Enum
+            AiSpendCategoryEntity entity = new AiSpendCategoryEntity(keyword, categoryEnum);
+            result.put(keyword, new SpendCategoryEntity(keyword, categoryEnum));     // 결과 map 추가
+            entitiesToSave.add(entity);     // DB 저장용 리스트 추가
+        }
+
+        aiCategoryRepository.saveAll(entitiesToSave); // DB 저장
         return result;
     }
 
