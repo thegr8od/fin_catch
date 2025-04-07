@@ -1,45 +1,24 @@
-import { useState } from "react"
+import { useState } from "react";
 
-interface ChatMessage {
-  sender: string
-  message: string
-  timestamp: Date
-  isVisible?: boolean
-}
-
-interface UseChatProps {
-  playerName: string
-}
-
-export const useChat = ({ playerName }: UseChatProps) => {
-  const [chatInput, setChatInput] = useState<string>("")
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [playerBubble, setPlayerBubble] = useState<ChatMessage | null>(null)
+// 간소화된 버전의 useChat 훅
+// 이제 메시지 상태 관리는 GameContext에서 처리
+export const useChat = () => {
+  const [chatInput, setChatInput] = useState<string>("");
 
   const handleChatInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChatInput(e.target.value)
-  }
+    setChatInput(e.target.value);
+  };
 
   const handleChatSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (chatInput.trim() === "") return
-
-    const newMessage: ChatMessage = {
-      sender: playerName,
-      message: chatInput,
-      timestamp: new Date(),
-    }
-
-    setChatMessages([...chatMessages, newMessage])
-    setPlayerBubble(newMessage)
-    setChatInput("")
-  }
+    e.preventDefault();
+    setChatInput("");
+  };
 
   return {
     chatInput,
-    chatMessages,
-    playerBubble,
+    chatMessages: [], // 빈 배열 반환 (GameContext에서 채팅 메시지를 관리)
+    playerBubble: null, // 항상 null 반환
     handleChatInputChange,
     handleChatSubmit,
-  }
-}
+  };
+};
