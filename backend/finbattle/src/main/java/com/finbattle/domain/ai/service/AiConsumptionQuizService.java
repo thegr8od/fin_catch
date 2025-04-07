@@ -98,6 +98,7 @@ public class AiConsumptionQuizService {
             
             위 두 유형이 고루 섞여 총 10개의 서로 다른 문제를 만들어 주세요.
             각 문제는 4개의 보기와 정답(0~3 중 인덱스)을 포함한 JSON 배열 형식으로 응답해 주세요.
+            "JSON 포맷만 출력해주세요. ```json 없이 순수한 JSON만 반환해주세요."
             """);
         return sb.toString();
     }
