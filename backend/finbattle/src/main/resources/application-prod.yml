@@ -15,7 +15,7 @@ server:
 app:
   clientUrl: https://j12d108.p.ssafy.io
   baseUrl: https://j12d108.p.ssafy.io
-  fastapiUrl: https://j12d108.p.ssafy.io:8000
+  fastapiUrl: http://classifier
 
 logging:
   file:
