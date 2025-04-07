@@ -3,25 +3,13 @@ import { CharacterAnimationProps } from "./types/character";
 import { useCharacterAnimation } from "../../hooks/useCharacterAnimation";
 import { CharacterType } from "./constants/animations";
 
-
 interface ExtendedCharacterAnimationProps extends CharacterAnimationProps {
   characterType?: CharacterType;
   isPlaying?: boolean;
   size?: "small" | "large";
 }
 
-const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({
-  state,
-  direction = true,
-  scale = 2,
-  className = "",
-  onAnimationComplete,
-  characterType,
-  size = "small",
-  loop = true,
-}) => {
-  
-
+const CharacterAnimation: React.FC<ExtendedCharacterAnimationProps> = ({ state, direction = true, scale = 2, className = "", onAnimationComplete, characterType, size = "small", loop = true }) => {
   const { containerRef, isReady } = useCharacterAnimation({
     state,
     direction,

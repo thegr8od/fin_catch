@@ -69,7 +69,6 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
 
-    console.log(`진행률 업데이트: ${newProgress}%`);
     setProgressState(newProgress);
 
     // 진행률이 100%에 도달하면 로딩 상태 해제

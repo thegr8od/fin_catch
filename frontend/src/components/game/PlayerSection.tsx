@@ -24,6 +24,12 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
 
   const [showBubble, setShowBubble] = useState(false);
 
+  // 상태에 따라 루프 여부 결정
+  // idle, victory는 루프, damage, attack, dead는 한 번만 재생
+  const shouldStateLoop = characterState === "idle" || characterState === "victory" ? shouldLoop : false;
+
+  console.log(`PlayerSection - ${name} - 상태: ${characterState}, 루프: ${shouldStateLoop}`);
+
   useEffect(() => {
     if (bubble) {
       setShowBubble(true);
@@ -75,9 +81,7 @@ const PlayerSection = React.memo(({ characterType, characterState, direction, na
             state={characterState}
             direction={direction}
             size={size}
-            loop={(() => {
-              return shouldLoop;
-            })()}
+            loop={shouldStateLoop}
             onAnimationComplete={() => onAnimationComplete(characterState)}
           />
         </div>

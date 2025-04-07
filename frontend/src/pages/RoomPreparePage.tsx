@@ -257,10 +257,11 @@ const RoomPreparePage: React.FC = () => {
             }
             // 게임 시작
             if (roomRef.current?.subjectType) {
-              navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}`, {
+              navigate(`/one-to-one/${roomRef.current.subjectType.toLowerCase()}/${roomId}`, {
                 state: {
                   host: redisRoom?.host,
                   players: members,
+                  roomId: roomId,
                 },
               });
             }
