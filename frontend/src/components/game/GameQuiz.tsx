@@ -107,7 +107,7 @@ const GameQuiz = ({
                     <button
                       type="button"
                       onClick={() => onOptionSelect(0)}
-                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 border-r border-purple-200 pl-5 text-left hover:bg-purple-100 hover:bg-opacity-60 transition-colors ${
+                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 border-r border-purple-200 pl-5 text-left hover:bg-purple-100 hover:bg-opacity-60 transition-colors cursor-pointer ${
                         selectedOption === 0 ? "bg-purple-200 bg-opacity-70 font-semibold" : ""
                       }`}
                       disabled={isTimeUp}
@@ -117,7 +117,7 @@ const GameQuiz = ({
                     <button
                       type="button"
                       onClick={() => onOptionSelect(1)}
-                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 pl-5 text-left hover:bg-purple-100 hover:bg-opacity-60 transition-colors ${
+                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 pl-5 text-left hover:bg-purple-100 hover:bg-opacity-60 transition-colors cursor-pointer ${
                         selectedOption === 1 ? "bg-purple-200 bg-opacity-70 font-semibold" : ""
                       }`}
                       disabled={isTimeUp}
@@ -129,7 +129,7 @@ const GameQuiz = ({
                     <button
                       type="button"
                       onClick={() => onOptionSelect(2)}
-                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 border-r border-purple-200 pl-5 text-left hover:bg-purple-100 transition-colors ${
+                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 border-r border-purple-200 pl-5 text-left hover:bg-purple-100 transition-colors cursor-pointer ${
                         selectedOption === 2 ? "bg-purple-200 font-semibold" : ""
                       }`}
                       disabled={isTimeUp}
@@ -139,7 +139,7 @@ const GameQuiz = ({
                     <button
                       type="button"
                       onClick={() => onOptionSelect(3)}
-                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 pl-5 text-left hover:bg-purple-100 transition-colors ${
+                      className={`w-1/2 h-full flex items-center font-medium text-[1.3rem] text-gray-700 pl-5 text-left hover:bg-purple-100 transition-colors cursor-pointer ${
                         selectedOption === 3 ? "bg-purple-200 font-semibold" : ""
                       }`}
                       disabled={isTimeUp}
