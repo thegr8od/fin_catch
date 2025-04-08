@@ -15,7 +15,7 @@ const BattleStatus = ({ timer, question, quizType }: BattleStatusProps) => {
         <div className="text-4xl font-bold text-white mr-4" style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
           VS
         </div>
-        <div className={`text-4xl font-bold ${timer <= 10 ? "text-red-500" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
+        <div className={`text-4xl font-bold ${timer <= 10 ? "text-red" : "text-white"}`} style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>
           {timer}
         </div>
       </div>
