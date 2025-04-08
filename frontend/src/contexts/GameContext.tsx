@@ -5,11 +5,6 @@ import { GameState } from "../components/game/types/game";
 import { CharacterType } from "../components/game/constants/animations";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { useWebSocket } from "../hooks/useWebSocket";
-// 게임 관련 타입들은 현재 직접 정의하여 사용 중입니다.
-// 필요시 아래 타입들을 활용할 수 있습니다.
-// import { EventType } from "../types/game/eventType";
-// import { GameContextState, GameEventData, HintData } from "../types/game/gameTypes";
-// import { AnswerRequest } from "../types/game/answerRequest";
 
 // 퀴즈 옵션 인터페이스
 interface QuizOption {
@@ -352,7 +347,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
               ...prev,
               gameStatus: "playing" as const,
               currentQuestion: questionText,
-              remainingTime: payload.data.timer || 10,
+              remainingTime: 20,
             };
             return newState;
           });
@@ -402,7 +397,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
               ...prev,
               gameStatus: "playing" as const,
               currentQuestion: questionText,
-              remainingTime: payload.data.timer || 30,
+              remainingTime: 40,
             };
             return newState;
           });
@@ -535,7 +530,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
               ...prev,
               gameStatus: "playing" as const,
               currentQuestion: questionText,
-              remainingTime: payload.data.timer || 20,
+              remainingTime: 20,
             };
             return newState;
           });

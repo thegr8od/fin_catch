@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlayerSection from "./PlayerSection";
 import BattleStatus from "./BattleStatus";
@@ -22,26 +22,8 @@ interface BattleScreenProps {
 
 const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAnswerSubmit }) => {
   const [chatInput, setChatInput] = useState("");
-  const { chatMessages, quizOptions, gameState, quizType } = useGame();
+  const { chatMessages, gameState, quizType } = useGame();
   const navigate = useNavigate();
-
-  // 디버깅용 로그 추가
-  useEffect(() => {
-    console.log("BattleScreen - 타이머 변경:", timer);
-    console.log("BattleScreen - 문제 변경:", questionText);
-    console.log("BattleScreen - 게임 상태:", gameState.gameStatus);
-    console.log("BattleScreen - 퀴즈 타입:", quizType);
-  }, [timer, questionText, gameState.gameStatus, quizType]);
-
-  // 퀴즈 옵션 변경 감지
-  useEffect(() => {
-    console.log("BattleScreen - 퀴즈 옵션 변경:", quizOptions);
-  }, [quizOptions]);
-
-  // 문제와 타이머 상태 로그 - 컴포넌트 렌더링마다
-  console.log("BattleScreen render - 문제:", questionText);
-  console.log("BattleScreen render - 타이머:", timer);
-  console.log("BattleStatus props:", { timer, question: questionText });
 
   // 폼 제출 핸들러
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
