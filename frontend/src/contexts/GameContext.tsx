@@ -76,6 +76,7 @@ interface GameContextType {
   chatMessages: Array<{ sender: string; message: string; timestamp: Date }>;
   sendChatMessage: (message: string, sender: string) => boolean;
   setChatMessages: React.Dispatch<React.SetStateAction<Array<{ sender: string; message: string; timestamp: Date }>>>;
+  isAnswerBlocked: boolean;
 }
 
 // 게임 프로바이더 Props 인터페이스
@@ -120,6 +121,7 @@ const GameContext = createContext<GameContextType>({
   chatMessages: [],
   sendChatMessage: () => false,
   setChatMessages: () => {},
+  isAnswerBlocked: false,
 });
 
 // 게임 컨텍스트 훅
@@ -150,6 +152,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
   const [firstHint, setFirstHint] = useState<Hint | null>(null);
   const [secondHint, setSecondHint] = useState<Hint | null>(null);
   const [quizType, setQuizType] = useState<string | null>(null);
+
+  // 답변 차단 상태 관리
+  const [isAnswerBlocked, setIsAnswerBlocked] = useState(false);
+  const answerBlockTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 컴포넌트 마운트 시 roomId 설정 확인
   useEffect(() => {
@@ -261,6 +267,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         return false;
       }
 
+      // 답변 차단 상태일 때는 제출 불가
+      if (isAnswerBlocked) {
+        return false;
+      }
+
       const trimmedMessage = message.trim();
       const messageData: ChatMessage = {
         content: trimmedMessage,
@@ -273,7 +284,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       send(`/app/game/${roomId}/checkAnswer`, messageData);
       return true;
     },
-    [currentQuizId, roomId, playerStatus.id, send]
+    [currentQuizId, roomId, playerStatus.id, send, isAnswerBlocked]
   );
 
   // WebSocket 메시지 핸들러 (useRef로 안정적인 참조 생성)
@@ -302,7 +313,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
               // data가 일반 문자열인 경우 파싱 오류는 무시
             }
           }
-        } catch (parseError) {
+        } catch {
           return;
         }
 
@@ -483,6 +494,22 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
               setPlayerStatus((prev) => ({ ...prev, state: "damage" }));
             }
           }
+
+          // 오답 처리 - 2초 동안 답변 차단
+          if (result === "오답입니다" && sender === playerStatus.name) {
+            // 이전 타이머가 있으면 취소
+            if (answerBlockTimerRef.current) {
+              clearTimeout(answerBlockTimerRef.current);
+            }
+
+            // 답변 차단 상태로 설정
+            setIsAnswerBlocked(true);
+
+            // 2초 후에 차단 해제
+            answerBlockTimerRef.current = setTimeout(() => {
+              setIsAnswerBlocked(false);
+            }, 2000);
+          }
         }
 
         // SHORT_QUIZ 이벤트 처리
@@ -615,7 +642,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
             setOpponentStatus((prev) => ({ ...prev, state: "victory" }));
           }
         }
-      } catch (error) {
+      } catch {
         // 오류 처리
       }
     };
@@ -675,7 +702,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
         if (handleMessageRef.current) {
           handleMessageRef.current(message);
         }
-      } catch (error) {
+      } catch {
         // 오류 처리
       }
     };
@@ -743,6 +770,15 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
     [connected, roomId, playerStatus.id, send, lastMessageTime]
   );
 
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (answerBlockTimerRef.current) {
+        clearTimeout(answerBlockTimerRef.current);
+      }
+    };
+  }, []);
+
   // 컨텍스트 값
   const value = useMemo(
     () => ({
@@ -760,6 +796,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       handleAttack,
       handleAnswerSubmit,
       setChatMessages,
+      isAnswerBlocked,
     }),
     [
       gameState,
@@ -776,6 +813,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
       handleAttack,
       handleAnswerSubmit,
       setChatMessages,
+      isAnswerBlocked,
     ]
   );
 

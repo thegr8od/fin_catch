@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Background from "../components/layout/Background";
 import oneVsOneImg from "../assets/shin_chang_seop_boxing.gif";
@@ -94,11 +94,20 @@ const RoomPreparePage: React.FC = () => {
   const [isPullupDisabled, setIsPullupDisabled] = useState(false);
   // room 값을 참조할 ref 추가
   const roomRef = React.useRef<Room | null>(null);
+  // 채팅 컨테이너에 대한 ref 추가
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // room 상태가 업데이트될 때마다 ref 업데이트
   useEffect(() => {
     roomRef.current = room;
   }, [room]);
+
+  // 채팅 메시지가 변경될 때마다 스크롤을 맨 아래로 이동
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
   useEffect(() => {
     if (pullupTimer >= 1) {
@@ -541,7 +550,7 @@ const RoomPreparePage: React.FC = () => {
                 {/* 채팅창 */}
                 <div className="flex-1 bg-black/30 backdrop-blur-sm rounded-3xl p-4 border border-white/10">
                   <div className="flex flex-col h-full">
-                    <div className="flex-1 overflow-y-auto mb-4 rounded-2xl bg-black/20 p-4 max-h-[300px]">
+                    <div ref={chatContainerRef} className="flex-1 overflow-y-auto mb-4 rounded-2xl bg-black/20 p-4 max-h-[300px]">
                       {chatMessages.length === 0 ? (
                         <div className="text-white/50 text-center py-8">
                           <p className="text-lg">채팅을 입력하세요...</p>
@@ -667,11 +676,7 @@ const RoomPreparePage: React.FC = () => {
             </div>
 
             {/* 나가기 버튼 */}
-            <button
-              onClick={handleLeaveRoom}
-              className="absolute top-4 right-4 px-6 py-2 bg-red text-white rounded-full hover:bg-red transition-all transform hover:scale-105"
-              disabled={isLoading}
-            >
+            <button onClick={handleLeaveRoom} className="absolute top-4 right-4 px-6 py-2 bg-red text-white rounded-full hover:bg-red transition-all transform hover:scale-105" disabled={isLoading}>
               {leaveLoading ? "처리 중..." : "나가기"}
             </button>
           </div>
