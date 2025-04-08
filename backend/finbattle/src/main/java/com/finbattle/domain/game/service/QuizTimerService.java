@@ -338,7 +338,7 @@ public class QuizTimerService {
             case SHORT_ANSWER:
                 return 20;
             case MULTIPLE_CHOICE:
-                return 10;
+                return 20;
             case ESSAY:
                 return 40;
             default:
