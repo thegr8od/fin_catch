@@ -54,27 +54,53 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
 
         <div className="p-6 mt-16 h-[calc(100%-4rem)] overflow-y-auto">
           {/* 애니메이션 미리보기 */}
-          <div className="mb-6 flex flex-col items-center">
-            <div ref={containerRef} className="w-[150px] h-[150px] relative">
-              {!isReady && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="mb-6 flex justify-between items-start bg-gray-50 p-6 rounded-xl">
+            <div className="flex flex-col items-center">
+              <div ref={containerRef} className="w-[200px] h-[200px] relative">
+                {!isReady && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              {/* 모션 버튼들 */}
+              <div className="flex gap-2 mt-4">
+                {motionButtons.map((button) => (
+                  <button
+                    key={button.state}
+                    onClick={() => setCurrentAnimation(button.state)}
+                    className={`px-3 py-1 rounded font-korean-pixel text-sm transition-colors ${
+                      currentAnimation === button.state ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 선택된 캐릭터 정보 */}
+            <div className="flex-1 ml-8 p-4">
+              {selectedCharacter ? (
+                <div className="space-y-4">
+                  <h3 className="font-korean-pixel text-2xl font-bold text-gray-800">{selectedCharacter.catName}</h3>
+                  <p className="text-lg text-gray-600 font-korean-pixel">{selectedCharacter.description}</p>
+                  <p className="text-md text-gray-500 font-korean-pixel">등급: {selectedCharacter.grade}</p>
+                  {selectedCharacter.catName === mainCat && <span className="inline-block mt-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-md font-korean-pixel">현재 대표 캐릭터</span>}
+                  {selectedCharacter.catName !== mainCat && (
+                    <button
+                      onClick={onSetMainCharacter}
+                      className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300 w-full"
+                    >
+                      대표 캐릭터로 설정
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500 font-korean-pixel">캐릭터를 선택해주세요</p>
                 </div>
               )}
-            </div>
-            {/* 모션 버튼들 */}
-            <div className="flex gap-2 mt-4">
-              {motionButtons.map((button) => (
-                <button
-                  key={button.state}
-                  onClick={() => setCurrentAnimation(button.state)}
-                  className={`px-3 py-1 rounded font-korean-pixel text-sm transition-colors ${
-                    currentAnimation === button.state ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {button.label}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -99,17 +125,6 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
               </div>
             ))}
           </div>
-
-          {selectedCharacter && selectedCharacter.catName !== mainCat && (
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={onSetMainCharacter}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300"
-              >
-                대표 캐릭터로 설정
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
