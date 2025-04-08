@@ -145,7 +145,19 @@ finbattle/
 ```
 
 2. AI
-
+```
+ai/
+├── app/
+│   ├── models/
+│   │   ├── best_booster.model
+│   │   ├── category_mapping.joblib
+│   │   ├── final_vectorizer.joblib
+│   │   ├── label_encoder.joblib
+│   │   ├── vectorizer.joblib
+│   ├── __init__.py
+│   ├── main.py
+├── requirements.txt
+```
 
 ### 🏗️ 아키텍처
 ![아키텍처 다이어그램](docs/아키텍처.png)
