@@ -18,7 +18,7 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
   const [selectError, setSelectError] = useState<string | null>(null);
 
   const changeAccountApi = useApi<string, { accountNo: string }>("/api/finance/account/change", "PATCH");
-
+  const pullUpAccountApi = useApi<Account[]>("/api/finance/account/all", "PATCH");
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
@@ -26,6 +26,25 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
       fetchAllAccount().finally(() => setLoading(false));
     }
   }, [isOpen]);
+
+  const handlePullUp = async () => {
+    setSelectLoading(true);
+    setSelectError(null);
+    try {
+      const response = await pullUpAccountApi.execute();
+      if (response?.isSuccess) {
+        // 계좌 목록 새로고침
+        await fetchAllAccount();
+      } else {
+        throw new Error("계좌 동기화에 실패했습니다.");
+      }
+    } catch (error) {
+      setSelectError("계좌 동기화에 실패했습니다.");
+      console.error("계좌 동기화 에러:", error);
+    } finally {
+      setSelectLoading(false);
+    }
+  };
 
   const handleAccountSelect = async (account: Account) => {
     setSelectLoading(true);
@@ -62,8 +81,18 @@ const AccountLinkModal: React.FC<AccountLinkModalProps> = ({ isOpen, onClose, on
       <div className="bg-white/95 rounded-2xl shadow-2xl w-[800px] h-[600px] relative" onClick={(e) => e.stopPropagation()}>
         {/* 제목 부분 */}
         <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-form-color to-button-color py-5 rounded-t-2xl text-center shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 font-korean-pixel">주 거래 통장 선택</h2>
-
+          <div className="flex items-center justify-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-800 font-korean-pixel">주 거래 통장 선택</h2>
+            <button onClick={handlePullUp} className="p-2 rounded-full hover:bg-white/10 transition-colors duration-200" title="계좌 목록 새로고침">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
           {/* 닫기 버튼 */}
           <button className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-700 hover:text-gray-900 transition-colors duration-200" onClick={onClose}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
