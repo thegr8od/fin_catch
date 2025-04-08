@@ -116,10 +116,10 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
                 <div className="flex flex-col items-center">
                   <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-24 h-24" style={{ imageRendering: "pixelated" }} />
                   <div className="mt-4 text-center">
-                    <h3 className="font-korean-pixel text-lg font-bold text-gray-800">{character.catName}</h3>
+                    {/* <h3 className="font-korean-pixel text-lg font-bold text-gray-800">{character.catName}</h3>
                     <p className="text-sm text-gray-600 mt-1">{character.description}</p>
                     <p className="text-xs text-gray-500 mt-1">{character.grade}</p>
-                    {character.catName === mainCat && <span className="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-korean-pixel">현재 대표 캐릭터</span>}
+                    {character.catName === mainCat && <span className="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-korean-pixel">현재 대표 캐릭터</span>} */}
                   </div>
                 </div>
               </div>

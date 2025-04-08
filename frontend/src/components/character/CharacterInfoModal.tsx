@@ -19,7 +19,7 @@ const CharacterInfoModal: React.FC<CharacterInfoModalProps> = ({ character, onCl
           </button>
         </div>
 
-        <div className="space-y-6">
+        {/* <div className="space-y-6">
           <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-6">
             <div className="space-y-4">
               <div className="bg-white/50 rounded-lg p-4">
@@ -32,7 +32,7 @@ const CharacterInfoModal: React.FC<CharacterInfoModalProps> = ({ character, onCl
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
