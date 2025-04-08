@@ -340,7 +340,7 @@ public class GameService {
             } else {
                 if (m1.getCreatedAt().isAfter(m2.getCreatedAt())) {
                     for (GameMemberStatus m : memberList) {
-                        if (m.getMemberId() == m2.getMemberId()) {
+                        if (m.getMemberId() == m1.getMemberId()) {
                             attackedMemberId = m.getMemberId();
                             m.setLife(Math.max(0, m.getLife() - 1));
                             break;
@@ -348,7 +348,7 @@ public class GameService {
                     }
                 } else {
                     for (GameMemberStatus m : memberList) {
-                        if (m.getMemberId() == m1.getMemberId()) {
+                        if (m.getMemberId() == m2.getMemberId()) {
                             attackedMemberId = m.getMemberId();
                             m.setLife(Math.max(0, m.getLife() - 1));
                             break;
