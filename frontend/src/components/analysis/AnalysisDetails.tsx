@@ -5,7 +5,7 @@ import AnalysisCharts from './AnalysisCharts';
 interface AnalysisDetailsProps {
   problem: Problem;
   loading: boolean;
-  error: boolean;  // 명확한 boolean 타입으로 정의
+  error: boolean;
 }
 
 const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, error }) => {
@@ -41,26 +41,6 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
       <div className="mt-6">
         <h5 className="font-korean-pixel text-gray-800 mb-2">📊 분석 내용</h5>
         <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{problem.analysis}</p>
-      </div>
-      <div>
-        <h5 className="font-korean-pixel text-gray-800 mb-2">💡 취약점</h5>
-        <ul className="list-disc pl-5 space-y-1">
-          {problem.weakPoints.map((point, index) => (
-            <li key={index} className="font-korean-pixel text-gray-600">
-              {point}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h5 className="font-korean-pixel text-gray-800 mb-2">✨ 추천 학습</h5>
-        <ul className="list-disc pl-5 space-y-1">
-          {problem.recommendations.map((rec, index) => (
-            <li key={index} className="font-korean-pixel text-gray-600">
-              {rec}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
