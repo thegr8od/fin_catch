@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAnalyze } from "../../hooks/useAnalyze";
+import { useConsumptionAnalyze } from "../../hooks/useConsumptionAnalyze";
 import { Problem, Category, AnalysisProps } from "../../types/analysis/Problem";
 import { useApi } from "../../hooks/useApi";
 import CategoryButtons from "../common/CategoryButtons";
@@ -41,9 +42,15 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
   const itemsPerPage = 7;
   
   // 훅 사용
-  const { analyzeWrongAnswer, loading, error } = useAnalyze();
-  const { loading: consumptionLoading, execute: fetchConsumptionWrong } = useApi<ApiResponse>("/api/ai/consumption/wrong", "GET");
-  const { loading: regularLoading, execute: fetchRegularWrong } = useApi<ApiResponse>("/api/ai/analysis/regular/wrong", "GET");
+  const { analyzeWrongAnswer, loading: regularLoading, error: regularError } = useAnalyze();
+  const { analyzeConsumptionWrongAnswer, loading: consumptionLoading, error: consumptionError } = useConsumptionAnalyze();
+  
+  const { loading: apiConsumptionLoading, execute: fetchConsumptionWrong } = useApi<ApiResponse>("/api/ai/consumption/wrong", "GET");
+  const { loading: apiRegularLoading, execute: fetchRegularWrong } = useApi<ApiResponse>("/api/ai/analysis/regular/wrong", "GET");
+
+  // 현재 분석 로딩 상태 및 에러 계산
+  const loading = regularLoading || consumptionLoading;
+  const error = regularError || consumptionError;
 
   // 오답을 그룹화하는 함수
   const groupAnswersByQuiz = useCallback((answers: WrongAnswer[], isRegular = false): Problem[] => {
@@ -93,8 +100,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       analysis: isRegular 
         ? `주제: ${item.quizSubject}, 정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`
         : `정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`,
-      weakPoints: [isRegular ? "일반 퀴즈에서 오답 발생" : "AI 소비 퀴즈에서 오답 발생"],
-      recommendations: [isRegular ? "관련 금융 개념 학습하기" : "소비 패턴 복습하기", "관련 금융 개념 학습하기"],
+      weakPoints: [],
+      recommendations: [],
       attemptHistory: item.attempts.map((attempt) => ({
         date: attempt.createdAt.substring(0, 10),
         isCorrect: false
@@ -207,36 +214,40 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     // 약 1초간 분석 중 표시 - 모든 문제 타입에 적용
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // 소비 퀴즈가 아닌 경우에만 분석 API 호출
-    if (selectedCategory !== "consumption") {
-      try {
-        const result = await analyzeWrongAnswer(problem.id);
-        if (result?.isSuccess && result.result) {
-          // 타입 안전하게 처리: unknown으로 변환 후 타입 가드 사용
-          const analysisResult = result.result as unknown;
-          
-          // 타입 가드로 필수 필드 확인
-          if (
-            analysisResult && 
-            typeof analysisResult === 'object' && 
-            'analysis' in analysisResult && 
-            'weakness' in analysisResult && 
-            'recommendation' in analysisResult
-          ) {
-            const analysisData = analysisResult as AnalysisData;
-            
-            // 분석 결과로 문제 업데이트
-            problem = {
-              ...problem,
-              analysis: analysisData.analysis,
-              weakPoints: [analysisData.weakness],
-              recommendations: [analysisData.recommendation],
-            };
-          }
-        }
-      } catch (err) {
-        console.error("분석 오류:", err);
+    try {
+      let result;
+      // 카테고리에 따라 다른 분석 API 호출
+      if (selectedCategory === "consumption") {
+        result = await analyzeConsumptionWrongAnswer(problem.id);
+      } else {
+        result = await analyzeWrongAnswer(problem.id);
       }
+      
+      if (result?.isSuccess && result.result) {
+        // 타입 안전하게 처리: unknown으로 변환 후 타입 가드 사용
+        const analysisResult = result.result as unknown;
+        
+        // 타입 가드로 필수 필드 확인
+        if (
+          analysisResult && 
+          typeof analysisResult === 'object' && 
+          'analysis' in analysisResult && 
+          'weakness' in analysisResult && 
+          'recommendation' in analysisResult
+        ) {
+          const analysisData = analysisResult as AnalysisData;
+          
+          // 분석 결과로 문제 업데이트
+          problem = {
+            ...problem,
+            analysis: analysisData.analysis,
+            weakPoints: [analysisData.weakness],
+            recommendations: [analysisData.recommendation],
+          };
+        }
+      }
+    } catch (err) {
+      console.error("분석 오류:", err);
     }
     
     // 분석 완료 후 선택된 문제 설정
@@ -261,8 +272,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
   );
 
   // 로딩 상태 확인
-  const isLoading = (consumptionLoading && selectedCategory === "consumption") || 
-                   (regularLoading && selectedCategory === "regular");
+  const isLoading = apiConsumptionLoading || apiRegularLoading;
   
   // 데이터 존재 여부 확인
   const hasData = currentCategory?.problems && currentCategory.problems.length > 0;
