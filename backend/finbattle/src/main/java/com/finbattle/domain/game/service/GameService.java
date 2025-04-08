@@ -18,6 +18,7 @@ import com.finbattle.domain.quiz.model.QuizMode;
 import com.finbattle.domain.quiz.repository.QuizLogRepository;
 import com.finbattle.domain.room.dto.RoomStatus;
 import com.finbattle.domain.room.model.Room;
+import com.finbattle.domain.room.repository.RedisRoomRepository;
 import com.finbattle.domain.room.repository.RoomRepository;
 import com.finbattle.global.common.redis.RedisPublisher;
 import java.time.Duration;
@@ -49,6 +50,7 @@ public class GameService {
 
     private final Map<Long, LocalDateTime> lastAnswerMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(100);
+    private final RedisRoomRepository redisRoomRepository;
 
     public void startAutoGame(Long roomId) {
         if (!canStartGame(roomId)) {
@@ -416,6 +418,7 @@ public class GameService {
             }
         }
         redisGameRepository.deleteById(roomId);
+        redisRoomRepository.deleteById(roomId);
         Room room = roomRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
         room.setStatus(RoomStatus.CLOSED);
