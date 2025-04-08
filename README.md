@@ -12,9 +12,9 @@
 
 금융 배틀을 통해 포인트를 얻고 다양한 고양이를 획득하세요!
 
-<a link="http://j12d108.p.ssafy.io">Fin catch 이용하기</a>
+[Fin catch 이용하기](http://j12d108.p.ssafy.io)
 
-<a link="https://apricot-bunny-1cb.notion.site/FinCatch-1a4faf2ac15080329d55f99fe2cb0490?pvs=74">노션 바로가기</a>
+[노션 바로가기](https://apricot-bunny-1cb.notion.site/FinCatch-1a4faf2ac15080329d55f99fe2cb0490?pvs=74)
 
 </div>
 
@@ -114,12 +114,41 @@ src/
 
 ### 🖥️ 백엔드
 1. Spring Boot
+```
+finbattle/
+├── domain/                   # 도메인 기반 비즈니스 로직 모음
+│   ├── ai/                   # AI 추천, 분석 기능
+│   ├── banking/              # 금융/거래 처리 로직
+│   ├── cat/                  # 고양이 정보 관리 및 연결
+│   ├── chat/                 # 채팅 기능
+│   ├── game/                 # 게임 기능 처리
+│   ├── member/               # 회원 정보 및 인증 관리
+│   ├── oauth/                # OAuth 인증 처리
+│   ├── quiz/                 # 퀴즈 기능
+│   ├── room/                 # 채팅방/게임방 관리
+│   └── token/                # JWT/AccessToken 관련 처리
+│
+├── global/
+│   └── common/               # 전역 공통 모듈
+│       ├── config/           # 애플리케이션 설정 (WebMvc, Security 등)
+│       ├── exception/        # 전역 예외 처리
+│       ├── filter/           # 인증 필터 등 서블릿 필터
+│       ├── handler/          # 인증 실패, 예외 핸들러
+│       ├── metrics/          # Prometheus, Grafana 메트릭 연동
+│       ├── model/            # 공통 모델 및 DTO
+│       ├── redis/            # Redis 캐싱, 저장소
+│       ├── service/          # 공용 서비스 계층
+│       └── Util/             # 유틸 클래스 모음 (DateUtil, StringUtil 등)
+│
+└── FinbattleApplication.java # 스프링부트 메인 실행 클래스
+
+```
 
 2. AI
 
 
 ### 🏗️ 아키텍처
-![아키텍처 다이어그램]()
+![아키텍처 다이어그램](docs/아키텍처.png)
 
 ### 📚 ERD
 ![ERD 다이어그램]()
