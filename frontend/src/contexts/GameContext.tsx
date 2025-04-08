@@ -482,11 +482,13 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           if (result === "정답입니다" || score !== undefined) {
             // 메시지를 보낸 사람이 자신일 경우
             if (sender === playerStatus.name) {
-              setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
-              setOpponentStatus((prev) => ({ ...prev, state: "damage" }));
+              // setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
+              // setOpponentStatus((prev) => ({ ...prev, state: "damage" }));
+              setIsAnswerBlocked(false);
             } else {
-              setOpponentStatus((prev) => ({ ...prev, state: "attack" }));
-              setPlayerStatus((prev) => ({ ...prev, state: "damage" }));
+              // setOpponentStatus((prev) => ({ ...prev, state: "attack" }));
+              // setPlayerStatus((prev) => ({ ...prev, state: "damage" }));
+              setIsAnswerBlocked(false);
             }
           }
 
