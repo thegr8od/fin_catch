@@ -16,6 +16,7 @@ const SpendingAnalysis: React.FC<SpendingAnalysisProps> = ({ className = "" }) =
     year: new Date().getFullYear().toString(),
     month: (new Date().getMonth() + 1).toString().padStart(2, "0"),
   });
+  const [showType, setShowType] = useState<"expense" | "income">("expense");
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat("ko-KR").format(amount);
@@ -100,62 +101,63 @@ const SpendingAnalysis: React.FC<SpendingAnalysisProps> = ({ className = "" }) =
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className={`bg-white rounded-2xl p-6 ${className}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비패턴 분석</h3>
-          {renderDateSelector()}
-        </div>
-        <div className="flex justify-center items-center h-[300px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
-        </div>
-      </div>
-    );
-  }
+  // 총 지출액과 수입액 계산
+  const { totalExpense, totalIncome, expenseCategories, incomeCategories } = React.useMemo(() => {
+    if (!data) return { totalExpense: 0, totalIncome: 0, expenseCategories: [], incomeCategories: [] };
 
-  if (error) {
-    return (
-      <div className={`bg-white rounded-2xl p-6 ${className}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비패턴 분석</h3>
-          {renderDateSelector()}
-        </div>
-        <div className="flex justify-center items-center h-[300px] text-gray-500 font-korean-pixel">{error}</div>
-      </div>
-    );
-  }
+    const expenses: [SpendingCategory, number][] = [];
+    const incomes: [SpendingCategory, number][] = [];
+    let totalExp = 0;
+    let totalInc = 0;
 
-  // 총 지출액 계산
-  const totalAmount = Object.values(data || {}).reduce((sum, amount) => sum + (amount || 0), 0);
+    Object.entries(data).forEach(([category, amount]) => {
+      if (!amount || amount === 0) return;
 
-  // 카테고리별 데이터 준비
-  const categories = Object.entries(data || {}).filter(([_, amount]) => amount && amount > 0) as [SpendingCategory, number][];
+      if (category === "INCOME") {
+        totalInc += amount;
+        incomes.push([category as SpendingCategory, amount]);
+      } else {
+        totalExp += amount;
+        expenses.push([category as SpendingCategory, amount]);
+      }
+    });
+
+    return {
+      totalExpense: totalExp,
+      totalIncome: totalInc,
+      expenseCategories: expenses,
+      incomeCategories: incomes,
+    };
+  }, [data]);
+
+  // 현재 선택된 타입에 따른 데이터
+  const currentTotal = showType === "expense" ? totalExpense : totalIncome;
+  const currentCategories = showType === "expense" ? expenseCategories : incomeCategories;
 
   // 분석할 데이터가 없는 경우
-  if (!data || categories.length === 0 || totalAmount === 0) {
+  if (!data || (totalExpense === 0 && totalIncome === 0)) {
     return (
       <div className={`bg-white rounded-2xl p-6 ${className}`}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비패턴 분석</h3>
+          <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비/수입 분석</h3>
           {renderDateSelector()}
         </div>
         <div className="flex flex-col items-center justify-center h-[300px] text-gray-500 font-korean-pixel">
           <p>
             선택하신 {analysisFilter.year}년 {parseInt(analysisFilter.month)}월에는
           </p>
-          <p>분석할 소비 내역이 없어요 😅</p>
+          <p>분석할 내역이 없어요 😅</p>
         </div>
       </div>
     );
   }
 
   const pieChartData = {
-    labels: categories.map(([category]) => CATEGORY_NAMES[category]),
+    labels: currentCategories.map(([category]) => CATEGORY_NAMES[category] || "수입"),
     datasets: [
       {
-        data: categories.map(([_, amount]) => amount),
-        backgroundColor: categories.map(([category]) => CATEGORY_COLORS[category]),
+        data: currentCategories.map(([_, amount]) => amount),
+        backgroundColor: currentCategories.map(([category]) => CATEGORY_COLORS[category] || "#34D399"),
         borderColor: "white",
         borderWidth: 2,
       },
@@ -171,7 +173,7 @@ const SpendingAnalysis: React.FC<SpendingAnalysisProps> = ({ className = "" }) =
         callbacks: {
           label: (context: any) => {
             const value = context.raw;
-            const percentage = ((value / totalAmount) * 100).toFixed(1);
+            const percentage = ((value / currentTotal) * 100).toFixed(1);
             return `${context.label}: ${formatAmount(value)}원 (${percentage}%)`;
           },
         },
@@ -185,8 +187,24 @@ const SpendingAnalysis: React.FC<SpendingAnalysisProps> = ({ className = "" }) =
   return (
     <div className={`bg-white rounded-2xl p-6 ${className}`}>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비패턴 분석</h3>
+        <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 소비/수입 분석</h3>
         {renderDateSelector()}
+      </div>
+
+      {/* 타입 선택 버튼 */}
+      <div className="flex justify-center space-x-4 mb-6">
+        <button
+          onClick={() => setShowType("expense")}
+          className={`px-4 py-2 rounded-lg font-korean-pixel transition-colors ${showType === "expense" ? "bg-red-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+        >
+          지출 분석
+        </button>
+        <button
+          onClick={() => setShowType("income")}
+          className={`px-4 py-2 rounded-lg font-korean-pixel transition-colors ${showType === "income" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+        >
+          수입 분석
+        </button>
       </div>
 
       <div className="flex flex-col">
@@ -197,26 +215,38 @@ const SpendingAnalysis: React.FC<SpendingAnalysisProps> = ({ className = "" }) =
             <Pie data={pieChartData} options={pieChartOptions} />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <div className="text-sm text-gray-600 font-korean-pixel">총 지출</div>
-                <div className="text-xl font-bold text-gray-800 font-korean-pixel">{formatAmount(totalAmount)}원</div>
+                <div className="text-sm text-gray-600 font-korean-pixel">{showType === "expense" ? "총 지출" : "총 수입"}</div>
+                <div className="text-xl font-bold text-gray-800 font-korean-pixel">{formatAmount(currentTotal)}원</div>
               </div>
             </div>
           </div>
 
           {/* 카테고리 목록 */}
           <div className="w-full md:w-1/2">
-            {categories.map(([category, amount]) => (
+            {currentCategories.map(([category, amount]) => (
               <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[category] }} />
-                  <span className="font-korean-pixel text-gray-700">{CATEGORY_NAMES[category]}</span>
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[category] || "#34D399" }} />
+                  <span className="font-korean-pixel text-gray-700">{CATEGORY_NAMES[category] || "수입"}</span>
                 </div>
                 <div className="text-right">
                   <div className="font-korean-pixel text-gray-800">{formatAmount(amount)}원</div>
-                  <div className="text-sm font-korean-pixel text-gray-500">{((amount / totalAmount) * 100).toFixed(1)}%</div>
+                  <div className="text-sm font-korean-pixel text-gray-500">{((amount / currentTotal) * 100).toFixed(1)}%</div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 총계 요약 */}
+        <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="p-4 bg-red-50 rounded-lg">
+            <div className="text-sm text-gray-600 font-korean-pixel">이번 달 총 지출</div>
+            <div className="text-lg font-bold text-red-600 font-korean-pixel">{formatAmount(totalExpense)}원</div>
+          </div>
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-gray-600 font-korean-pixel">이번 달 총 수입</div>
+            <div className="text-lg font-bold text-blue-600 font-korean-pixel">{formatAmount(totalIncome)}원</div>
           </div>
         </div>
       </div>
