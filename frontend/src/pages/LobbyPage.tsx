@@ -404,17 +404,6 @@ const LobbyPage = () => {
                 </select>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">비밀번호 (선택)</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded"
-                  placeholder="비밀번호를 입력하세요 (선택)"
-                />
-              </div>
-
               <div className="flex justify-end mt-6">
                 <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-700 mr-2">
                   취소

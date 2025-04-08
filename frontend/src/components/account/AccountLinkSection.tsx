@@ -4,6 +4,9 @@ import { Account, AccountDetail, AllConsumeHistory, ConsumeHistory, ConsumeHisto
 import { formatDateToInput } from "../../utils/formatDate";
 import { formatBalance, formataccountNo } from "../../utils/formatAccount";
 import { useApi } from "../../hooks/useApi";
+import { useUserInfo } from "../../hooks/useUserInfo";
+import CharacterAnimation from "../game/CharacterAnimation";
+import { CharacterType } from "../game/constants/animations";
 
 interface MainAccount {
   bankCode: string;
@@ -14,7 +17,6 @@ interface MainAccount {
 
 interface AccountLinkSectionProps {
   onAccountLink: () => void;
-  mainAccount: MainAccount | null;
   error?: string | null;
   accounts: Account[];
   fetchAllAccount: () => Promise<any>;
@@ -30,7 +32,57 @@ interface CalendarDay {
   totalExpense: number;
 }
 
-const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, mainAccount, error, accounts, fetchAllAccount }) => {
+interface LoadingModalProps {
+  isOpen: boolean;
+  hasAccounts: boolean;
+  onClose: () => void;
+  user: any; // 실제 User 타입으로 변경하는 것이 좋습니다
+}
+
+const LoadingModal: React.FC<LoadingModalProps> = ({ isOpen, hasAccounts, onClose, user }) => {
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+        {!showContent ? (
+          <div className="text-center">
+            <div className="w-40 h-40 mx-auto mb-4">
+              <CharacterAnimation state="idle" characterType={user?.mainCat || "classic"} size="small" />
+            </div>
+            <p className="text-lg font-korean-pixel text-gray-800">계좌 연동 중...</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            {!hasAccounts ? (
+              <div>
+                <p className="text-xl font-korean-pixel text-gray-800 mb-4">연동된 계좌가 없어요</p>
+                <p className="text-sm font-korean-pixel text-gray-600 mb-6">계좌를 연동하고 다양한 기능을 사용해보세요!</p>
+                <button onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-korean-pixel hover:bg-gray-200 transition-colors">
+                  닫기
+                </button>
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, error, accounts, fetchAllAccount }) => {
+  const { user, loading: userLoading } = useUserInfo();
   const [showDetail, setShowDetail] = useState(false);
   const [accountDetail, setAccountDetail] = useState<AccountDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,6 +90,28 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
   const [consumeHistory, setConsumeHistory] = useState<AllConsumeHistory | null>(null);
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [hasShownModal, setHasShownModal] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+
+  // 주 거래 통장 정보 찾기
+  const mainAccount = React.useMemo(() => {
+    if (!user?.main_account || !accounts) return null;
+    const account = accounts.find((acc) => acc.accountNo === user.main_account);
+    if (!account) return null;
+    return {
+      bankCode: account.bankCode,
+      accountNo: account.accountNo,
+      accountName: account.accountName,
+      accountBalance: account.accountBalance,
+    };
+  }, [accounts, user?.main_account]);
+
+  // 컴포넌트 마운트 시 계좌 정보 불러오기
+  useEffect(() => {
+    if (user?.main_account && (!accounts || accounts.length === 0)) {
+      fetchAllAccount();
+    }
+  }, [user?.main_account, accounts, fetchAllAccount]);
 
   // API 호출 함수들
   const accountDetailApi = useApi<AccountDetail, { accountNo: string }>("/api/finance/account/detail", "POST");
@@ -49,6 +123,20 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
     month: (new Date().getMonth() + 1).toString().padStart(2, "0"),
     transactionType: "A" as "A" | "M" | "D",
   });
+
+  // 계좌 연동 모달 자동 표시 관련 useEffect
+  useEffect(() => {
+    const shouldShowModal = user && !user.main_account && (!accounts || accounts.length === 0) && !hasShownModal && !showLoadingModal;
+
+    if (shouldShowModal) {
+      setShowLoadingModal(true);
+      // 2초 후에 로딩 모달을 닫고 계좌가 없다는 메시지를 표시
+      setTimeout(() => {
+        setShowLoadingModal(false);
+        setHasShownModal(true);
+      }, 2000);
+    }
+  }, [user, accounts, hasShownModal, showLoadingModal]);
 
   // 상세정보 조회
   const handleDetailClick = async (accountNo: string) => {
@@ -208,10 +296,28 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
   const handleAccountLinkClick = async () => {
     try {
       setLoading(true);
+
+      // 계좌가 이미 있는 경우 바로 계좌 목록 모달 표시
+      if (accounts && accounts.length > 0) {
+        onAccountLink();
+        return;
+      }
+
+      // 계좌가 없는 경우에만 로딩 모달 표시
+      setShowLoadingModal(true);
       await fetchAllAccount();
-      onAccountLink();
+
+      // 2초 후에 로딩 모달의 내용만 변경
+      setTimeout(() => {
+        if (accounts && accounts.length > 0) {
+          setShowLoadingModal(false);
+          setHasShownModal(false);
+          onAccountLink();
+        }
+      }, 2000);
     } catch (error) {
       console.error("계좌 목록 갱신 중 오류 발생:", error);
+      setShowLoadingModal(false);
     } finally {
       setLoading(false);
     }
@@ -252,7 +358,10 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
             <div className={`text-sm font-korean-pixel mb-2 ${day.isToday ? "text-blue-500 font-bold" : "text-gray-600"}`}>{day.date.getDate()}</div>
 
             {day.transactions.length > 0 && (
-              <div className="text-xs">{day.totalExpense > 0 && <div className="text-gray-800 font-korean-pixel font-medium">-{formatBalance(day.totalExpense)}</div>}</div>
+              <div className="text-xs space-y-1">
+                {day.totalExpense > 0 && <div className="text-red-600 font-korean-pixel font-medium">-{formatBalance(day.totalExpense)}</div>}
+                {day.totalIncome > 0 && <div className="text-blue-600 font-korean-pixel font-medium">+{formatBalance(day.totalIncome)}</div>}
+              </div>
             )}
           </div>
         ))}
@@ -299,7 +408,7 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
   return (
     <div className="bg-white/95 rounded-2xl shadow-2xl p-6 mt-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 주 거래 통장</h3>
+        <h3 className="text-xl font-bold text-gray-800 font-korean-pixel">💰 계좌 연동</h3>
         {mainAccount && (
           <div className="flex gap-2">
             <button onClick={() => handleDetailClick(mainAccount.accountNo)} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-korean-pixel hover:bg-blue-100 transition-colors">
@@ -436,15 +545,17 @@ const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, 
         </>
       ) : (
         <div className="bg-gray-50 rounded-xl p-6 text-center">
-          <p className="text-gray-600 mb-4 font-korean-pixel">{error || "아직 주 거래 통장이 설정되지 않았습니다"}</p>
+          <p className="text-gray-600 mb-4 font-korean-pixel">{error || "아직 계좌 연동이 되지 않았습니다다"}</p>
           <button
             onClick={handleAccountLinkClick}
             className="px-6 py-3 bg-gradient-to-r from-form-color to-button-color text-gray-700 rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300"
           >
-            주 거래 통장 설정하기
+            계좌 연동하기
           </button>
         </div>
       )}
+
+      <LoadingModal isOpen={showLoadingModal} hasAccounts={accounts?.length > 0} onClose={() => setShowLoadingModal(false)} user={user} />
     </div>
   );
 };
