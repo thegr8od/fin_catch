@@ -210,7 +210,7 @@ public class GameService {
                 int ans = Integer.parseInt(userAnswer);
                 isCorrect = quiz.getQuizOptions().stream()
                     .anyMatch(option -> option.getOptionNumber() == ans && option.isCorrect());
-                resultMessageText = isCorrect ? "정답입니다" : "오답입니다";
+                resultMessageText = isCorrect ? "정답입니다. (정답: " + ans + "번)" : "오답입니다.";
                 if (isCorrect) {
                     quizTimerService.cancelQuizTasks(roomId);
                 }
@@ -253,7 +253,7 @@ public class GameService {
                 roomId,
                 Map.of(
                     "quizId", quizId,
-                    "result", isCorrect ? "정답입니다" : userAnswer,
+                    "result", isCorrect ? "정답입니다. (정답: " + userAnswer + ")" : userAnswer,
                     "sender", nickname
                 )
             );
