@@ -232,12 +232,12 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     setSelectedProblem(null);
   };
 
-  // 문제 선택 핸들러 - 이제 분석 요청은 하지 않고 단순히 선택된 문제를 표시
+  // 문제 선택 핸들러
   const handleProblemSelect = (problem: ExtendedProblem) => {
     setSelectedProblem(problem);
   };
   
-  // AI 분석 요청 핸들러 - 오른쪽 패널의 분석 버튼 클릭 시 호출
+  // AI 분석 요청 핸들러
   const handleRequestAnalysis = async (problem: ExtendedProblem) => {
     setAnalyzingProblemId(problem.id);
 
@@ -264,7 +264,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
         ) {
           const analysisData = analysisResult as AnalysisData;
           
-          // 분석 결과로 문제 업데이트 (weakPoints와 recommendations 필드는 여전히 유지되지만 화면에 표시하지 않음)
+          // 분석 결과로 문제 업데이트
           const analyzedProblem: ExtendedProblem = {
             ...problem,
             analysis: analysisData.analysis,
@@ -362,25 +362,13 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
               <div>
                 <h4 className="font-korean-pixel text-xl text-gray-800 mb-4">{selectedProblem.title}</h4>
                 
-                {/* 사용자 답변과 정답 정보 */}
-                <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="border-l-4 border-red-400 pl-3">
-                      <p className="text-gray-500 text-sm mb-1 font-korean-pixel">내 답변</p>
-                      <p className="text-red-500 font-korean-pixel">{selectedProblem.userAnswer || '미입력'}</p>
-                    </div>
-                    
-                    <div className="border-l-4 border-green-400 pl-3">
-                      <p className="text-gray-500 text-sm mb-1 font-korean-pixel">정답</p>
-                      <p className="text-green-600 font-korean-pixel">{selectedProblem.correctAnswer || '정보 없음'}</p>
-                    </div>
-                  </div>
-                </div>
+                {/* AnalysisCharts 컴포넌트 - 소비 퀴즈 여부를 전달 */}
+                <AnalysisCharts 
+                  problem={selectedProblem} 
+                  isConsumption={selectedCategory === "consumption"}
+                />
                 
-                {/* 차트 영역 - 항상 표시 */}
-                <AnalysisCharts problem={selectedProblem} />
-                
-                {/* 분석 중 상태 - 차트 아래에 표시 */}
+                {/* 분석 중 상태 */}
                 {analyzingProblemId === selectedProblem.id ? (
                   <div className="mt-4 bg-blue-50 p-4 rounded-lg text-center flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-2"></div>
@@ -395,12 +383,13 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
                       <div className="mt-6 bg-white p-4 rounded-lg shadow-sm">
                         <h5 className="font-korean-pixel text-lg text-blue-700 mb-3">📊 AI 분석 결과</h5>
                         <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{selectedProblem.analysis}</p>
-                        {/* 여기에서 취약점과 학습 추천 항목 제거 */}
+                        
+                        {/* 취약점과 학습 추천 부분이 제거됨 */}
                       </div>
                     ) : (
                       <div className="mt-6 bg-blue-50 p-4 rounded-lg text-center">
                         <p className="font-korean-pixel text-blue-700 mb-4">
-                          AI가 이 문제의 오답 원인을 분석할 수 있습니다.
+                          AI가 이 문제의 오답 원인과 개선 방법을 분석할 수 있습니다.
                         </p>
                         <button
                           onClick={() => handleRequestAnalysis(selectedProblem)}
