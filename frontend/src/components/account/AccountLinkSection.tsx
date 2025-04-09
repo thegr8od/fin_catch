@@ -20,6 +20,7 @@ interface AccountLinkSectionProps {
   error?: string | null;
   accounts: Account[];
   fetchAllAccount: () => Promise<any>;
+  mainAccountInfo?: Account | null;
 }
 
 // 달력 관련 타입
@@ -81,7 +82,7 @@ const LoadingModal: React.FC<LoadingModalProps> = ({ isOpen, hasAccounts, onClos
   );
 };
 
-const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, error, accounts, fetchAllAccount }) => {
+const AccountLinkSection: React.FC<AccountLinkSectionProps> = ({ onAccountLink, error, accounts, fetchAllAccount, mainAccountInfo }) => {
   const { user, loading: userLoading } = useUserInfo();
   const [showDetail, setShowDetail] = useState(false);
   const [accountDetail, setAccountDetail] = useState<AccountDetail | null>(null);
