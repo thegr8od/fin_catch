@@ -14,8 +14,12 @@ const ShopPage: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
-  useEffect(() => {
-  }, [showModal, pickedCharacters, purchaseAmount]);
+  const handleChargeClick = () => {
+    setAlertMessage("아직 준비중이에요!");
+    setShowAlert(true);
+  };
+
+  useEffect(() => {}, [showModal, pickedCharacters, purchaseAmount]);
 
   const shouldShowModal = showModal && pickedCharacters && pickedCharacters.length > 0;
 
@@ -33,7 +37,7 @@ const ShopPage: React.FC = () => {
       <Background backgroundImage={shopBg}>
         <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
           {/* 코인 표시 */}
-          <CoinDisplay coins={user?.point || 0} onChargeClick={() => {}} />
+          <CoinDisplay coins={user?.point || 0} onChargeClick={handleChargeClick} />
 
           {/* 슬롯 머신 섹션 */}
           <SlotMachineSection isSpinning={isSpinning} onPurchase={handlePurchaseWithValidation} disabled={isSpinning} userCoins={user?.point || 0} />
