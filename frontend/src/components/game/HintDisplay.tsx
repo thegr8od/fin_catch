@@ -5,16 +5,12 @@ import { useGame } from "../../contexts/GameContext";
 const HintDisplay = () => {
   const { firstHint, secondHint } = useGame();
 
-  console.log("HintDisplay 렌더링 - 힌트:", { firstHint, secondHint });
-
   if (!firstHint && !secondHint) {
-    console.log("HintDisplay: 힌트 없음 - null 반환");
     return null;
   }
 
   return (
     <div className="bg-yellow-100 bg-opacity-90 rounded-lg p-3 mb-4 border-2 border-yellow-400">
-      <div className="font-bold text-center mb-1">힌트</div>
       {firstHint && (
         <div className="mb-1">
           <span className="font-semibold">힌트 1: </span>
