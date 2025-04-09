@@ -22,6 +22,22 @@ interface CharacterChangeModalProps {
 const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, characters, selectedCharacter, onSelect, mainCat, onSetMainCharacter }) => {
   const [currentAnimation, setCurrentAnimation] = useState<CharacterState>("idle");
 
+  // 등급에 따른 테두리 색상 반환 함수
+  const getBorderColorByGrade = (grade: string): string => {
+    switch (grade.toLowerCase()) {
+      case "common":
+        return "border-gray-400";
+      case "rare":
+        return "border-blue-500";
+      case "epic":
+        return "border-purple-500";
+      case "legendary":
+        return "border-orange-500";
+      default:
+        return "border-gray-400";
+    }
+  };
+
   // 애니메이션 상태 관리
   const { containerRef, isReady } = useCharacterAnimation({
     state: currentAnimation,
@@ -109,7 +125,7 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
               <div
                 key={character.catId}
                 className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedCharacter?.catId === character.catId ? "bg-blue-100 border-2 border-blue-500" : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                  selectedCharacter?.catId === character.catId ? "bg-blue-100 border-2 border-blue-500" : `bg-gray-50 hover:bg-gray-100 border-2 ${getBorderColorByGrade(character.grade)}`
                 }`}
                 onClick={() => onSelect(character)}
               >
