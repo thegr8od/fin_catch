@@ -72,9 +72,9 @@
 <table>
   <tr>
     <td><img src="docs/icons/springboot.png" width="20"/> SpringBoot</td>
+    <td><img src="docs/icons/springsecurity.png" width="20"/> SpringSecurity</td>
     <td><img src="docs/icons/hibernate.png" width="20"/> Hibernate</td>
     <td><img src="docs/icons/fastapi.png" width="20"/> FastAPI</td>
-    <td><img src="docs/icons/springsecurity.png" width="20"/> SpringSecurity</td>
   </tr>
 </table>
 
