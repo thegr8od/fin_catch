@@ -40,7 +40,17 @@ public class MyInfoDto {
         List<CatDto> catDtos = cats.stream()
             .map(CatDto::new)
             .toList();
-
+        if (member.getFinanceMember() == null) {
+            return new MyInfoDto(
+                member.getEmail(),
+                member.getNickname(),
+                member.getMainCat(),
+                catDtos,
+                member.getExp(),
+                member.getPoint(),
+                ""
+            );
+        }
         return new MyInfoDto(
             member.getEmail(),
             member.getNickname(),

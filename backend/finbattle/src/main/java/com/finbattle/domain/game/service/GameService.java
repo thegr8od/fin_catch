@@ -210,7 +210,7 @@ public class GameService {
                 int ans = Integer.parseInt(userAnswer);
                 isCorrect = quiz.getQuizOptions().stream()
                     .anyMatch(option -> option.getOptionNumber() == ans && option.isCorrect());
-                resultMessageText = isCorrect ? "정답입니다" : "오답입니다";
+                resultMessageText = isCorrect ? "정답입니다. (정답: " + ans + "번)" : "오답입니다.";
                 if (isCorrect) {
                     quizTimerService.cancelQuizTasks(roomId);
                 }
@@ -253,7 +253,7 @@ public class GameService {
                 roomId,
                 Map.of(
                     "quizId", quizId,
-                    "result", isCorrect ? "정답입니다" : userAnswer,
+                    "result", isCorrect ? "정답입니다. (정답: " + userAnswer + ")" : userAnswer,
                     "sender", nickname
                 )
             );
@@ -340,7 +340,7 @@ public class GameService {
             } else {
                 if (m1.getCreatedAt().isAfter(m2.getCreatedAt())) {
                     for (GameMemberStatus m : memberList) {
-                        if (m.getMemberId() == m2.getMemberId()) {
+                        if (m.getMemberId() == m1.getMemberId()) {
                             attackedMemberId = m.getMemberId();
                             m.setLife(Math.max(0, m.getLife() - 1));
                             break;
@@ -348,7 +348,7 @@ public class GameService {
                     }
                 } else {
                     for (GameMemberStatus m : memberList) {
-                        if (m.getMemberId() == m1.getMemberId()) {
+                        if (m.getMemberId() == m2.getMemberId()) {
                             attackedMemberId = m.getMemberId();
                             m.setLife(Math.max(0, m.getLife() - 1));
                             break;
