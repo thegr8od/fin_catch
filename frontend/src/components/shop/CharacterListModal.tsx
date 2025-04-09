@@ -1,5 +1,6 @@
 import React from "react";
 import coinImg from "../../assets/coin.png";
+import { changeCatNameToKorean } from "../../utils/ChangeCatName";
 
 interface Character {
   catId: number;
@@ -109,10 +110,10 @@ const CharacterListModal: React.FC<CharacterListModalProps> = ({ characters, onC
 
               {/* 캐릭터 이미지 */}
               <div className="w-full aspect-square mb-2">
-                <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-full h-full object-contain" />
+                <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={changeCatNameToKorean(character.catName)} className="w-full h-full object-contain" />
               </div>
 
-              <p className={`text-sm font-korean-pixel truncate w-full text-center mb-2 ${getNameClass(character.grade)}`}>{character.catName}</p>
+              <p className={`text-sm font-korean-pixel truncate w-full text-center mb-2 ${getNameClass(character.grade)}`}>{changeCatNameToKorean(character.catName)}</p>
               <p className={`text-xs font-korean-pixel mb-2 ${getDescriptionClass(character.grade)}`}>{character.description}</p>
               <p className="text-yellow-400 text-xs font-korean-pixel">{getGradeStars(character.grade)}</p>
               <div className="flex items-center justify-center mt-1">

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { CharacterType } from "../game/constants/animations";
 import { useCharacterAnimation } from "../../hooks/useCharacterAnimation";
 import { CharacterState } from "../game/types/character";
+import { changeCatNameToKorean } from "../../utils/ChangeCatName";
 
 interface Character {
   catId: number;
@@ -21,20 +22,54 @@ interface CharacterChangeModalProps {
 
 const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, characters, selectedCharacter, onSelect, mainCat, onSetMainCharacter }) => {
   const [currentAnimation, setCurrentAnimation] = useState<CharacterState>("idle");
-
   // 등급에 따른 테두리 색상 반환 함수
-  const getBorderColorByGrade = (grade: string): string => {
+  const getBorderColorByGrade = (grade: string): { border: string; bg: string; text: string; shadow: string; glow: string; special: boolean } => {
     switch (grade.toLowerCase()) {
       case "common":
-        return "border-gray-400";
+        return {
+          border: "border-gray-300",
+          bg: "bg-gray-50",
+          text: "text-gray-500",
+          shadow: "shadow-gray-200",
+          glow: "shadow-[0_0_5px_rgba(156,163,175,0.5)]",
+          special: false,
+        };
       case "rare":
-        return "border-blue-500";
+        return {
+          border: "border-blue-300",
+          bg: "bg-blue-50",
+          text: "text-blue-500",
+          shadow: "shadow-blue-200",
+          glow: "shadow-[0_0_5px_rgba(59,130,246,0.5)]",
+          special: false,
+        };
       case "epic":
-        return "border-purple-500";
+        return {
+          border: "border-purple-400",
+          bg: "bg-purple-100",
+          text: "text-purple-600",
+          shadow: "shadow-purple-300",
+          glow: "shadow-[0_0_8px_rgba(147,51,234,0.7)]",
+          special: true,
+        };
       case "legendary":
-        return "border-orange-500";
+        return {
+          border: "border-amber-400",
+          bg: "bg-amber-100",
+          text: "text-amber-600",
+          shadow: "shadow-amber-300",
+          glow: "shadow-[0_0_10px_rgba(245,158,11,0.8)]",
+          special: true,
+        };
       default:
-        return "border-gray-400";
+        return {
+          border: "border-gray-300",
+          bg: "bg-gray-50",
+          text: "text-gray-500",
+          shadow: "shadow-gray-200",
+          glow: "shadow-[0_0_5px_rgba(156,163,175,0.5)]",
+          special: false,
+        };
     }
   };
 
@@ -99,14 +134,30 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
             <div className="flex-1 ml-8 p-4">
               {selectedCharacter ? (
                 <div className="space-y-4">
-                  <h3 className="font-korean-pixel text-2xl font-bold text-gray-800">{selectedCharacter.catName}</h3>
-                  <p className="text-lg text-gray-600 font-korean-pixel">{selectedCharacter.description}</p>
-                  <p className="text-md text-gray-500 font-korean-pixel">등급: {selectedCharacter.grade}</p>
-                  {selectedCharacter.catName === mainCat && <span className="inline-block mt-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-md font-korean-pixel">현재 대표 캐릭터</span>}
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-korean-pixel text-2xl font-bold text-gray-800">{changeCatNameToKorean(selectedCharacter.catName)}</h3>
+                    {selectedCharacter.catName === mainCat && <div className="bg-amber-400 text-white px-2 py-0.5 rounded-md text-sm font-bold">MAIN</div>}
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <p className="text-lg text-gray-600 font-korean-pixel">{selectedCharacter.description}</p>
+                  </div>
+                  {(() => {
+                    const gradeStyle = getBorderColorByGrade(selectedCharacter.grade);
+                    return (
+                      <div
+                        className={`px-4 py-2 ${gradeStyle.special ? "rounded-lg scale-105" : "rounded-md"} 
+                      ${gradeStyle.bg} ${gradeStyle.border} border ${gradeStyle.shadow} ${gradeStyle.glow} 
+                      inline-flex items-center transition-all duration-300 
+                      ${gradeStyle.special ? "animate-pulse" : ""}`}
+                      >
+                        <span className={`font-bold tracking-wider ${gradeStyle.text} ${gradeStyle.special ? "text-base" : "text-sm"}`}>{selectedCharacter.grade.toUpperCase()}</span>
+                      </div>
+                    );
+                  })()}
                   {selectedCharacter.catName !== mainCat && (
                     <button
                       onClick={onSetMainCharacter}
-                      className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300 w-full"
+                      className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-korean-pixel hover:opacity-90 transition-all duration-300 w-full shadow-md"
                     >
                       대표 캐릭터로 설정
                     </button>
@@ -121,25 +172,39 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            {characters.map((character) => (
-              <div
-                key={character.catId}
-                className={`p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-                  selectedCharacter?.catId === character.catId ? "bg-blue-100 border-2 border-blue-500" : `bg-gray-50 hover:bg-gray-100 border-2 ${getBorderColorByGrade(character.grade)}`
-                }`}
-                onClick={() => onSelect(character)}
-              >
-                <div className="flex flex-col items-center">
-                  <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-24 h-24" style={{ imageRendering: "pixelated" }} />
-                  <div className="mt-4 text-center">
-                    {/* <h3 className="font-korean-pixel text-lg font-bold text-gray-800">{character.catName}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{character.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">{character.grade}</p>
-                    {character.catName === mainCat && <span className="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-korean-pixel">현재 대표 캐릭터</span>} */}
+            {characters.map((character) => {
+              const gradeStyle = getBorderColorByGrade(character.grade);
+              return (
+                <div
+                  key={character.catId}
+                  className={`p-4 rounded-xl cursor-pointer transition-all duration-300 relative ${
+                    selectedCharacter?.catId === character.catId ? `${gradeStyle.bg} bg-opacity-20 ${gradeStyle.border} border-2` : `bg-gray-50 hover:bg-gray-100 ${gradeStyle.border} border-2`
+                  }`}
+                  onClick={() => onSelect(character)}
+                >
+                  <div className="flex flex-col items-center">
+                    {character.catName === mainCat && (
+                      <div className="absolute -top-1 -right-1 bg-amber-400 text-white px-2 py-0.5 rounded-md text-xs font-bold z-10 transform rotate-12 origin-center">MAIN</div>
+                    )}
+                    <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-24 h-24" style={{ imageRendering: "pixelated" }} />
+                    <div className="mt-4 text-center w-full">
+                      <h3 className="font-korean-pixel text-lg font-bold text-gray-800 mb-2">{changeCatNameToKorean(character.catName)}</h3>
+                      <div className={`w-full flex justify-center ${gradeStyle.special ? "scale-110" : ""}`}>
+                        <div
+                          className={`px-4 py-1.5 ${gradeStyle.special ? "rounded-lg" : "rounded-md"} 
+                          ${gradeStyle.bg} ${gradeStyle.border} border ${gradeStyle.shadow} ${gradeStyle.glow} 
+                          inline-flex items-center justify-center transition-all duration-300 
+                          ${gradeStyle.special ? "animate-pulse" : ""} 
+                          ${gradeStyle.special ? "min-w-[120px]" : "min-w-[100px]"}`}
+                        >
+                          <span className={`text-xs font-bold tracking-wider ${gradeStyle.text} ${gradeStyle.special ? "text-sm" : ""}`}>{character.grade.toUpperCase()}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

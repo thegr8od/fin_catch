@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import CharacterListModal from "./CharacterListModal";
 import coinImg from "../../assets/coin.png";
+import { changeCatNameToKorean } from "../../utils/ChangeCatName";
 
 interface Character {
   catId: number;
@@ -111,14 +112,14 @@ const CharacterResultModal: React.FC<CharacterResultModalProps> = ({ onClose, am
           <div className={`w-64 h-64 mb-4 relative ${currentCharacter.grade === "LEGENDARY" ? "animate-pulse" : ""}`}>
             <img
               src={`/cats_assets/${currentCharacter.catName}/${currentCharacter.catName}_cat_static.png`}
-              alt={currentCharacter.catName}
+              alt={changeCatNameToKorean(currentCharacter.catName)}
               className={`w-full h-full object-contain ${
                 currentCharacter.grade === "LEGENDARY" ? "drop-shadow-[0_0_15px_rgba(234,179,8,0.8)]" : currentCharacter.grade === "EPIC" ? "drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" : ""
               }`}
             />
           </div>
 
-          <h3 className={`font-korean-pixel mb-2 ${getGradeClass(currentCharacter.grade)}`}>{currentCharacter.catName}</h3>
+          <h3 className={`font-korean-pixel mb-2 ${getGradeClass(currentCharacter.grade)}`}>{changeCatNameToKorean(currentCharacter.catName)}</h3>
           <p className={`text-center font-korean-pixel mb-2 ${getDescriptionClass(currentCharacter.grade)}`}>{currentCharacter.description}</p>
           <p className="text-yellow-400 text-center font-korean-pixel mb-2 text-xl">{getGradeStars(currentCharacter.grade)}</p>
 
