@@ -6,7 +6,6 @@ import GameResult from "../components/game/GameResult";
 import { useUserInfo } from "../hooks/useUserInfo";
 import { CharacterType } from "../components/game/constants/animations";
 import { usePreventNavigation } from "../hooks/usePreventNavigation";
-import useQuizResult from "../hooks/useQuizResult";
 import { useShuffledQuiz, ShuffledQuizItem } from "../hooks/useShuffledQuiz";
 import axiosInstance from "../api/axios";
 
@@ -35,13 +34,12 @@ const AiQuizPage = () => {
   
   // 새로 수정된 useShuffledQuiz 훅 사용
   const { loading, error, shuffledQuizzes, createAndGetShuffledQuizzes, submitShuffledQuizAnswer } = useShuffledQuiz();
-  const { saveQuizResult } = useQuizResult();
 
   usePreventNavigation({
     roomId: null,
     gameType: "AiQuiz",
   });
-
+  
   // 랜덤 고양이 캐릭터 선택
   const selectRandomCat = useCallback(() => {
     const catTypes: CharacterType[] = ["classic", "batman", "slave", "master", "unique_rabbit"];
@@ -93,7 +91,7 @@ const AiQuizPage = () => {
       setIsLoading(false);
     }
   }, [createAndGetShuffledQuizzes, quizzes.length]);
-
+  
   // 정답 제출 처리 - 섞인 옵션에 맞게 수정
   const handleSubmitAnswer = useCallback(async () => {
     if (selectedOption === null || quizzes.length === 0 || !isQuizInProgress.current) return;
@@ -192,7 +190,30 @@ const AiQuizPage = () => {
       setGameState("finalResult");
     }
   }, [currentQuizIndex, quizzes.length]);
-
+  
+  // 서버에 경험치와 포인트 업데이트 함수
+  const updateExpAndPoint = async (exp: number, point: number) => {
+    try {
+      const response = await axiosInstance.patch('/api/member/exp-point', {
+        exp: exp,
+        point: point
+      });
+      
+      if (response.data.isSuccess) {
+        console.log("경험치와 포인트 업데이트 성공:", response.data.result);
+        // 사용자 정보 갱신
+        await fetchUserInfo();
+        return true;
+      } else {
+        console.error("경험치와 포인트 업데이트 실패:", response.data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("API 호출 중 오류 발생:", error);
+      return false;
+    }
+  };
+  
   // 컴포넌트 마운트 시 초기화 - 의존성 배열 수정
   useEffect(() => {
     console.log("컴포넌트 마운트: 초기 설정");
@@ -220,17 +241,7 @@ const AiQuizPage = () => {
       fetchQuizzes();
     }
   }, [fetchQuizzes, isLoading]);
-
-  // 디버깅용 로그 추가
-  useEffect(() => {
-    console.log("현재 퀴즈 상태:", {
-      인덱스: currentQuizIndex,
-      진행중: isQuizInProgress.current,
-      초기화됨: isQuizInitialized.current,
-      퀴즈개수: quizzes.length
-    });
-  }, [currentQuizIndex, quizzes.length]);
-
+  
   // 타이머 설정
   useEffect(() => {
     if (isLoading || gameState !== "quiz") return;
@@ -247,7 +258,7 @@ const AiQuizPage = () => {
     // 컴포넌트 언마운트 또는 의존성 변경 시 타이머 정리
     return () => clearTimeout(timer);
   }, [timeLeft, isLoading, gameState]);
-
+  
   // 현재 퀴즈 가져오기
   const getCurrentQuiz = () => {
     if (quizzes.length === 0 || currentQuizIndex >= quizzes.length) {
@@ -258,29 +269,6 @@ const AiQuizPage = () => {
 
   const currentQuiz = getCurrentQuiz();
   const options = currentQuiz.options ? currentQuiz.options.map((opt) => opt.optionText) : [];
-
-  // 서버에 경험치와 포인트 업데이트 함수
-  const updateExpAndPoint = async (exp: number, point: number) => {
-    try {
-      const response = await axiosInstance.patch('/api/member/exp-point', {
-        exp: exp,
-        point: point
-      });
-      
-      if (response.data.isSuccess) {
-        console.log("경험치와 포인트 업데이트 성공:", response.data.result);
-        // 사용자 정보 갱신
-        await fetchUserInfo();
-        return true;
-      } else {
-        console.error("경험치와 포인트 업데이트 실패:", response.data.message);
-        return false;
-      }
-    } catch (error) {
-      console.error("API 호출 중 오류 발생:", error);
-      return false;
-    }
-  };
 
   // 결과 화면에서 계속하기 버튼 클릭 시 처리
   const handleContinue = async () => {
@@ -294,15 +282,22 @@ const AiQuizPage = () => {
       // 퀴즈 완료 시 상태 초기화
       isQuizInProgress.current = false;
       
-      // 훅을 사용하여 결과 저장
-      saveQuizResult({
-        totalProblems: quizzes.length,
-        correctAnswers: correctAnswers,
-        finalScore: score
-      });
-      
-      // 메인 페이지로 이동
-      navigate("/main");
+      // 퀴즈 결과를 서버에 저장
+      try {
+        // 결과 저장 API를 호출
+        await axiosInstance.post('/api/ai/consumption/result', {
+          totalProblems: quizzes.length,
+          correctAnswers: correctAnswers,
+          finalScore: score
+        });
+        
+        // 메인 페이지로 이동
+        navigate("/main");
+      } catch (error) {
+        console.error("퀴즈 결과 저장 오류:", error);
+        // 오류가 있어도 메인 페이지로 이동
+        navigate("/main");
+      }
     }
   };
 
