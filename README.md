@@ -31,22 +31,31 @@
 
 ## 💻 화면
 ### 1. 메인화면
-<img src="./exec/example/MainPage.webp" width="600">
+![메인 화면](docs/기능/게임시작.webp)
 
 ### 2. Oauth 로그인
-<img src="./exec/example/OauthLogin.webp" width="600">
+![Oauth 로그인](docs/기능/로그인.webp)
 
 ### 3. 소비 패턴 분석
-<img src="./exec/example/WriteDiary.webp" width="600">
+![소비 패턴 분석](docs/기능/계좌연동 및 분석.webp)
+
+### 3-1. AI 소비 분류
+![AI 소비 분류](docs/기능/AI 소비 분류.webp)
 
 ### 4. 소비 패턴 퀴즈
-<img src="./exec/example/EditMyUniverse.webp" width="600">
+![소비 패턴 퀴즈](docs/기능/소비분석퀴즈.webp)
 
 ### 5. 사용자 대결 
-<img src="./exec/example/MyUniverse.webp" width="600">
+![사용자 대결](docs/기능/사용자게임.webp)
 
-### 6. 캐릭터 뽑기
-<img src="./exec/example/ChatBot.webp" width="600">
+### 6. 오답 노트
+![오답 노트](docs/기능/오답노트.webp)
+
+### 7. 캐릭터 뽑기
+![캐릭터 뽑기](docs/기능/캐릭터뽑기.webp)
+
+### 8. 캐릭터 선택
+![캐릭터 선택](docs/기능/캐릭터선택.webp)
 
 
 ## 🛠️ 기술 스택

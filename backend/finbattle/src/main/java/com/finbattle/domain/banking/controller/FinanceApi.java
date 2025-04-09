@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AISearchRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
@@ -82,5 +83,14 @@ public interface FinanceApi {
     ResponseEntity<BaseResponse<AnalysisResponseDto>> analysisTransaction(
         @AuthenticationPrincipal AuthenticatedUser detail,
         @RequestBody AnalysisRequestDto requestDto
+    ) throws JsonProcessingException;
+
+    @Operation(summary = "AI 분류 검색", description = "상호명 리스트를 받아 AI로 분류합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "분류 성공")
+    })
+    @PostMapping("/ai")
+    ResponseEntity<BaseResponse<String>> AIsearch(
+        @RequestBody AISearchRequestDto dto
     ) throws JsonProcessingException;
 }

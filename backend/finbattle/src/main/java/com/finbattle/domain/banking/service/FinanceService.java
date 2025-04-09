@@ -3,6 +3,7 @@ package com.finbattle.domain.banking.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AISearchRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
 import com.finbattle.domain.banking.model.TransactionList;
@@ -65,5 +66,9 @@ public interface FinanceService {
      * @throws JsonProcessingException JSON 변환 실패 시 발생
      */
     AnalysisResponseDto AnalysisSpend(Long memberId, Integer year, Integer month)
+        throws JsonProcessingException;
+
+
+    String AISearch(AISearchRequestDto dto)
         throws JsonProcessingException;
 }
