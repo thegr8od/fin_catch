@@ -10,6 +10,7 @@ import com.finbattle.domain.game.model.EssayCorrected;
 import com.finbattle.domain.game.model.GameData;
 import com.finbattle.domain.game.repository.RedisGameRepository;
 import com.finbattle.domain.member.repository.MemberRepository;
+import com.finbattle.domain.member.service.MemberFacadeService;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
 import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
 import com.finbattle.domain.quiz.dto.ShortAnswerQuizDto;
@@ -51,6 +52,7 @@ public class GameService {
     private final Map<Long, LocalDateTime> lastAnswerMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(100);
     private final RedisRoomRepository redisRoomRepository;
+    private final MemberFacadeService memberFacadeService;
 
     public void startAutoGame(Long roomId) {
         if (!canStartGame(roomId)) {
@@ -401,20 +403,11 @@ public class GameService {
             loserId = member1.getMemberId();
         }
         if (winnerId != -1L) {
-            memberRepository.findByMemberId(winnerId).ifPresent(member -> {
-                member.setPoint(member.getPoint() + 300);
-                memberRepository.save(member);
-            });
-            memberRepository.findByMemberId(loserId).ifPresent(member -> {
-                member.setPoint(member.getPoint() + 100);
-                memberRepository.save(member);
-            });
+            memberFacadeService.updateExpAndPoint(winnerId, 150L, 300L);
+            memberFacadeService.updateExpAndPoint(loserId, 75L, 100L);
         } else {
             for (GameMemberStatus m : gameData.getGameMemberStatusList()) {
-                memberRepository.findByMemberId(m.getMemberId()).ifPresent(member -> {
-                    member.setPoint(member.getPoint() + 100);
-                    memberRepository.save(member);
-                });
+                memberFacadeService.updateExpAndPoint(m.getMemberId(), 75L, 100L);
             }
         }
         redisGameRepository.deleteById(roomId);
