@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountResponseDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AISearchRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequest;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
@@ -115,5 +116,10 @@ public class FinanceFacadeService implements FinanceService {
         log.info("거래 내역 조회 완료.");
         String data = spendAnalysisService.analysisSpend(transactionLists);
         return new AnalysisResponseDto(data);
+    }
+
+    @Override
+    public String AISearch(AISearchRequestDto dto) throws JsonProcessingException {
+        return spendAnalysisService.aiSearch(dto.summaries());
     }
 }
