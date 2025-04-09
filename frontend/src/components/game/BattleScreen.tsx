@@ -77,7 +77,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
               <QuizOptions />
             </>
           ) : (
-            <div className="bg-white bg-opacity-90 rounded-lg p-6 text-center shadow-2xl border-4 border-yellow-500">
+            <div className="bg-white bg-opacity-90 rounded-lg p-2 text-center shadow-2xl border-4 border-yellow-500">
               <h2 className="text-3xl font-bold mb-4 text-blue-800">게임 결과</h2>
               <div className="text-2xl font-bold mb-2">{getGameResultMessage()}</div>
               <div className="mt-4 flex justify-around">
@@ -105,7 +105,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
       </div>
 
       {/* 중앙 플레이어 영역 */}
-      <div className="flex-1 w-full flex justify-between items-center px-8 pt-20">
+      <div className="flex-1 w-full flex justify-between items-center">
         {/* 왼쪽 플레이어 */}
         <div className="w-1/3">
           <PlayerSection
