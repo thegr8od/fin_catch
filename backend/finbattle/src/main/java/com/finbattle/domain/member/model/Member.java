@@ -62,7 +62,7 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default // ✅ 기본값 추가
-    private Long point = 100000L; // 포인트 (기본값: 0)
+    private Long point = 10000L; // 포인트 (기본값: 0)
 
     @Schema(description = "사용자 대표 캐릭터", example = "default")
     private String mainCat;
