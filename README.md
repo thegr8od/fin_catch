@@ -191,42 +191,42 @@ cd backend
 <table>
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/b905b75a-ea9d-4823-ae99-86b371a4277d" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/thegr8od"><img src="https://avatars.githubusercontent.com/u/127323247?v=4" alt="thegr8od" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>김승준</strong>
       <br />
-      💻 FE | 🔧 BE | 🛠 Infra
+      😎 Reader | 🔧 BE 
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/48639e08-4756-4b9c-b351-482a7a01e51d" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/YDaewon"><img src="https://avatars.githubusercontent.com/u/138689677?v=4" alt="YDaewon" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>양대원</strong>
       <br />
       🔧 BE | 🛠 Infra
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/e4354ce8-a354-4dfd-be39-4227c580767f" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/DonghyeonKwon"><img src="https://avatars.githubusercontent.com/u/93506933?v=4" alt="DonghyeonKwon" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>권동현</strong>
       <br />
       🔧 BE | 🛠 Infra
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/42d0efbb-d1dd-4aef-a4d1-9a3fcaa5b4d8" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/KimByeongNyeon"><img src="https://avatars.githubusercontent.com/u/104885355?v=4" alt="KimByeongNyeon" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>김병년</strong>
       <br />
       💻 FE
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/3f901364-23cb-44fd-9bf7-324cd7fadab8" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/kim13245"><img src="https://avatars.githubusercontent.com/u/61528451?v=4" alt="kim13245" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>김세현</strong>
       <br />
       💻 FE
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/a6d21efe-258f-45c8-8cfa-b0df04cbe7c0" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+      <a href="https://github.com/cosmos2123"><img src="https://avatars.githubusercontent.com/u/185461286?v=4" alt="cosmos2123" width="100" height="100" style="object-fit: cover; border-radius: 10px;"></a>
       <br />
       <strong>김태호</strong>
       <br />
