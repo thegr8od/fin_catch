@@ -31,6 +31,7 @@ public class SpendAnalysisService {
     private final CategoryRepository categoryRepository;
     private final AiCategoryRepository aiCategoryRepository;
     private final FastApiClient fastApiClient;
+    private final ObjectMapper objectMapper;
 
     public String analysisSpend(Map<String, TransactionList> transactionLists)
         throws JsonProcessingException {
@@ -51,6 +52,34 @@ public class SpendAnalysisService {
         log.info("GPT 요청용 JSON: {}", json);
 
         return json;
+    }
+
+    public String aiSearch(Set<String> summaries) throws JsonProcessingException {
+        List<KeywordCategoryMapping> aiMappings = aiCategoryRepository.findKeywordCategoryMappings(
+            summaries);
+
+        // 2. DB 결과를 result 맵에 먼저 담기
+        Map<String, SpendCategoryEntity> result = aiMappings.stream()
+            .collect(Collectors.toMap(
+                KeywordCategoryMapping::getKeyword,
+                mapping -> new SpendCategoryEntity(mapping.getKeyword(), mapping.getCategory())
+            ));
+
+        // 3. DB에 없는 것들만 FastAPI로 분류
+        Set<String> reallyNotFound = new HashSet<>(summaries);
+        reallyNotFound.removeAll(result.keySet());
+
+        Map<String, SpendCategoryEntity> airesult = classifyWithFastApi(reallyNotFound);
+
+        result.putAll(airesult);
+
+        String formattedLog = result.values().stream()
+            .map(entity -> entity.getKeyword() + " - " + entity.getCategory())
+            .collect(Collectors.joining(", "));
+
+        log.info("[AI 분류 결과]\n{}", formattedLog);
+
+        return formattedLog;
     }
 
     private Map<String, List<TransactionRecord>> convertTransactionData(
@@ -90,8 +119,7 @@ public class SpendAnalysisService {
         Set<String> notFound = new HashSet<>(summaries);
         notFound.removeAll(summaryToCategory.keySet());
 
-        log.info("[AI 분류] AI 분류 시작. 입력 값:");
-        notFound.forEach(summary -> log.info(" - {}", summary));
+        log.info("[AI 분류] AI 분류 시작. 입력 값: {}", notFound);
 
         List<KeywordCategoryMapping> aiMappings = aiCategoryRepository.findKeywordCategoryMappings(
             notFound);
@@ -114,8 +142,14 @@ public class SpendAnalysisService {
 
         log.info("카테고리 분류 완료. 총 거래 내역 수: {}, DB 분류: {}, AI 분류: {}", summaries.size(),
             summaries.size() - notFound.size(), notFound.size());
-        log.info("분류 결과");
-        summaries.forEach(summary -> log.info(" - {}", summary));
+
+        String logMessage = summaryToCategory.entrySet().stream()
+            .map(entry -> String.format(" - %s → %s", entry.getKey(),
+                entry.getValue().getCategory()))
+            .collect(Collectors.joining("\n"));
+
+        log.info("{}", logMessage);
+
         return summaryToCategory;
     }
 

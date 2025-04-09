@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.finbattle.domain.banking.dto.account.AccountDetailDto;
 import com.finbattle.domain.banking.dto.account.AccountRequestDto;
 import com.finbattle.domain.banking.dto.account.FindAllAccountResponseDto;
+import com.finbattle.domain.banking.dto.analysis.AISearchRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisRequestDto;
 import com.finbattle.domain.banking.dto.analysis.AnalysisResponseDto;
 import com.finbattle.domain.banking.dto.transaction.LoadAllTransactionRequestDto;
@@ -14,6 +15,7 @@ import com.finbattle.global.common.model.dto.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -83,4 +85,13 @@ public class FinanceController implements FinanceApi {
             financeService.AnalysisSpend(detail.getMemberId(), requestDto.year(),
                 requestDto.month())));
     }
+
+    @Override
+    public ResponseEntity<BaseResponse<String>> AIsearch(
+        @RequestBody AISearchRequestDto dto
+    ) throws JsonProcessingException {
+        return ResponseEntity.ok(new BaseResponse<>(financeService.AISearch(dto)));
+    }
+
+    ;
 }
