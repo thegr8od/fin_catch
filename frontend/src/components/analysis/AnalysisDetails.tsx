@@ -17,28 +17,12 @@ interface AnalysisDetailsProps {
 }
 
 const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, error, onRequestAnalysis }) => {
-  // 로딩 상태 컴포넌트
-  const renderLoadingState = () => (
-    <div className="flex items-center justify-center p-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      <span className="ml-2 font-korean-pixel">분석 중...</span>
-    </div>
-  );
-
   // 에러 상태 컴포넌트
   const renderErrorState = () => (
     <div className="text-red-500 p-4 text-center font-korean-pixel">
       분석 중 오류가 발생했습니다. 다시 시도해주세요.
     </div>
   );
-
-  if (loading) {
-    return renderLoadingState();
-  }
-
-  if (error) {
-    return renderErrorState();
-  }
 
   return (
     <div className="space-y-6">
@@ -63,11 +47,37 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
         <AnalysisCharts problem={problem} />
       </div>
       
+      {/* 분석 중 상태 */}
+      {loading && (
+        <div className="mt-4 bg-blue-50 p-4 rounded-lg text-center flex items-center justify-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-2"></div>
+          <span className="font-korean-pixel text-blue-700">AI 분석 중...</span>
+        </div>
+      )}
+      
       {/* 분석 내용은 사용자가 명시적으로 AI 분석을 요청했을 때만 표시 */}
       {problem.isAnalyzed && problem.analysis ? (
         <div className="mt-6 bg-white p-4 rounded-lg shadow-sm">
           <h5 className="font-korean-pixel text-lg text-blue-700 mb-3">📊 AI 분석 결과</h5>
           <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{problem.analysis}</p>
+          
+          {problem.weakPoints && problem.weakPoints.length > 0 && (
+            <div className="mt-4">
+              <h6 className="font-korean-pixel text-red-600 mb-2">⚠️ 취약점</h6>
+              <div className="bg-red-50 p-3 rounded-md">
+                <p className="font-korean-pixel text-gray-700">{problem.weakPoints[0]}</p>
+              </div>
+            </div>
+          )}
+          
+          {problem.recommendations && problem.recommendations.length > 0 && (
+            <div className="mt-4">
+              <h6 className="font-korean-pixel text-green-600 mb-2">💡 학습 추천</h6>
+              <div className="bg-green-50 p-3 rounded-md">
+                <p className="font-korean-pixel text-gray-700">{problem.recommendations[0]}</p>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="mt-6 bg-blue-50 p-4 rounded-lg text-center">
@@ -82,6 +92,8 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
           </button>
         </div>
       )}
+
+
     </div>
   );
 };
