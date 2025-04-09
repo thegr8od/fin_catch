@@ -122,8 +122,15 @@ public class SpendAnalysisService {
 
         Map<String, SpendCategoryEntity> result = new HashMap<>();
         // FastAPI 서버에 요청 → 결과 예: { "스타벅스": "카페", "배달의민족": "식비" }
+        log.info("[AI 분류] FastAPI 분류 요청 시작. 입력 값:");
+        summaries.forEach(summary -> log.info(" - {}", summary));
+
         List<FastApiResponseDto> resultFromFastApi = fastApiClient.predict(summaries);
-        //fastAPi : 8000
+        log.info("[AI 분류] FastAPI 응답 결과:");
+        resultFromFastApi.forEach(dto ->
+            log.info(" - '{}' : '{}'", dto.store_name(), dto.category())
+        );
+        
         List<AiSpendCategoryEntity> entitiesToSave = new ArrayList<>();
 
         for (FastApiResponseDto entry : resultFromFastApi) {
