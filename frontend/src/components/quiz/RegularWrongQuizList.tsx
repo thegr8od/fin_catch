@@ -76,16 +76,16 @@ const RegularWrongQuizList: React.FC = () => {
                   className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
                     log.quizMode === "MULTIPLE_CHOICE" 
                       ? "bg-blue-100 text-blue-700" 
-                      : log.quizMode === "ESSAY" 
+                      : log.quizMode === "SHORT_ANSWER" 
                         ? "bg-green-100 text-green-700" 
                         : "bg-purple-100 text-purple-700"
                   }`}
                 >
                   {log.quizMode === "MULTIPLE_CHOICE" 
                     ? "객관식" 
-                    : log.quizMode === "ESSAY" 
+                    : log.quizMode === "SHORT_ANSWER" 
                       ? "주관식" 
-                      : "단답"}
+                      : "서술형"}
                 </span>
               </div>
               <div className="mt-2 space-y-1">

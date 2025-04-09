@@ -68,24 +68,6 @@ const AnalysisDetails: React.FC<AnalysisDetailsProps> = ({ problem, loading, err
         <div className="mt-6 bg-white p-4 rounded-lg shadow-sm">
           <h5 className="font-korean-pixel text-lg text-blue-700 mb-3">📊 AI 분석 결과</h5>
           <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{problem.analysis}</p>
-          
-          {problem.weakPoints && problem.weakPoints.length > 0 && (
-            <div className="mt-4">
-              <h6 className="font-korean-pixel text-red-600 mb-2">⚠️ 취약점</h6>
-              <div className="bg-red-50 p-3 rounded-md">
-                <p className="font-korean-pixel text-gray-700">{problem.weakPoints[0]}</p>
-              </div>
-            </div>
-          )}
-          
-          {problem.recommendations && problem.recommendations.length > 0 && (
-            <div className="mt-4">
-              <h6 className="font-korean-pixel text-green-600 mb-2">💡 학습 추천</h6>
-              <div className="bg-green-50 p-3 rounded-md">
-                <p className="font-korean-pixel text-gray-700">{problem.recommendations[0]}</p>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div className="mt-6 bg-blue-50 p-4 rounded-lg text-center">
