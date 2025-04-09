@@ -24,7 +24,7 @@ const MainPage = () => {
   const { characters, selectedCharacter, handleCharacterSelect, changeMyCat } = useCharacterManagement();
   const { showNicknameModal, showCharacterInfoModal, handleModalOpen, handleModalClose } = useModalManagement(user);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  
+
   const { accounts, error: accountError, loadAccounts } = useLoadAccounts();
   const { categories } = useAnalyze();
 
@@ -79,30 +79,16 @@ const MainPage = () => {
           <div className="max-w-7xl mx-auto px-4">
             <div className="space-y-6 mt-10">
               {/* 프로필 섹션 */}
-              <ProfileSection 
-                profileData={profileData} 
-                onNicknameChange={() => handleModalOpen("nickname")} 
-                onCharacterClick={handleCharacterClick} 
-              />
+              <ProfileSection profileData={profileData} onNicknameChange={() => handleModalOpen("nickname")} onCharacterClick={handleCharacterClick} />
 
               {/* 계좌 연동 섹션 - 확장된 Props 사용 */}
-              <AccountLinkSection 
-                onAccountLink={() => setIsAccountModalOpen(true)} 
-                accounts={accounts}
-                error={accountError}
-                fetchAllAccount={loadAccounts}
-                mainAccountInfo={mainAccountInfo}
-              />
-
-              {/* 오답 분석 */}
-              <WrongAnswerAnalysis 
-                categories={categories} 
-                onDetailView={() => {}} 
-                onStartGame={() => navigate("/lobby")} 
-              />
+              <AccountLinkSection onAccountLink={() => setIsAccountModalOpen(true)} accounts={accounts} error={accountError} fetchAllAccount={loadAccounts} mainAccountInfo={mainAccountInfo} />
 
               {/* 소비패턴 분석 */}
               <SpendingAnalysis />
+
+              {/* 오답 분석 */}
+              <WrongAnswerAnalysis categories={categories} onDetailView={() => {}} onStartGame={() => navigate("/lobby")} />
 
               {/* AI 문제 풀기 */}
               <QuizResultSection />
@@ -112,21 +98,9 @@ const MainPage = () => {
       </div>
 
       {/* 모달들 */}
-      {showNicknameModal && (
-        <NicknameChangeModal 
-          onClose={() => handleModalClose("nickname")} 
-          currentNickname={profileData.nickname} 
-          onUpdateNickname={handleUpdateNickname} 
-        />
-      )}
+      {showNicknameModal && <NicknameChangeModal onClose={() => handleModalClose("nickname")} currentNickname={profileData.nickname} onUpdateNickname={handleUpdateNickname} />}
 
-      <AccountLinkModal 
-        isOpen={isAccountModalOpen} 
-        onClose={() => setIsAccountModalOpen(false)} 
-        onLinkAccount={handleAccountLink} 
-        accounts={accounts}
-        fetchAllAccount={loadAccounts}
-      />
+      <AccountLinkModal isOpen={isAccountModalOpen} onClose={() => setIsAccountModalOpen(false)} onLinkAccount={handleAccountLink} accounts={accounts} fetchAllAccount={loadAccounts} />
 
       {showCharacterInfoModal && (
         <CharacterChangeModal
