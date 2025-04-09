@@ -1,5 +1,6 @@
 package com.finbattle.domain.quiz.service;
 
+import com.finbattle.domain.quiz.dto.QuizLogDto;
 import com.finbattle.domain.quiz.dto.WrongQuizLogDto;
 import com.finbattle.domain.quiz.model.*;
 import com.finbattle.domain.quiz.repository.*;
@@ -62,5 +63,19 @@ public class QuizService {
                     .createdAt(log.getCreatedAt())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    public List<QuizLogDto> getQuizLogsByQuizId(Long quizId) {
+        List<QuizLog> logs = quizLogRepository.findByQuizId(quizId);
+
+        return logs.stream()
+                .map(log -> QuizLogDto.builder()
+                        .quizLogId(log.getQuizLogId())
+                        .memberId(log.getMemberId())
+                        .userAnswer(log.getUserAnswer())
+                        .isCorrect(log.getIsCorrect())
+                        .createdAt(log.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
