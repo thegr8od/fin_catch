@@ -168,17 +168,17 @@ export const useCharacterAnimation = ({ state, characterType = "classic", direct
         animation.anchor.set(0.5);
 
         // 크기에 맞게 스케일 조정
-        const baseScale = (dimensions.width / config.frameWidth) * 0.6; // 60% 크기로 조정
+        const baseScale = (dimensions.width / config.frameWidth) * 0.6;
         animation.scale.set(baseScale * (animState.direction ? 1 : -1), baseScale);
 
-        // 위치 조정 (약간 아래로)
+        // 위치 조정
         animation.x = dimensions.width / 2;
-        animation.y = dimensions.height / 2 + dimensions.height * 0.1; // 10% 아래로
+        animation.y = dimensions.height / 2 + dimensions.height * 0.1; 
 
         // 루프 설정
         animation.loop = animState.loop;
 
-        // 애니메이션 완료 콜백 설정 (콜백은 ref에서 가져옴)
+        // 애니메이션 완료
         animation.onComplete = () => {
           console.log(`애니메이션 완료 이벤트 발생: 상태=${animState.state}, 루프=${animState.loop}`);
           if (mountedRef.current && callbackRef.current) {
