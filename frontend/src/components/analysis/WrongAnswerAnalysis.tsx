@@ -232,9 +232,15 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     setSelectedProblem(null);
   };
 
-  // 문제 선택 핸들러 - 이제 분석 요청은 하지 않고 단순히 선택된 문제를 표시
+  // 문제 선택 핸들러 - 토글 기능 추가
   const handleProblemSelect = (problem: ExtendedProblem) => {
-    setSelectedProblem(problem);
+    // 이미 선택된 문제를 다시 클릭하면 닫기
+    if (selectedProblem && selectedProblem.id === problem.id) {
+      setSelectedProblem(null);
+    } else {
+      // 새로운 문제 선택
+      setSelectedProblem(problem);
+    }
   };
   
   // AI 분석 요청 핸들러 - 오른쪽 패널의 분석 버튼 클릭 시 호출
