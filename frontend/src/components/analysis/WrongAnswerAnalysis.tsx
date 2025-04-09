@@ -31,10 +31,17 @@ interface AnalysisData {
   recommendation: string;
 }
 
+// Problem 타입 확장
+interface ExtendedProblem extends Problem {
+  userAnswer?: string;
+  correctAnswer?: string;
+  isAnalyzed?: boolean;
+}
+
 const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame }) => {
   // 상태 관리
   const [selectedCategory, setSelectedCategory] = useState<number | string>(categories.length > 0 ? categories[0]?.tag : "consumption");
-  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<ExtendedProblem | null>(null);
   const [analyzingProblemId, setAnalyzingProblemId] = useState<number | null>(null);
   const [consumptionCategory, setConsumptionCategory] = useState<Category | null>(null);
   const [regularCategory, setRegularCategory] = useState<Category | null>(null);
@@ -53,11 +60,12 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
   const error = regularError || consumptionError;
 
   // 오답을 그룹화하는 함수
-  const groupAnswersByQuiz = useCallback((answers: WrongAnswer[], isRegular = false): Problem[] => {
+  const groupAnswersByQuiz = useCallback((answers: WrongAnswer[], isRegular = false): ExtendedProblem[] => {
     const grouped: Record<number, {
       quizId: number;
       question: string;
       correctAnswer: string;
+      userAnswer: string;
       quizMode?: string;
       quizSubject?: string;
       wrongCount: number;
@@ -73,6 +81,7 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
           quizId: item.quizId,
           question: item.question,
           correctAnswer: item.correctAnswer,
+          userAnswer: item.userAnswer,
           quizMode: item.quizMode,
           quizSubject: item.quizSubject,
           wrongCount: 1,
@@ -97,9 +106,10 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       type: isRegular && item.quizMode === "MULTIPLE_CHOICE" ? "객관식" : isRegular && item.quizMode !== "MULTIPLE_CHOICE" ? "주관식" : "객관식" as const,
       wrongCount: item.wrongCount,
       correctCount: 0,
-      analysis: isRegular 
-        ? `주제: ${item.quizSubject}, 정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`
-        : `정답: ${item.correctAnswer}, 최근 제출한 답: ${item.attempts[item.attempts.length - 1].userAnswer}`,
+      analysis: "",
+      userAnswer: item.userAnswer,
+      correctAnswer: item.correctAnswer,
+      isAnalyzed: false,
       weakPoints: [],
       recommendations: [],
       attemptHistory: item.attempts.map((attempt) => ({
@@ -207,13 +217,15 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     setSelectedProblem(null);
   };
 
-  const handleProblemSelect = async (problem: Problem) => {
-    setSelectedProblem(null); // 이전 선택된 문제 초기화
+  // 문제 선택 핸들러 - 이제 분석 요청은 하지 않고 단순히 선택된 문제를 표시
+  const handleProblemSelect = (problem: ExtendedProblem) => {
+    setSelectedProblem(problem);
+  };
+  
+  // AI 분석 요청 핸들러 - 오른쪽 패널의 분석 버튼 클릭 시 호출
+  const handleRequestAnalysis = async (problem: ExtendedProblem) => {
     setAnalyzingProblemId(problem.id);
 
-    // 약 1초간 분석 중 표시 - 모든 문제 타입에 적용
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     try {
       let result;
       // 카테고리에 따라 다른 분석 API 호출
@@ -238,21 +250,41 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
           const analysisData = analysisResult as AnalysisData;
           
           // 분석 결과로 문제 업데이트
-          problem = {
+          const analyzedProblem: ExtendedProblem = {
             ...problem,
             analysis: analysisData.analysis,
             weakPoints: [analysisData.weakness],
             recommendations: [analysisData.recommendation],
+            isAnalyzed: true
           };
+
+          // 카테고리 내에서 해당 문제 업데이트
+          if (currentCategory) {
+            const updatedProblems = currentCategory.problems.map(p => 
+              p.id === problem.id ? analyzedProblem : p
+            );
+
+            if (selectedCategory === "consumption" && consumptionCategory) {
+              setConsumptionCategory({
+                ...consumptionCategory,
+                problems: updatedProblems
+              });
+            } else if (selectedCategory === "regular" && regularCategory) {
+              setRegularCategory({
+                ...regularCategory,
+                problems: updatedProblems
+              });
+            }
+          }
+
+          setSelectedProblem(analyzedProblem);
         }
       }
     } catch (err) {
       console.error("분석 오류:", err);
+    } finally {
+      setAnalyzingProblemId(null);
     }
-    
-    // 분석 완료 후 선택된 문제 설정
-    setSelectedProblem(problem);
-    setAnalyzingProblemId(null);
   };
 
   // 데이터가 없을 때 표시할 컴포넌트
@@ -319,10 +351,15 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
             ) : error ? (
               <div className="text-red-500 p-4 text-center font-korean-pixel">분석 중 오류가 발생했습니다. 다시 시도해주세요.</div>
             ) : selectedProblem ? (
-              <AnalysisDetails problem={selectedProblem} loading={loading} error={!!error} />
+              <AnalysisDetails 
+                problem={selectedProblem} 
+                loading={loading} 
+                error={!!error}
+                onRequestAnalysis={handleRequestAnalysis}
+              />
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-500 font-korean-pixel">문제를 선택하면 분석 내용이 표시됩니다</p>
+                <p className="text-gray-500 font-korean-pixel">왼쪽에서 문제를 선택하면 상세 정보가 표시됩니다</p>
               </div>
             )}
           </div>
