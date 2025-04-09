@@ -72,4 +72,13 @@ public class AiConsumptionQuizController {
         }
     }
 
+    @Operation(summary = "1개월 소비내역 기반 AI퀴즈 조회",
+            description = "현재 로그인한 사용자의 최근 1개월 간 소비내역 기반 AI퀴즈를 모두 조회합니다.")
+    @GetMapping("/monthly")
+    public ResponseEntity<BaseResponse<List<AiConsumptionQuizDto>>> getMonthlyConsumptionQuizzes() {
+        Long memberId = authenticationUtil.getMemberId();
+        List<AiConsumptionQuizDto> quizzes = aiConsumptionQuizService.getMonthlyConsumptionQuizzes(memberId);
+        return ResponseEntity.ok(new BaseResponse<>(quizzes));
+    }
+
 }

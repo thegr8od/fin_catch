@@ -159,5 +159,21 @@ public class AiConsumptionQuizService {
         }).collect(Collectors.toList());
     }
 
+    public List<AiConsumptionQuizDto> getMonthlyConsumptionQuizzes(Long memberId) {
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+        // 새로 추가한 메서드 호출하여 해당 기간의 데이터를 조회
+        List<AiQuiz> aiQuizzes = aiQuizRepository.findByMemberIdAndIsDeletedFalseAndCreatedAtAfter(memberId, oneMonthAgo);
+
+        return aiQuizzes.stream().map(aiQuiz -> {
+            AiMultipleChoiceQuiz multipleQuiz = multipleChoiceQuizRepository.findByAiQuiz(aiQuiz)
+                    .orElseThrow(() -> new BusinessException(BaseResponseStatus.QUIZ_NOT_FOUND));
+            List<AiOption> options = aiOptionRepository.findByMultipleChoiceQuiz(multipleQuiz);
+            List<AiOptionDto> optionDtos = options.stream()
+                    .map(opt -> new AiOptionDto(opt.getAiOptionId(), opt.getOptionText(), opt.isCorrect()))
+                    .collect(Collectors.toList());
+            return new AiConsumptionQuizDto(aiQuiz.getAiQuizId(), multipleQuiz.getQuestion(), optionDtos);
+        }).collect(Collectors.toList());
+    }
+
 
 }
