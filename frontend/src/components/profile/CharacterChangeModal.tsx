@@ -190,15 +190,15 @@ const CharacterChangeModal: React.FC<CharacterChangeModalProps> = ({ onClose, ch
                       <img src={`/cats_assets/${character.catName}/${character.catName}_cat_static.png`} alt={character.catName} className="w-24 h-24" style={{ imageRendering: "pixelated" }} />
                       <div className="mt-4 text-center w-full">
                         <h3 className="font-korean-pixel text-lg font-bold text-gray-800 mb-2">{changeCatNameToKorean(character.catName)}</h3>
-                        <div className={`w-full flex justify-center ${gradeStyle.special ? "scale-110" : ""}`}>
+                        <div className={`w-full flex justify-center ${gradeStyle.special ? "scale-105" : ""}`}>
                           <div
-                            className={`px-4 py-1.5 ${gradeStyle.special ? "rounded-lg" : "rounded-md"} 
+                            className={`px-2 py-0.5 ${gradeStyle.special ? "rounded-md" : "rounded"} 
                             ${gradeStyle.bg} ${gradeStyle.border} border ${gradeStyle.shadow} ${gradeStyle.glow} 
                             inline-flex items-center justify-center transition-all duration-300 
                             ${gradeStyle.special ? "animate-pulse" : ""} 
-                            ${gradeStyle.special ? "min-w-[120px]" : "min-w-[100px]"}`}
+                            ${gradeStyle.special ? "min-w-[70px]" : "min-w-[60px]"}`}
                           >
-                            <span className={`text-xs font-bold tracking-wider ${gradeStyle.text} ${gradeStyle.special ? "text-sm" : ""}`}>{character.grade.toUpperCase()}</span>
+                            <span className={`text-[8px] font-bold tracking-wider ${gradeStyle.text} ${gradeStyle.special ? "text-[9px]" : ""}`}>{character.grade.toUpperCase()}</span>
                           </div>
                         </div>
                       </div>
