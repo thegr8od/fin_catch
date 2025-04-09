@@ -100,23 +100,38 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
     });
     
     // 그룹화된 데이터를 Problem 형식으로 변환
-    return Object.values(grouped).map((item) => ({
-      id: item.quizId,
-      title: item.question,
-      type: isRegular && item.quizMode === "MULTIPLE_CHOICE" ? "객관식" : isRegular && item.quizMode !== "MULTIPLE_CHOICE" ? "주관식" : "객관식" as const,
-      wrongCount: item.wrongCount,
-      correctCount: 0,
-      analysis: "",
-      userAnswer: item.userAnswer,
-      correctAnswer: item.correctAnswer,
-      isAnalyzed: false,
-      weakPoints: [],
-      recommendations: [],
-      attemptHistory: item.attempts.map((attempt) => ({
-        date: attempt.createdAt.substring(0, 10),
-        isCorrect: false
-      }))
-    }));
+    return Object.values(grouped).map((item) => {
+      // 문제 유형 매핑
+      let problemType: "객관식" | "주관식" | "서술형" = "객관식";
+      
+      if (isRegular && item.quizMode) {
+        if (item.quizMode === "MULTIPLE_CHOICE") {
+          problemType = "객관식";
+        } else if (item.quizMode === "SHORT_ANSWER") {
+          problemType = "주관식";
+        } else if (item.quizMode === "ESSAY") {
+          problemType = "서술형";
+        }
+      }
+      
+      return {
+        id: item.quizId,
+        title: item.question,
+        type: problemType,
+        wrongCount: item.wrongCount,
+        correctCount: 0,
+        analysis: "",
+        userAnswer: item.userAnswer,
+        correctAnswer: item.correctAnswer,
+        isAnalyzed: false,
+        weakPoints: [],
+        recommendations: [],
+        attemptHistory: item.attempts.map((attempt) => ({
+          date: attempt.createdAt.substring(0, 10),
+          isCorrect: false
+        }))
+      };
+    });
   }, []);
 
   // 오답 데이터 로드 함수
