@@ -1,5 +1,6 @@
 package com.finbattle.domain.quiz.controller;
 
+import com.finbattle.domain.quiz.dto.QuizLogDto;
 import com.finbattle.domain.quiz.dto.WrongQuizLogDto;
 import com.finbattle.domain.quiz.service.QuizService;
 import com.finbattle.global.common.Util.AuthenticationUtil;
@@ -43,5 +44,15 @@ public class QuizController {
             return ResponseEntity.status(BaseResponseStatus.INVALID_QUIZ_TYPE.getHttpStatus())
                     .body(new BaseResponse<>(BaseResponseStatus.INVALID_QUIZ_TYPE));
         }
+    }
+
+    @Operation(
+            summary = "특정 퀴즈 로그 전체 조회",
+            description = "지정된 quiz_id와 관련된 모든 quiz_log를 조회하여 반환합니다."
+    )
+    @GetMapping("/logs/{quizId}")
+    public ResponseEntity<BaseResponse<List<QuizLogDto>>> getQuizLogsByQuizId(@PathVariable Long quizId) {
+        List<QuizLogDto> logDtos = quizService.getQuizLogsByQuizId(quizId);
+        return ResponseEntity.ok(new BaseResponse<>(logDtos));
     }
 }
