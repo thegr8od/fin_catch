@@ -90,6 +90,9 @@ public class SpendAnalysisService {
         Set<String> notFound = new HashSet<>(summaries);
         notFound.removeAll(summaryToCategory.keySet());
 
+        log.info("[AI 분류] AI 분류 시작. 입력 값:");
+        notFound.forEach(summary -> log.info(" - {}", summary));
+
         List<KeywordCategoryMapping> aiMappings = aiCategoryRepository.findKeywordCategoryMappings(
             notFound);
 
@@ -111,7 +114,8 @@ public class SpendAnalysisService {
 
         log.info("카테고리 분류 완료. 총 거래 내역 수: {}, DB 분류: {}, AI 분류: {}", summaries.size(),
             summaries.size() - notFound.size(), notFound.size());
-
+        log.info("분류 결과");
+        summaries.forEach(summary -> log.info(" - {}", summary));
         return summaryToCategory;
     }
 
@@ -122,15 +126,13 @@ public class SpendAnalysisService {
 
         Map<String, SpendCategoryEntity> result = new HashMap<>();
         // FastAPI 서버에 요청 → 결과 예: { "스타벅스": "카페", "배달의민족": "식비" }
-        log.info("[AI 분류] FastAPI 분류 요청 시작. 입력 값:");
-        summaries.forEach(summary -> log.info(" - {}", summary));
 
         List<FastApiResponseDto> resultFromFastApi = fastApiClient.predict(summaries);
         log.info("[AI 분류] FastAPI 응답 결과:");
         resultFromFastApi.forEach(dto ->
             log.info(" - '{}' : '{}'", dto.store_name(), dto.category())
         );
-        
+
         List<AiSpendCategoryEntity> entitiesToSave = new ArrayList<>();
 
         for (FastApiResponseDto entry : resultFromFastApi) {
