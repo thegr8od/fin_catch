@@ -28,13 +28,27 @@ const RegularWrongQuizList: React.FC = () => {
     }
   };
 
+  // 최신순으로 정렬된 로그
+  const sortedLogs = useMemo(() => {
+    // 복사본을 만들어 정렬
+    return [...groupedLogs].sort((a, b) => {
+      // 날짜 비교를 위해 Date 객체로 변환
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      
+      // 내림차순 정렬 (최신 날짜가 먼저 오도록)
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [groupedLogs]);
+
+  // 페이지네이션 적용
   const paginatedLogs = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return groupedLogs.slice(startIndex, endIndex);
-  }, [groupedLogs, currentPage]);
+    return sortedLogs.slice(startIndex, endIndex);
+  }, [sortedLogs, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(groupedLogs.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedLogs.length / itemsPerPage);
 
   // 날짜 포맷 함수 - 날짜만 표시 (시간 제외)
   const formatDate = (dateString: string) => {

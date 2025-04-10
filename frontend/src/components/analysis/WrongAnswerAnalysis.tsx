@@ -96,6 +96,9 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
           userAnswer: item.userAnswer,
           createdAt: item.createdAt
         });
+        
+        // 최신 답변으로 userAnswer 업데이트
+        grouped[item.quizId].userAnswer = item.userAnswer;
       }
     });
     
@@ -114,6 +117,11 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
         }
       }
       
+      // 시도 기록을 최신순으로 정렬
+      const sortedAttempts = [...item.attempts].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
       return {
         id: item.quizId,
         title: item.question,
@@ -126,8 +134,8 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
         isAnalyzed: false,
         weakPoints: [],
         recommendations: [],
-        attemptHistory: item.attempts.map((attempt) => ({
-          date: attempt.createdAt.substring(0, 10),
+        attemptHistory: sortedAttempts.map((attempt) => ({
+          date: attempt.createdAt,  // 전체 날짜 문자열 사용
           isCorrect: false
         }))
       };
@@ -140,7 +148,12 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       // AI 소비 퀴즈 오답 데이터 로드
       const consumptionResponse = await fetchConsumptionWrong();
       if (consumptionResponse?.isSuccess && Array.isArray(consumptionResponse?.result)) {
-        const mergedProblems = groupAnswersByQuiz(consumptionResponse.result);
+        // 최신순으로 정렬 (createdAt 기준 내림차순)
+        const sortedAnswers = [...consumptionResponse.result].sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        
+        const mergedProblems = groupAnswersByQuiz(sortedAnswers);
         setConsumptionCategory({
           id: 900, // 임의의 ID 할당
           tag: "consumption",
@@ -153,7 +166,12 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
       // 일반 퀴즈 오답 데이터 로드
       const regularResponse = await fetchRegularWrong();
       if (regularResponse?.isSuccess && Array.isArray(regularResponse?.result)) {
-        const mergedProblems = groupAnswersByQuiz(regularResponse.result, true);
+        // 최신순으로 정렬 (createdAt 기준 내림차순)
+        const sortedAnswers = [...regularResponse.result].sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        
+        const mergedProblems = groupAnswersByQuiz(sortedAnswers, true);
         setRegularCategory({
           id: 901, // 임의의 ID 할당
           tag: "regular",
@@ -211,9 +229,25 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
   
   const currentProblems = React.useMemo(() => {
     if (!currentCategory?.problems) return [];
+    
+    // 최신 틀린 날짜 기준으로 문제들 정렬 (맨 처음 렌더링 시에도 최신순 보장)
+    const sortedProblems = [...currentCategory.problems].sort((a, b) => {
+      // 최신 틀린 날짜 가져오기 (attemptHistory의 첫 번째 항목)
+      const aDate = a.attemptHistory && a.attemptHistory.length > 0 
+        ? new Date(a.attemptHistory[0].date)
+        : new Date(0);
+        
+      const bDate = b.attemptHistory && b.attemptHistory.length > 0 
+        ? new Date(b.attemptHistory[0].date)
+        : new Date(0);
+        
+      // 내림차순 정렬 (최신 날짜가 먼저 오도록)
+      return bDate.getTime() - aDate.getTime();
+    });
+    
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    return currentCategory.problems.slice(indexOfFirstItem, indexOfLastItem);
+    return sortedProblems.slice(indexOfFirstItem, indexOfLastItem);
   }, [currentCategory, currentPage, itemsPerPage]);
   
   const totalPages = React.useMemo(() => {
@@ -384,7 +418,23 @@ const WrongAnswerAnalysis: React.FC<AnalysisProps> = ({ categories, onStartGame 
                         <h5 className="font-korean-pixel text-lg text-blue-700 mb-3">📊 AI 분석 결과</h5>
                         <p className="font-korean-pixel text-gray-600 whitespace-pre-line">{selectedProblem.analysis}</p>
                         
-                        {/* 취약점과 학습 추천 부분이 제거됨 */}
+                        {selectedProblem.weakPoints && selectedProblem.weakPoints.length > 0 && (
+                          <div className="mt-4">
+                            <h6 className="font-korean-pixel text-red-600 mb-2">⚠️ 취약점</h6>
+                            <div className="bg-red-50 p-3 rounded-md">
+                              <p className="font-korean-pixel text-gray-700">{selectedProblem.weakPoints[0]}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {selectedProblem.recommendations && selectedProblem.recommendations.length > 0 && (
+                          <div className="mt-4">
+                            <h6 className="font-korean-pixel text-green-600 mb-2">💡 학습 추천</h6>
+                            <div className="bg-green-50 p-3 rounded-md">
+                              <p className="font-korean-pixel text-gray-700">{selectedProblem.recommendations[0]}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="mt-6 bg-blue-50 p-4 rounded-lg text-center">

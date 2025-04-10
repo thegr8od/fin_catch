@@ -56,9 +56,9 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
   // 획득한 코인 수량 계산
   const getEarnedCoins = () => {
     if (playerStatus.state === "victory") {
-      return 300; // 승리 시 300 코인
+      return { coins: 300, exp: 150 }; // 승리 시 300 코인
     } else {
-      return 100; // 패배 또는 비김 시 100 코인
+      return { coins: 100, exp: 75 }; // 패배 또는 비김 시 100 코인
     }
   };
 
@@ -90,9 +90,14 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
                   <div className="text-xl">{opponentStatus.state === "victory" ? "🏆" : opponentStatus.state === "dead" ? "💀" : "🤝"}</div>
                 </div>
               </div>
-              <div className="mt-4 mb-4 flex items-center justify-center">
-                <img src="/assets/coin.png" alt="코인" className="w-8 h-8 mr-2" />
-                <span className="text-xl font-bold text-yellow-600">× {getEarnedCoins()} 획득!</span>
+              <div className="mt-4 mb-4 flex items-center justify-center space-x-8">
+                <div className="flex items-center justify-center">
+                  <img src="/assets/coin.png" alt="코인" className="w-8 h-8 mr-2" />
+                  <span className="text-xl font-bold text-yellow-600">× {getEarnedCoins().coins} 획득!</span>
+                </div>
+                <div className="flex items-center justify-center">
+                  <span className="text-xl font-bold text-green-600"> Exp x {getEarnedCoins().exp} 획득!</span>
+                </div>
               </div>
               <div className="mt-6">
                 <button onClick={() => navigate("/main")} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors duration-300">
