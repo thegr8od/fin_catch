@@ -76,11 +76,6 @@ body::after {
   z-index: 999;
 }
 
-button {
-  cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABIUlEQVR4nO2XMU7DQBBF3xIJIVEgUVJwAa7AEWi5AhVnoEGiQNyAC3ABCpAoKJCoKIEGIRQhJBSRDf/LWpbXa8drr1Mk/2Y9mvdmZndtKJVKJQcagLbtb8AK0Mv5/QnYA+4s9oBnYJjlMAQOgTvgFZiVOO8Dj8A9cAV0VIBj4DPH+QdwCrRTbFrAGXCf4jMBToAqwGqOcwEcALUC+xpwBIwS9t+WA+AFeADWS9ivAxfAFKgDzDOcX4HdkvYxu8Cb+c5jgSPgDdhx2MfsWPxRLLBhN5vjsI/ZtPhNFWDgcR4LDFSAsce5+Y5UgInHuflOVICxx7n5jlWAkce5+Y5UgKnHuflOVYAvj/P4X/ClAsy9zkulUiQW35OzAVBhkTMfAAAAAElFTkSuQmCC"),
-    auto;
-}
-
 .text-shadow-lg {
   text-shadow: 3px 3px 0 #000;
 }
