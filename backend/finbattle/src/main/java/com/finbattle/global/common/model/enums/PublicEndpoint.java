@@ -23,7 +23,7 @@ public enum PublicEndpoint {
     ACTUATOR_PROMETHEUS("/actuator/prometheus"),
     GRAFANA("/grafana**"),
     ACTUATOR("/actuator/**"),
-    WEBSOCKET("/ws/firechat/**");
+    WEBSOCKET("/ws/firechat");
 
     private final String url;
 
