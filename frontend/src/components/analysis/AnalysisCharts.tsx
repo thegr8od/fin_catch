@@ -30,7 +30,7 @@ ChartJS.register(
 
 interface AnalysisChartsProps {
   problem: Problem;
-  isConsumption?: boolean; // 소비 퀴즈인지 여부를 결정하는 prop 추가
+  isConsumption?: boolean; // 소비 퀴즈 여부를 결정하는 prop 추가
 }
 
 const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption = false }) => {
@@ -41,6 +41,16 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption 
   // 정답률 계산 (도넛 차트를 위해 필요)
   const correctRate = (problem.correctCount / (problem.correctCount + problem.wrongCount)) * 100;
   const wrongRate = 100 - correctRate;
+
+  // 날짜만 표시하는 함수
+  const formatDateOnly = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit'
+    });
+  };
 
   const doughnutData = {
     labels: ["정답", "오답"],
@@ -54,7 +64,8 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption 
   };
 
   const historyData = {
-    labels: problem.attemptHistory.map((h) => h.date),
+    // 날짜만 표시하도록 수정
+    labels: problem.attemptHistory.map((h) => formatDateOnly(h.date)),
     datasets: [
       {
         label: "문제 풀이 기록",
