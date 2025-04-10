@@ -143,12 +143,12 @@ frontend/
 ```
 finbattle/
 ├── domain/                   # 도메인 기반 비즈니스 로직 모음
-│   ├── ai/                   # AI 추천, 분석 기능
+│   ├── ai/                   # AI 분류, 분석, 출제 기능
 │   ├── banking/              # 금융/거래 처리 로직
 │   ├── cat/                  # 고양이 정보 관리 및 연결
 │   ├── chat/                 # 채팅 기능
 │   ├── game/                 # 게임 기능 처리
-│   ├── member/               # 회원 정보 및 인증 관리
+│   ├── member/               # 회원 정보 관리리
 │   ├── oauth/                # OAuth 인증 처리
 │   ├── quiz/                 # 퀴즈 기능
 │   ├── room/                 # 채팅방/게임방 관리
@@ -158,13 +158,13 @@ finbattle/
 │   └── common/               # 전역 공통 모듈
 │       ├── config/           # 애플리케이션 설정 (WebMvc, Security 등)
 │       ├── exception/        # 전역 예외 처리
-│       ├── filter/           # 인증 필터 등 서블릿 필터
+│       ├── filter/           # JWT, Log 필터
 │       ├── handler/          # 인증 실패, 예외 핸들러
 │       ├── metrics/          # Prometheus, Grafana 메트릭 연동
 │       ├── model/            # 공통 모델 및 DTO
-│       ├── redis/            # Redis 캐싱, 저장소
+│       ├── redis/            # Redis 캐싱, Pub / Sub
 │       ├── service/          # 공용 서비스 계층
-│       └── Util/             # 유틸 클래스 모음 (DateUtil, StringUtil 등)
+│       └── Util/             # 유틸 클래스 모음 (JWTUtil, CookieUtil 등)
 │
 └── FinbattleApplication.java # 스프링부트 메인 실행 클래스
 
