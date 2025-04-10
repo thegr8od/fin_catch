@@ -1,0 +1,10 @@
+fastapi>=0.115.0
+uvicorn>=0.30.0
+dill>=0.3.7
+xgboost>=2.0.3
+konlpy>=0.6.0
+JPype1==1.4.1  # konlpy 호환
+scikit-learn>=1.0.2
+pandas>=2.0.0
+numpy>=1.24.0
+python-multipart 
