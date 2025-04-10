@@ -397,7 +397,7 @@ public class GameService {
 
         if (member1.getLife() > member2.getLife()) {
             winnerId = member1.getMemberId();
-            loserId = -1L;
+            loserId = member2.getMemberId();
         } else if (member2.getLife() > member1.getLife()) {
             winnerId = member2.getMemberId();
             loserId = member1.getMemberId();
