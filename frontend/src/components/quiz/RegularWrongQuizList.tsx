@@ -36,6 +36,16 @@ const RegularWrongQuizList: React.FC = () => {
 
   const totalPages = Math.ceil(groupedLogs.length / itemsPerPage);
 
+  // 날짜 포맷 함수 - 날짜만 표시 (시간 제외)
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit'
+    });
+  };
+
   if (loading) return (
     <div className="bg-white/95 rounded-2xl shadow-2xl p-6 flex justify-center items-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -98,8 +108,9 @@ const RegularWrongQuizList: React.FC = () => {
                   </p>
                 )}
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {new Date(log.createdAt).toLocaleString()}
+              {/* 틀린 날짜 표시 (시간 제외) */}
+              <div className="text-sm text-red-500 mt-1 font-korean-pixel">
+                틀린 날짜: {formatDate(log.createdAt)}
               </div>
 
               {analyzingProblemId === log.quizId && (
