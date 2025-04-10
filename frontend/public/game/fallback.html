@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이미지 경로 확인</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .image-container {
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        padding: 10px;
+      }
+      img {
+        max-width: 100%;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .status {
+        font-weight: bold;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>게임 이미지 경로 확인</h1>
+
+    <div class="image-container">
+      <h2>배틀 배경</h2>
+      <img src="/game/battlebg.png" alt="배틀 배경" onerror="this.parentNode.querySelector('.status').innerHTML = '로드 실패'; this.parentNode.querySelector('.status').className = 'status error';" />
+      <div class="status">확인 중...</div>
+      <script>
+        document.querySelector('img[src="/game/battlebg.png"]').onload = function () {
+          this.parentNode.querySelector(".status").innerHTML = "로드 성공";
+          this.parentNode.querySelector(".status").className = "status success";
+        };
+      </script>
+    </div>
+
+    <div class="image-container">
+      <h2>고양이 이미지</h2>
+      <img
+        src="/game/IdleCatt.png"
+        alt="고양이 이미지"
+        onerror="this.parentNode.querySelector('.status').innerHTML = '로드 실패'; this.parentNode.querySelector('.status').className = 'status error';"
+      />
+      <div class="status">확인 중...</div>
+      <script>
+        document.querySelector('img[src="/game/IdleCatt.png"]').onload = function () {
+          this.parentNode.querySelector(".status").innerHTML = "로드 성공";
+          this.parentNode.querySelector(".status").className = "status success";
+        };
+      </script>
+    </div>
+
+    <h2>불 애니메이션 이미지</h2>
+    <div id="fire-images">
+      <!-- 자바스크립트로 동적 생성 -->
+    </div>
+
+    <script>
+      // 불 이미지 확인
+      const fireContainer = document.getElementById("fire-images");
+      for (let i = 1; i <= 5; i++) {
+        const container = document.createElement("div");
+        container.className = "image-container";
+
+        const path = `/game/fire/fire${i}.png`;
+
+        const heading = document.createElement("h3");
+        heading.textContent = `불 이미지 ${i}`;
+
+        const img = document.createElement("img");
+        img.src = path;
+        img.alt = `불 이미지 ${i}`;
+
+        const status = document.createElement("div");
+        status.className = "status";
+        status.textContent = "확인 중...";
+
+        img.onload = function () {
+          status.textContent = "로드 성공";
+          status.className = "status success";
+        };
+
+        img.onerror = function () {
+          status.textContent = "로드 실패";
+          status.className = "status error";
+        };
+
+        container.appendChild(heading);
+        container.appendChild(img);
+        container.appendChild(status);
+
+        fireContainer.appendChild(container);
+      }
+    </script>
+  </body>
+</html>
