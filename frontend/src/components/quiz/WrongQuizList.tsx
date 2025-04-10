@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Problem } from '../../types/analysis/Problem';
 import Pagination from '../common/Pagination';
 
@@ -31,10 +31,27 @@ const WrongQuizList: React.FC<WrongQuizListProps> = ({
     });
   };
 
+  // 최신순으로 정렬된 문제 목록
+  const sortedProblems = useMemo(() => {
+    return [...problems].sort((a, b) => {
+      // 최신 틀린 날짜 가져오기 (attemptHistory의 첫 번째 항목이 최신)
+      const aDate = a.attemptHistory && a.attemptHistory.length > 0 
+        ? new Date(a.attemptHistory[0].date)
+        : new Date(0);
+        
+      const bDate = b.attemptHistory && b.attemptHistory.length > 0 
+        ? new Date(b.attemptHistory[0].date)
+        : new Date(0);
+        
+      // 내림차순 정렬 (최신 날짜가 먼저 오도록)
+      return bDate.getTime() - aDate.getTime();
+    });
+  }, [problems]);
+
   return (
     <div className="space-y-3">
-      {/* 현재 페이지의 문제만 표시 */}
-      {problems.map((problem) => (
+      {/* 현재 페이지의 문제만 표시 (최신순 정렬) */}
+      {sortedProblems.map((problem) => (
         <div
           key={problem.id}
           onClick={() => onProblemSelect(problem)}
@@ -62,7 +79,7 @@ const WrongQuizList: React.FC<WrongQuizListProps> = ({
             {/* 틀린 날짜 표시 (시간 제외) */}
             {problem.attemptHistory && problem.attemptHistory.length > 0 && (
               <p className="text-sm font-korean-pixel" style={{ color: '#EF4444' }}>
-                틀린 날짜: {formatDate(problem.attemptHistory[problem.attemptHistory.length - 1].date)}
+                틀린 날짜: {formatDate(problem.attemptHistory[0].date)}
               </p>
             )}
           </div>
