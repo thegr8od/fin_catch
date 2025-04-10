@@ -22,7 +22,7 @@ interface BattleScreenProps {
 
 const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatus, timer, questionText, onPlayerAnimationComplete, onOpponentAnimationComplete, onAnswerSubmit }) => {
   const [chatInput, setChatInput] = useState("");
-  const { chatMessages, gameState, quizType } = useGame();
+  const { chatMessages, gameState, quizType, isAnswerBlocked } = useGame();
   const navigate = useNavigate();
 
   // 폼 제출 핸들러
@@ -144,7 +144,15 @@ const BattleScreen: React.FC<BattleScreenProps> = ({ playerStatus, opponentStatu
 
       {/* 채팅 영역 - 중앙 하단에 배치 */}
       <div id="battle-chat-container" className="fixed left-1/2 transform -translate-x-1/2 bottom-4 z-30" style={{ width: "33%" }}>
-        <ChatSection chatMessages={chatMessages} chatInput={chatInput} setChatInput={setChatInput} handleSubmit={handleSubmit} showInput={!isGameFinished} showMessages={true} />
+        <ChatSection
+          chatMessages={chatMessages}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          handleSubmit={handleSubmit}
+          showInput={!isGameFinished}
+          showMessages={true}
+          isAnswerBlocked={isAnswerBlocked}
+        />
       </div>
     </div>
   );
