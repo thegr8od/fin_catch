@@ -30,8 +30,7 @@ public class RedisGameSubscriber implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         try {
             String msgBody = new String(message.getBody(), StandardCharsets.UTF_8);
-            log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", new String(pattern),
-                msgBody);
+            //log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", new String(pattern), msgBody);
 
             if (msgBody.startsWith("\"") && msgBody.endsWith("\"")) {
                 msgBody = objectMapper.readValue(msgBody, String.class); // JSON 문자열 → 실제 JSON
@@ -56,7 +55,7 @@ public class RedisGameSubscriber implements MessageListener {
                     );
                     break;
                 case MULTIPLE_QUIZ, SHORT_QUIZ, ESSAY_QUIZ, QUIZ_RESULT, ONE_ATTACK, FIRST_HINT,
-                     SECOND_HINT, REWARD:
+                    SECOND_HINT, REWARD:
                     // data는 Map<String, Object>
                     data = objectMapper.readValue(
                         dataNode.toString(),
@@ -73,8 +72,7 @@ public class RedisGameSubscriber implements MessageListener {
             // WebSocket으로 메시지 전송
             String destination = "/topic/game/" + eventMessage.getRoomId();
             messagingTemplate.convertAndSend(destination, eventMessage);
-            log.info("🔵 WebSocket 전송: Destination={}, Event={}, Data={}",
-                destination, eventMessage.getEvent(), eventMessage.getData());
+            //log.info("🔵 WebSocket 전송: Destination={}, Event={}, Data={}", destination, eventMessage.getEvent(), eventMessage.getData());
 
         } catch (Exception e) {
             log.error("❌ RedisGameSubscriber: WebSocket 전송 중 오류 발생", e);

@@ -22,7 +22,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
         WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        log.info("Before WebSocket Handshake");
+        //log.info("Before WebSocket Handshake");
 
         return true;
     }
@@ -30,6 +30,6 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
         WebSocketHandler wsHandler, Exception exception) {
-        log.info("After WebSocket Handshake");
+        //log.info("After WebSocket Handshake");
     }
 }

@@ -31,11 +31,11 @@ public class StompHandler implements ChannelInterceptor {
             StompCommand.SEND.equals(accessor.getCommand())) {
 
             String authHeader = accessor.getFirstNativeHeader("Authorization");
-            log.info("STOMP {} 요청 - Authorization 헤더: {}", accessor.getCommand(), authHeader);
+            //log.info("STOMP {} 요청 - Authorization 헤더: {}", accessor.getCommand(), authHeader);
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7); // "Bearer " 제거
-                log.info("추출된 JWT 토큰: {}", token);
+                //log.info("추출된 JWT 토큰: {}", token);
                 try {
                     // JWT 검증 및 사용자 정보 추출
                     Long memberId = jwtUtil.getAccessMemberId(token);
@@ -49,15 +49,14 @@ public class StompHandler implements ChannelInterceptor {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     accessor.setUser(stompPrincipal);
 
-                    log.info("✅ STOMP {} 인증 성공 - memberId: {}, providerId: {}",
-                        accessor.getCommand(), memberId, providerId);
+                    //log.info("✅ STOMP {} 인증 성공 - memberId: {}, providerId: {}", accessor.getCommand(), memberId, providerId);
                 } catch (Exception e) {
-                    log.warn("❌ JWT 인증 실패 - 토큰: {}, 오류: {}", token, e.getMessage());
+                    //log.warn("❌ JWT 인증 실패 - 토큰: {}, 오류: {}", token, e.getMessage());
                     throw new IllegalArgumentException(
                         "Invalid WebSocket token: " + e.getMessage());
                 }
             } else {
-                log.warn("❌ Authorization 헤더 누락 또는 형식 오류 - 헤더: {}", authHeader);
+                //log.warn("❌ Authorization 헤더 누락 또는 형식 오류 - 헤더: {}", authHeader);
                 throw new IllegalArgumentException("Missing or invalid Authorization header");
             }
         }

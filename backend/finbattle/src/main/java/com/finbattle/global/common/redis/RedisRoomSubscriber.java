@@ -19,20 +19,20 @@ public class RedisRoomSubscriber implements MessageListener {
         String channel = new String(message.getChannel());
         String msg = message.toString();
 
-        log.info("Received message from Redis Pub/Sub: Channel={}, Message={}", channel, msg);
-        log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", channel, msg);
+        //log.info("Received message from Redis Pub/Sub: Channel={}, Message={}", channel, msg);
+        //log.info("✅ Redis Pub/Sub 메시지 수신: Channel={}, Message={}", channel, msg);
 
         // WebSocket을 통해 클라이언트로 메시지 전송
         try {
             String roomId = channel.split(":")[1];
-            System.out.println("roomId = " + roomId);
+            //System.out.println("roomId = " + roomId);
             String destination = "/topic/room/" + roomId;
 
-            log.info("🔵 WebSocket 전송: Destination={}, Message={}", destination, msg);
+            //log.info("🔵 WebSocket 전송: Destination={}, Message={}", destination, msg);
             messagingTemplate.convertAndSend(destination, msg);
 
         } catch (Exception e) {
-            log.error("❌ WebSocket 전송 중 오류 발생", e);
+            //log.error("❌ WebSocket 전송 중 오류 발생", e);
         }
     }
 }

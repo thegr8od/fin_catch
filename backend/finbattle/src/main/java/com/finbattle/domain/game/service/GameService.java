@@ -388,6 +388,7 @@ public class GameService {
     }
 
     public void endGame(Long roomId) {
+        log.info("게임 종료: roomId={}", roomId);
         GameData gameData = redisGameRepository.findById(roomId)
             .orElseThrow(() -> new IllegalArgumentException("해당 roomId의 GameData가 없습니다."));
         long winnerId = -1L;

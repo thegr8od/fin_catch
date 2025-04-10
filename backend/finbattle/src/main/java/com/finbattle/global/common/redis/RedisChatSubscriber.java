@@ -23,9 +23,9 @@ public class RedisChatSubscriber implements MessageListener {
             String roomId = channel.split(":")[1];
             //  WebSocket 발송 대상: /topic/chat/{roomId}
             String destination = "/topic/chat/" + roomId;
-            
+
             messagingTemplate.convertAndSend(destination, msg);
-            log.info("🔵 WebSocket 전송: Destination={}, Message={}", destination, msg);
+            //log.info("🔵 WebSocket 전송: Destination={}, Message={}", destination, msg);
         } catch (Exception e) {
             log.error("Error processing chat message from Redis", e);
         }
