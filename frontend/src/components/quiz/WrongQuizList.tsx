@@ -61,22 +61,29 @@ const WrongQuizList: React.FC<WrongQuizListProps> = ({
               : "bg-gray-50 hover:bg-gray-100"
           }`}
         >
-          <div className="flex justify-between items-center">
-            <h4 className="font-korean-pixel text-gray-800">{problem.title}</h4>
-            <span
-              className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
-                problem.type === "객관식" 
-                  ? "bg-blue-100 text-blue-700" 
-                  : problem.type === "주관식" 
-                    ? "bg-green-100 text-green-700" 
-                    : "bg-purple-100 text-purple-700"
-              }`}
-            >
-              {problem.type}
-            </span>
+          {/* 문제 제목과 타입 정보를 포함하는 상단 영역 레이아웃 수정 */}
+          <div className="flex flex-col mb-2">
+            {/* 문제 제목 - 이제 전체 너비 사용 */}
+            <h4 className="font-korean-pixel text-gray-800 mb-2 pr-2 break-words">{problem.title}</h4>
+            
+            {/* 타입 태그 - 문제 제목과 분리하여 오른쪽 정렬 */}
+            <div className="flex justify-end">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-korean-pixel ${
+                  problem.type === "객관식" 
+                    ? "bg-blue-100 text-blue-700" 
+                    : problem.type === "주관식" 
+                      ? "bg-green-100 text-green-700" 
+                      : "bg-purple-100 text-purple-700"
+                }`}
+              >
+                {problem.type}
+              </span>
+            </div>
           </div>
+
+          {/* 틀린 날짜 표시 (시간 제외) */}
           <div className="flex justify-between items-center mt-2">
-            {/* 틀린 날짜 표시 (시간 제외) */}
             {problem.attemptHistory && problem.attemptHistory.length > 0 && (
               <p className="text-sm font-korean-pixel" style={{ color: '#EF4444' }}>
                 틀린 날짜: {formatDate(problem.attemptHistory[0].date)}

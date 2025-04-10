@@ -92,26 +92,33 @@ const RegularWrongQuizList: React.FC = () => {
                   : "bg-gray-50 hover:bg-gray-100"
               }`}
             >
-              <div className="flex justify-between items-center">
-                <h4 className="font-korean-pixel text-gray-800 flex-grow pr-4">
+              {/* 문제 레이아웃 수정 - 2단 레이아웃 */}
+              <div className="flex flex-col mb-2">
+                {/* 문제 제목 - 전체 너비 사용 */}
+                <h4 className="font-korean-pixel text-gray-800 mb-2 break-words">
                   {log.question}
                 </h4>
-                <span
-                  className={`px-2 py-1 rounded-full text-sm font-korean-pixel ${
-                    log.quizMode === "MULTIPLE_CHOICE" 
-                      ? "bg-blue-100 text-blue-700" 
+                
+                {/* 문제 유형 태그 - 오른쪽 정렬 */}
+                <div className="flex justify-end">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-korean-pixel ${
+                      log.quizMode === "MULTIPLE_CHOICE" 
+                        ? "bg-blue-100 text-blue-700" 
+                        : log.quizMode === "SHORT_ANSWER" 
+                          ? "bg-green-100 text-green-700" 
+                          : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    {log.quizMode === "MULTIPLE_CHOICE" 
+                      ? "객관식" 
                       : log.quizMode === "SHORT_ANSWER" 
-                        ? "bg-green-100 text-green-700" 
-                        : "bg-purple-100 text-purple-700"
-                  }`}
-                >
-                  {log.quizMode === "MULTIPLE_CHOICE" 
-                    ? "객관식" 
-                    : log.quizMode === "SHORT_ANSWER" 
-                      ? "주관식" 
-                      : "서술형"}
-                </span>
+                        ? "주관식" 
+                        : "서술형"}
+                  </span>
+                </div>
               </div>
+              
               <div className="mt-2 space-y-1">
                 <p className="text-sm font-korean-pixel text-red-500">
                   내 답변: {log.userAnswer || '미입력'}
