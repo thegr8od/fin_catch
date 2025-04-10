@@ -156,7 +156,7 @@ const NicknameChangeModal: React.FC<NicknameChangeModalProps> = ({ onClose, curr
               <button
                 type="button"
                 onClick={handleCheckNickname}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-korean-pixel whitespace-nowrap"
+                className="px-4 py-2 bg-green-200 text-gray-700 rounded-lg hover:bg-green-400 font-korean-pixel whitespace-nowrap"
                 disabled={isChecking || isSubmitting}
               >
                 {isChecking ? "확인 중..." : "중복 확인"}
@@ -174,7 +174,7 @@ const NicknameChangeModal: React.FC<NicknameChangeModalProps> = ({ onClose, curr
             <button
               type="submit"
               className={`px-5 py-2 rounded-lg text-white font-korean-pixel ${
-                isNicknameAvailable ? "bg-gradient-to-r from-form-color to-button-color hover:opacity-90" : "bg-gray-400 cursor-not-allowed"
+                isNicknameAvailable ? "bg-red/50 hover:bg-red/80" : "bg-gray-400 cursor-not-allowed"
               }`}
               disabled={!isNicknameAvailable || isChecking || isSubmitting}
             >

@@ -479,7 +479,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           ]);
 
           // 정답 처리 애니메이션
-          if (result === "정답입니다" || score !== undefined) {
+          if (result === "정답입니다." || score !== undefined) {
             // 메시지를 보낸 사람이 자신일 경우
             if (sender === playerStatus.name) {
               // setPlayerStatus((prev) => ({ ...prev, state: "attack" }));
@@ -493,7 +493,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children, roomId, pl
           }
 
           // 오답 처리 - 2초 동안 답변 차단
-          if (result === "오답입니다" && sender === playerStatus.name) {
+          if (result === "오답입니다." && sender === playerStatus.name) {
             // 이전 타이머가 있으면 취소
             if (answerBlockTimerRef.current) {
               clearTimeout(answerBlockTimerRef.current);

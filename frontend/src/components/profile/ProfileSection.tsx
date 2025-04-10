@@ -34,7 +34,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ profileData, onNickname
           <div>
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-2xl font-bold font-korean-pixel">{profileData.nickname}님, 환영합니다!</h2>
-              <button onClick={onNicknameChange} className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-korean-pixel text-gray-600 transition-colors">
+              <button onClick={onNicknameChange} className="px-2 py-1 border-2 border-purple-400 rounded-lg text-sm font-korean-pixel text-gray-600 transition-colors">
                 ✏️ 닉네임 변경
               </button>
             </div>
