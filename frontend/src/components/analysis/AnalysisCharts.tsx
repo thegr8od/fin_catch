@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Doughnut, Line } from "react-chartjs-2";
 import { 
   Chart as ChartJS, 
@@ -15,6 +15,7 @@ import {
   CoreScaleOptions 
 } from "chart.js";
 import { Problem } from '../../types/analysis/Problem';
+import axiosInstance from "../../api/axios";
 
 // Chart.js에 필요한 컴포넌트들을 등록
 ChartJS.register(
@@ -30,7 +31,16 @@ ChartJS.register(
 
 interface AnalysisChartsProps {
   problem: Problem;
-  isConsumption?: boolean; // 소비 퀴즈 여부를 결정하는 prop 추가
+  isConsumption?: boolean; // 소비 퀴즈인지 여부를 결정하는 prop 추가
+}
+
+// 퀴즈 로그 인터페이스
+interface QuizLog {
+  quizLogId: number;
+  memberId: number;
+  userAnswer: string;
+  isCorrect: boolean;
+  createdAt: string;
 }
 
 const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption = false }) => {
@@ -38,8 +48,65 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption 
   const userAnswer = (problem as any).userAnswer || '응답 없음';
   const correctAnswer = (problem as any).correctAnswer || '정보 없음';
   
-  // 정답률 계산 (도넛 차트를 위해 필요)
-  const correctRate = (problem.correctCount / (problem.correctCount + problem.wrongCount)) * 100;
+  // 상태 관리
+  const [quizLogs, setQuizLogs] = useState<QuizLog[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [correctRate, setCorrectRate] = useState<number>(0);
+  const [totalAttempts, setTotalAttempts] = useState<number>(0);
+  const [correctAttempts, setCorrectAttempts] = useState<number>(0);
+
+  // 퀴즈 로그 조회 및 정답률 계산
+  useEffect(() => {
+    const fetchQuizLogs = async () => {
+      if (!problem || !problem.id) return;
+      
+      setLoading(true);
+      try {
+        // 퀴즈 로그 API 호출
+        const response = await axiosInstance.get(`/api/quiz/logs/${problem.id}`);
+        
+        if (response.data && response.data.isSuccess && Array.isArray(response.data.result)) {
+          const logs = response.data.result as QuizLog[];
+          setQuizLogs(logs);
+          
+          // 전체 시도 횟수와 정답 횟수 계산
+          const total = logs.length;
+          const correct = logs.filter(log => log.isCorrect).length;
+          
+          setTotalAttempts(total);
+          setCorrectAttempts(correct);
+          setCorrectRate(total > 0 ? (correct / total) * 100 : 0);
+        }
+      } catch (error) {
+        console.error("퀴즈 로그 조회 오류:", error);
+        // API 오류 시 attemptHistory 기반으로 계산
+        calculateFromAttemptHistory();
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // API 호출 실패 시 기존 attemptHistory 기반으로 계산
+    const calculateFromAttemptHistory = () => {
+      if (!problem.attemptHistory || problem.attemptHistory.length === 0) {
+        setCorrectRate(0);
+        setTotalAttempts(0);
+        setCorrectAttempts(0);
+        return;
+      }
+      
+      const total = problem.attemptHistory.length;
+      const correct = problem.attemptHistory.filter(attempt => attempt.isCorrect).length;
+      
+      setTotalAttempts(total);
+      setCorrectAttempts(correct);
+      setCorrectRate(total > 0 ? (correct / total) * 100 : 0);
+    };
+    
+    fetchQuizLogs();
+  }, [problem]);
+  
+  // 오답률 계산
   const wrongRate = 100 - correctRate;
 
   // 날짜만 표시하는 함수
@@ -63,13 +130,17 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption 
     ],
   };
 
+  // 풀이 기록 데이터 - API 데이터 있으면 사용, 없으면 attemptHistory 사용
   const historyData = {
-    // 날짜만 표시하도록 수정
-    labels: problem.attemptHistory.map((h) => formatDateOnly(h.date)),
+    labels: quizLogs.length > 0 
+      ? quizLogs.map(log => formatDateOnly(log.createdAt)) 
+      : problem.attemptHistory.map(h => formatDateOnly(h.date)),
     datasets: [
       {
         label: "문제 풀이 기록",
-        data: problem.attemptHistory.map((h) => (h.isCorrect ? 100 : 0)),
+        data: quizLogs.length > 0 
+          ? quizLogs.map(log => log.isCorrect ? 100 : 0)
+          : problem.attemptHistory.map(h => h.isCorrect ? 100 : 0),
         borderColor: "#2196F3",
         tension: 0.1,
       },
@@ -158,7 +229,13 @@ const AnalysisCharts: React.FC<AnalysisChartsProps> = ({ problem, isConsumption 
         {/* 풀이 기록 그래프는 유지 */}
         <div className="bg-white p-4 rounded-lg shadow">
           <h5 className="font-korean-pixel text-gray-700 mb-4">풀이 기록</h5>
-          <Line data={historyData} options={lineOptions} />
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <Line data={historyData} options={lineOptions} />
+          )}
         </div>
       </div>
     </div>
