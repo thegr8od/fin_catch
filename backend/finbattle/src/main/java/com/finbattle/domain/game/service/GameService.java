@@ -9,7 +9,6 @@ import com.finbattle.domain.game.dto.GameMemberStatus;
 import com.finbattle.domain.game.model.EssayCorrected;
 import com.finbattle.domain.game.model.GameData;
 import com.finbattle.domain.game.repository.RedisGameRepository;
-import com.finbattle.domain.member.repository.MemberRepository;
 import com.finbattle.domain.member.service.MemberFacadeService;
 import com.finbattle.domain.quiz.dto.EssayQuizDto;
 import com.finbattle.domain.quiz.dto.MultipleChoiceQuizDto;
@@ -47,7 +46,6 @@ public class GameService {
     private final EssayAiScoringService essayAiScoringService;
     private final RoomRepository roomRepository;
     private final QuizLogRepository quizLogRepository;
-    private final MemberRepository memberRepository;
 
     private final Map<Long, LocalDateTime> lastAnswerMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(100);
@@ -283,7 +281,7 @@ public class GameService {
             }
             quizId = quiz.getQuizId();
             int score = essayAiScoringService.scoreEssayAnswer(quiz.getEssayQuestion(), userAnswer);
-            isCorrect = score >= 70;
+            isCorrect = score >= 0;
             Map<String, Object> essayResult = Map.of(
                 "quizId", quizId,
                 "score", score,
