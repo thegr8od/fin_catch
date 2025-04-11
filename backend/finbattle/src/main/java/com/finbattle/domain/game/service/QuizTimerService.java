@@ -265,12 +265,8 @@ public class QuizTimerService {
     private final Map<Long, List<ScheduledFuture<?>>> quizTasks = new ConcurrentHashMap<>();
 
     public void startQuizTimerWithCallback(
-        Long roomId,
-        Long quizId,
-        QuizMode quizMode,
-        QuizDto quizDto,
-        Runnable onTimeout
-    ) {
+        Long roomId, Long quizId, QuizMode quizMode, QuizDto quizDto, Runnable onTimeout) {
+
         int timeLimit = getTimeLimit(quizMode);
         int firstHintDelay = timeLimit / 3;
         int secondHintDelay = (timeLimit * 2) / 3;
